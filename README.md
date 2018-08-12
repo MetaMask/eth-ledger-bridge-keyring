@@ -16,7 +16,9 @@ device. However there are a number of differences:
 
 - Because extensions have limited access to browser features, there's no easy way to interact wth the Ledger Hardware wallet from the MetaMask extension. This library implements a work around those restrictions, by injecting (on demand) an iframe to the background page of the extension, which is hosted at [here](https://github.com/MetaMask/eth-hd-keyring)brunobar79.github.io/eth-ledger-bridge-keyring/index.html).
 
-The iframe is allowed to interact with the Ledger device (since it's running under https) using the libraries from [LedgerJS](https://github.com/LedgerHQ/ledgerjs) *hw-app-eth* and *hw-transport-u2f* establishes a two-way communication channel with the extension via postMessage.
+The iframe is allowed to interact with the Ledger device (since it's running under https) using the libraries from [LedgerJS](https://github.com/LedgerHQ/ledgerjs) *hw-app-eth* and *hw-transport-u2f* and establishes a two-way communication channel with the extension via postMessage.
+
+The iframe code it's hosted in the same repo under the branch [gh-pages](https://github.com/brunobar79/eth-ledger-bridge-keyring/tree/gh-pages) and it's being served via github pages. In the future we might move it under the metamask.io domain.
 
 Usage
 -----
