@@ -4,7 +4,7 @@ eth-ledger-bridge-keyring [![CircleCI](https://circleci.com/gh/brunobar79/eth-le
 An implementation of MetaMask's [Keyring interface](https://github.com/MetaMask/eth-simple-keyring#the-keyring-class-protocol), that uses a Ledger hardware wallet for all cryptographic operations.
 
 In most regards, it works in the same way as
-[eth-trezor-keyring](https://github.com/MetaMask/eth-hd-keyring), but using a TREZOR
+[eth-hd-keyring](https://github.com/MetaMask/eth-hd-keyring), but using a Ledger
 device. However there are a number of differences:
 
 - Because the keys are stored in the device, operations that rely on the device
@@ -14,9 +14,9 @@ device. However there are a number of differences:
 - It does not support the `signMessage`, `signTypedData` or `exportAccount`
   methods, because Ledger devices do not support these operations.
 
-- Because extensions have limited access to browser features, there's no easy way to interact wth the Ledger Hardware wallet from the MetaMask extension. This library implements a work around those restrictions, by injecting (on demand) an iframe to the background page of the extension, which is hosted at [here](https://github.com/MetaMask/eth-hd-keyring)brunobar79.github.io/eth-ledger-bridge-keyring/index.html).
+- Because extensions have limited access to browser features, there's no easy way to interact wth the Ledger Hardware wallet from the MetaMask extension. This library implements a workaround to those restrictions by injecting (on demand) an iframe to the background page of the extension, (which is hosted [here](https://brunobar79.github.io/eth-ledger-bridge-keyring/index.html).
 
-The iframe is allowed to interact with the Ledger device (since it's running under https) using the libraries from [LedgerJS](https://github.com/LedgerHQ/ledgerjs) *hw-app-eth* and *hw-transport-u2f* and establishes a two-way communication channel with the extension via postMessage.
+The iframe is allowed to interact with the Ledger device (since U2F requires SSL and the iframe is hosted under https) using the libraries from [LedgerJS](https://github.com/LedgerHQ/ledgerjs) *hw-app-eth* and *hw-transport-u2f* and establishes a two-way communication channel with the extension via postMessage.
 
 The iframe code it's hosted in the same repo under the branch [gh-pages](https://github.com/brunobar79/eth-ledger-bridge-keyring/tree/gh-pages) and it's being served via github pages. In the future we might move it under the metamask.io domain.
 
