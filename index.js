@@ -6,7 +6,7 @@ const Transaction = require('ethereumjs-tx')
 
 const hdPathString = `44'/60'/0'`
 const type = 'Ledger Hardware'
-const BRIDGE_URL = 'https://localhost:3000'
+const BRIDGE_URL = 'https://brunobar79.github.io/eth-ledger-bridge-keyring'
 const pathBase = 'm'
 const MAX_INDEX = 1000
 
@@ -22,24 +22,7 @@ class LedgerBridgeKeyring extends EventEmitter {
     this.paths = {}
     this.iframe = null
     this.deserialize(opts)
-    this.setupIframe()
-  }
-
-  setupIframe () {
-    this.iframe = document.createElement('iframe')
-    this.iframe.src = this.bridgeUrl
-    document.head.appendChild(this.iframe)
-  }
-
-  sendMessage (msg, cb) {
-    msg.target = 'LEDGER-IFRAME'
-    this.iframe.contentWindow.postMessage(msg, '*')
-    window.addEventListener('message', ({ origin, data }) => {
-      if (origin !== this.bridgeUrl) return false
-      if (data && data.action && data.action === `${msg.action}-reply`) {
-        cb(data)
-      }
-    })
+    this._setupIframe()
   }
 
   serialize () {
@@ -67,7 +50,7 @@ class LedgerBridgeKeyring extends EventEmitter {
     if (this.isUnlocked()) return Promise.resolve('already unlocked')
 
     return new Promise((resolve, reject) => {
-      this.sendMessage({
+      this._sendMessage({
         action: 'ledger-unlock',
         params: {
           hdPath: this.hdPath,
@@ -120,39 +103,6 @@ class LedgerBridgeKeyring extends EventEmitter {
     return this.__getPage(-1)
   }
 
-  __getPage (increment) {
-
-    this.page += increment
-
-    if (this.page <= 0) { this.page = 1 }
-
-    return new Promise((resolve, reject) => {
-      this.unlock()
-        .then(_ => {
-
-          const from = (this.page - 1) * this.perPage
-          const to = from + this.perPage
-
-          const accounts = []
-
-          for (let i = from; i < to; i++) {
-            const address = this._addressFromIndex(pathBase, i)
-             accounts.push({
-              address: address,
-              balance: null,
-              index: i,
-            })
-            this.paths[ethUtil.toChecksumAddress(address)] = i
-
-          }
-          resolve(accounts)
-        })
-        .catch(e => {
-          reject(e)
-        })
-    })
-  }
-
   getAccounts () {
     return Promise.resolve(this.accounts.slice())
   }
@@ -185,7 +135,7 @@ class LedgerBridgeKeyring extends EventEmitter {
             s: '0x00',
           })
 
-          this.sendMessage({
+          this._sendMessage({
             action: 'ledger-sign-transaction',
             params: {
               tx: newTx.serialize().toString('hex'),
@@ -224,7 +174,7 @@ class LedgerBridgeKeyring extends EventEmitter {
     return new Promise((resolve, reject) => {
       this.unlock()
         .then(_ => {
-          this.sendMessage({
+          this._sendMessage({
             action: 'ledger-sign-personal-message',
             params: {
               hdPath: this._pathFromAddress(withAccount),
@@ -269,6 +219,62 @@ class LedgerBridgeKeyring extends EventEmitter {
   }
 
   /* PRIVATE METHODS */
+
+  _setupIframe () {
+    this.iframe = document.createElement('iframe')
+    this.iframe.src = this.bridgeUrl
+    document.head.appendChild(this.iframe)
+  }
+  _getOrigin(){
+    const tmp = this.bridgeUrl.split('/')
+    tmp.splice(-1, 1)
+    return tmp.join('/')
+  }
+
+  _sendMessage (msg, cb) {
+    msg.target = 'LEDGER-IFRAME'
+    this.iframe.contentWindow.postMessage(msg, '*')
+    window.addEventListener('message', ({ origin, data }) => {
+      if (origin !== this._getOrigin()) return false
+      if (data && data.action && data.action === `${msg.action}-reply`) {
+        cb(data)
+      }
+    })
+  }
+
+  __getPage (increment) {
+
+    this.page += increment
+
+    if (this.page <= 0) { this.page = 1 }
+
+    return new Promise((resolve, reject) => {
+      this.unlock()
+        .then(_ => {
+
+          const from = (this.page - 1) * this.perPage
+          const to = from + this.perPage
+
+          const accounts = []
+
+          for (let i = from; i < to; i++) {
+            const address = this._addressFromIndex(pathBase, i)
+             accounts.push({
+              address: address,
+              balance: null,
+              index: i,
+            })
+            this.paths[ethUtil.toChecksumAddress(address)] = i
+
+          }
+          resolve(accounts)
+        })
+        .catch(e => {
+          reject(e)
+        })
+    })
+  }
+
 
   _padLeftEven (hex) {
     return hex.length % 2 !== 0 ? `0${hex}` : hex
@@ -317,6 +323,7 @@ class LedgerBridgeKeyring extends EventEmitter {
 
       return str
   }
+
 }
 
 LedgerBridgeKeyring.type = type
