@@ -21,8 +21,8 @@ class LedgerBridgeKeyring extends EventEmitter {
     this.hdk = new HDKey()
     this.paths = {}
     this.iframe = null
-    this.setupIframe()
     this.deserialize(opts)
+    this.setupIframe()
   }
 
   setupIframe () {
@@ -32,7 +32,8 @@ class LedgerBridgeKeyring extends EventEmitter {
   }
 
   sendMessage (msg, cb) {
-    this.iframe.contentWindow.postMessage({...msg, target: 'LEDGER-IFRAME'}, '*')
+    msg.target = 'LEDGER-IFRAME'
+    this.iframe.contentWindow.postMessage(msg, '*')
     window.addEventListener('message', ({ origin, data }) => {
       if (origin !== this.bridgeUrl) return false
       if (data && data.action && data.action === `${msg.action}-reply`) {
