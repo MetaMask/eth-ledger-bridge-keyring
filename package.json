@@ -1,0 +1,46 @@
+{
+  "name": "eth-ledger-bridge-keyring",
+  "version": "0.1.0",
+  "description": "A MetaMask compatible keyring, for ledger hardware wallets",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha",
+    "lint": "./node_modules/.bin/eslint . --ext .js",
+    "lint:fix": "./node_modules/.bin/eslint --fix . --ext .js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/brunobar79/eth-ledger-bridge-keyring.git"
+  },
+  "keywords": [
+    "ethereum",
+    "keyring",
+    "ledger",
+    "metamask"
+  ],
+  "author": "Bruno Barbieri",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/brunobar79/eth-ledger-bridge-keyring/issues"
+  },
+  "homepage": "https://github.com/brunobar79/eth-ledger-bridge-keyring#readme",
+  "dependencies": {
+    "eth-sig-util": "^1.4.2",
+    "ethereumjs-tx": "^1.3.4",
+    "ethereumjs-util": "^5.1.5",
+    "events": "^2.0.0",
+    "hdkey": "0.8.0"
+  },
+  "devDependencies": {
+    "assert": "^1.4.1",
+    "babel-eslint": "^8.0.0",
+    "babel-runtime": "^6.26.0",
+    "chai": "^4.1.2",
+    "chai-spies": "^1.0.0",
+    "eslint": "^5.0.0",
+    "eslint-plugin-chai": "0.0.1",
+    "eslint-plugin-json": "^1.2.0",
+    "eslint-plugin-mocha": "^5.0.0",
+    "mocha": "^5.0.4"
+  }
+}
