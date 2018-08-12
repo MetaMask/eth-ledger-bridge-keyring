@@ -1,46 +1,31 @@
 {
-  "name": "eth-ledger-bridge-keyring",
-  "version": "0.1.0",
-  "description": "A MetaMask compatible keyring, for ledger hardware wallets",
-  "main": "index.js",
+  "name": "gupltest",
+  "version": "0.0.0",
+  "description": "",
+  "main": "gulpfile.js",
   "scripts": {
-    "test": "mocha",
-    "lint": "./node_modules/.bin/eslint . --ext .js",
-    "lint:fix": "./node_modules/.bin/eslint --fix . --ext .js"
+    "start": "gulp",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/brunobar79/eth-ledger-bridge-keyring.git"
-  },
-  "keywords": [
-    "ethereum",
-    "keyring",
-    "ledger",
-    "metamask"
-  ],
-  "author": "Bruno Barbieri",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/brunobar79/eth-ledger-bridge-keyring/issues"
-  },
-  "homepage": "https://github.com/brunobar79/eth-ledger-bridge-keyring#readme",
-  "dependencies": {
-    "eth-sig-util": "^1.4.2",
-    "ethereumjs-tx": "^1.3.4",
-    "ethereumjs-util": "^5.1.5",
-    "events": "^2.0.0",
-    "hdkey": "0.8.0"
-  },
+  "author": "",
+  "license": "BSD-2-Clause",
   "devDependencies": {
-    "assert": "^1.4.1",
-    "babel-eslint": "^8.0.0",
+    "babel-core": "^6.26.3",
+    "babel-preset-es2015": "^6.24.1",
+    "browser-sync": "^2.24.6",
+    "gulp": "^3.9.1",
+    "gulp-util": "~3.0.1",
+    "source": "0.0.3",
+    "vinyl-source-stream": "^2.0.0"
+  },
+  "dependencies": {
+    "@ledgerhq/hw-app-eth": "^4.21.0",
+    "@ledgerhq/hw-transport-u2f": "^4.21.0",
     "babel-runtime": "^6.26.0",
-    "chai": "^4.1.2",
-    "chai-spies": "^1.0.0",
-    "eslint": "^5.0.0",
-    "eslint-plugin-chai": "0.0.1",
-    "eslint-plugin-json": "^1.2.0",
-    "eslint-plugin-mocha": "^5.0.0",
-    "mocha": "^5.0.4"
+    "babelify": "^8.0.0",
+    "browserify": "^16.2.2",
+    "buffer": "^5.2.0",
+    "ethereumjs-tx": "^1.3.7",
+    "translations": "^2.2.1"
   }
 }
