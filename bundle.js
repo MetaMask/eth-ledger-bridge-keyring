@@ -78,7 +78,6 @@ var LedgerBridge = function () {
     }, {
         key: 'unlock',
         value: async function unlock(replyAction, hdPath) {
-            console.log('[IFRAME]: unlock', replyAction, hdPath);
             try {
                 await this.makeApp();
                 var res = await this.app.getAddress(hdPath, false, true);

@@ -48,7 +48,6 @@ export default class LedgerBridge {
     }
 
     async unlock(replyAction, hdPath){
-        console.log('[IFRAME]: unlock', replyAction, hdPath)
         try {
             await this.makeApp()
             const res = await this.app.getAddress(hdPath, false, true)
