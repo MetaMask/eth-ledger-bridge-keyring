@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/brunobar79/eth-ledger-bridge-keyring.git"
+    "url": "git+https://github.com/MetaMask/eth-ledger-bridge-keyring.git"
   },
   "keywords": [
     "ethereum",
@@ -21,9 +21,9 @@
   "author": "Bruno Barbieri",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/brunobar79/eth-ledger-bridge-keyring/issues"
+    "url": "https://github.com/MetaMask/eth-ledger-bridge-keyring/issues"
   },
-  "homepage": "https://github.com/brunobar79/eth-ledger-bridge-keyring#readme",
+  "homepage": "https://github.com/MetaMask/eth-ledger-bridge-keyring#readme",
   "dependencies": {
     "eth-sig-util": "^1.4.2",
     "ethereumjs-tx": "^1.3.4",
