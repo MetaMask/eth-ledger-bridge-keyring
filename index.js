@@ -6,7 +6,7 @@ const Transaction = require('ethereumjs-tx')
 
 const hdPathString = `44'/60'/0'`
 const type = 'Ledger Hardware'
-const BRIDGE_URL = 'https://brunobar79.github.io/eth-ledger-bridge-keyring'
+const BRIDGE_URL = 'https://metamask.github.io/eth-ledger-bridge-keyring'
 const pathBase = 'm'
 const MAX_INDEX = 1000
 
