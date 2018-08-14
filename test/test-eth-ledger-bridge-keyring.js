@@ -66,7 +66,7 @@ describe('LedgerBridgeKeyring', function () {
 
     describe('constructor', function () {
         it('constructs', function (done) {
-            const t = new LedgerBridgeKeyring({hdPath: `44'/60'/0'`})
+            const t = new LedgerBridgeKeyring({hdPath: `m/44'/60'/0'`})
             assert.equal(typeof t, 'object')
             t.getAccounts()
             .then(accounts => {
@@ -81,7 +81,7 @@ describe('LedgerBridgeKeyring', function () {
             keyring.serialize()
             .then((output) => {
               assert.equal(output.bridgeUrl, 'https://metamask.github.io/eth-ledger-bridge-keyring')
-              assert.equal(output.hdPath, `44'/60'/0'`)
+              assert.equal(output.hdPath, `m/44'/60'/0'`)
               assert.equal(Array.isArray(output.accounts), true)
               assert.equal(output.accounts.length, 0)
               done()
@@ -92,7 +92,7 @@ describe('LedgerBridgeKeyring', function () {
     describe('deserialize', function () {
         it('serializes what it deserializes', function (done) {
 
-            const someHdPath = `44'/60'/0'/1`
+            const someHdPath = `m/44'/60'/0'/1`
 
             keyring.deserialize({
                 page: 10,
@@ -122,6 +122,22 @@ describe('LedgerBridgeKeyring', function () {
             keyring.unlock().then(_ => {
                 done()
             })
+        })
+    })
+
+    describe('setHdPath', function () {
+        it('should set the hdPath', function (done) {
+            const someHDPath = `m/44'/99'/0`
+            keyring.setHdPath(someHDPath)
+            assert.equal(keyring.hdPath, someHDPath)
+            done()
+        })
+
+        it('should reset the HDKey if the path changes', function (done) {
+            const someHDPath = `m/44'/99'/0`
+            keyring.setHdPath(someHDPath)
+            assert.equal(keyring.hdk.publicKey, null)
+            done()
         })
     })
 
@@ -272,7 +288,7 @@ describe('LedgerBridgeKeyring', function () {
             const expectedAccount = fakeAccounts[accountIndex]
             assert.equal(accounts[0], expectedAccount)
         })
-    }) 
+    })
 
     describe('signMessage', function () {
         it('should throw an error because it is not supported', function () {
@@ -335,7 +351,7 @@ describe('LedgerBridgeKeyring', function () {
             setTimeout(_ => {
                 keyring.signPersonalMessage(fakeAccounts[0], 'some msg')
                 expect(window.addEventListener).to.have.been.calledWith('message')
-            })
+            }, 1800)
             chai.spy.restore(window, 'addEventListener')
             done()
         })
