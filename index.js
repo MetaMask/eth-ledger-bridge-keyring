@@ -138,19 +138,9 @@ class LedgerBridgeKeyring extends EventEmitter {
       this.unlock()
         .then(_ => {
 
-          const newTx = new Transaction({
-            from: this._normalize(address),
-            to: this._normalize(tx.to),
-            value: this._normalize(tx.value),
-            data: this._normalize(tx.data),
-            chainId: tx._chainId,
-            nonce: this._normalize(tx.nonce),
-            gasLimit: this._normalize(tx.gasLimit),
-            gasPrice: this._normalize(tx.gasPrice),
-            v: ethUtil.bufferToHex(tx.getChainId()),
-            r: '0x00',
-            s: '0x00',
-          })
+          tx.v = ethUtil.bufferToHex(tx.getChainId())
+          tx.r = '0x00'
+          tx.s = '0x00'
 
           let hdPath
           if (this._isBIP44()) {
@@ -162,20 +152,20 @@ class LedgerBridgeKeyring extends EventEmitter {
           this._sendMessage({
             action: 'ledger-sign-transaction',
             params: {
-              tx: newTx.serialize().toString('hex'),
+              tx: tx.serialize().toString('hex'),
               hdPath,
             },
           },
           ({success, payload}) => {
             if (success) {
 
-              newTx.v = Buffer.from(payload.v, 'hex')
-              newTx.r = Buffer.from(payload.r, 'hex')
-              newTx.s = Buffer.from(payload.s, 'hex')
+              tx.v = Buffer.from(payload.v, 'hex')
+              tx.r = Buffer.from(payload.r, 'hex')
+              tx.s = Buffer.from(payload.s, 'hex')
 
-              const valid = newTx.verifySignature()
+              const valid = tx.verifySignature()
               if (valid) {
-                resolve(newTx)
+                resolve(tx)
               } else {
                 reject('The transaction signature is not valid')
               }
