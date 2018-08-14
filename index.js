@@ -4,7 +4,7 @@ const ethUtil = require('ethereumjs-util')
 const sigUtil = require('eth-sig-util')
 const Transaction = require('ethereumjs-tx')
 
-const hdPathString = `44'/60'/0'`
+const hdPathString = `m/44'/60'/0'`
 const type = 'Ledger Hardware'
 const BRIDGE_URL = 'https://metamask.github.io/eth-ledger-bridge-keyring'
 const pathBase = 'm'
@@ -13,7 +13,7 @@ const NETWORK_API_URLS = {
   ropsten: 'http://api-ropsten.etherscan.io',
   kovan: 'http://api-kovan.etherscan.io',
   rinkeby: 'https://api-rinkeby.etherscan.io',
-  mainnet: 'https://api.etherscan.io'
+  mainnet: 'https://api.etherscan.io',
 }
 
 class LedgerBridgeKeyring extends EventEmitter {
@@ -44,21 +44,29 @@ class LedgerBridgeKeyring extends EventEmitter {
   }
 
   isUnlocked () {
-    return this.hdk && this.hdk.publicKey ? true : false
+    return !!(this.hdk && this.hdk.publicKey)
   }
 
   setAccountToUnlock (index) {
     this.unlockedAccount = parseInt(index, 10)
   }
 
+  setHdPath (hdPath) {
+    // Reset HDKey if the path changes
+    if (this.hdPath !== hdPath) {
+      this.hdk = new HDKey()
+    }
+    this.hdPath = hdPath
+  }
+
   unlock (hdPath) {
     if (this.isUnlocked() && !hdPath) return Promise.resolve('already unlocked')
-
+    const path = hdPath ? this._toLedgerPath(hdPath) : this.hdPath
     return new Promise((resolve, reject) => {
       this._sendMessage({
         action: 'ledger-unlock',
         params: {
-          hdPath: this._toLedgerPath(hdPath ? hdPath : this.hdPath),
+          hdPath: path,
         },
       },
       ({success, payload}) => {
@@ -83,10 +91,10 @@ class LedgerBridgeKeyring extends EventEmitter {
           this.accounts = []
           for (let i = from; i < to; i++) {
             let address
-            if(this._isBIP44()){
+            if (this._isBIP44()) {
               const path = this._getPathForIndex(i)
               address = await this.unlock(path)
-            }else{
+            } else {
               address = this._addressFromIndex(pathBase, i)
             }
             this.accounts.push(address)
@@ -145,9 +153,9 @@ class LedgerBridgeKeyring extends EventEmitter {
           })
 
           let hdPath
-          if(this._isBIP44()){
+          if (this._isBIP44()) {
             hdPath = this._getPathForIndex(this.unlockedAccount)
-          }else{
+          } else {
             hdPath = this._toLedgerPath(this._pathFromAddress(address))
           }
 
@@ -191,9 +199,9 @@ class LedgerBridgeKeyring extends EventEmitter {
       this.unlock()
         .then(_ => {
           let hdPath
-          if(this._isBIP44()){
+          if (this._isBIP44()) {
             hdPath = this._getPathForIndex(this.unlockedAccount)
-          }else{
+          } else {
             hdPath = this._toLedgerPath(this._pathFromAddress(withAccount))
           }
 
@@ -238,7 +246,7 @@ class LedgerBridgeKeyring extends EventEmitter {
     this.page = 0
     this.unlockedAccount = 0
     this.paths = {}
-    this.hdk = null
+    this.hdk = new HDKey()
   }
 
   /* PRIVATE METHODS */
@@ -248,7 +256,7 @@ class LedgerBridgeKeyring extends EventEmitter {
     this.iframe.src = this.bridgeUrl
     document.head.appendChild(this.iframe)
   }
-  _getOrigin(){
+  _getOrigin () {
     const tmp = this.bridgeUrl.split('/')
     tmp.splice(-1, 1)
     return tmp.join('/')
@@ -273,13 +281,13 @@ class LedgerBridgeKeyring extends EventEmitter {
     const from = (this.page - 1) * this.perPage
     const to = from + this.perPage
 
-    return new Promise((resolve, reject) =>  {
+    return new Promise((resolve, reject) => {
       this.unlock(from)
-        .then( async _ => {
+        .then(async _ => {
           let accounts
-          if(this._isBIP44()){
+          if (this._isBIP44()) {
             accounts = await this._getAccountsBIP44(from, to)
-          }else{
+          } else {
             accounts = this._getAccountsLegacy(from, to)
           }
           resolve(accounts)
@@ -290,7 +298,7 @@ class LedgerBridgeKeyring extends EventEmitter {
     })
   }
 
-  async _getAccountsBIP44(from, to) {
+  async _getAccountsBIP44 (from, to) {
     const accounts = []
 
     for (let i = from; i < to; i++) {
@@ -304,16 +312,16 @@ class LedgerBridgeKeyring extends EventEmitter {
       })
       // PER BIP44
       // "Software should prevent a creation of an account if
-      // a previous account does not have a transaction history 
+      // a previous account does not have a transaction history
       // (meaning none of its addresses have been used before)."
-      if(!valid){
+      if (!valid) {
         break
       }
     }
     return accounts
   }
 
-  _getAccountsLegacy(from, to){
+  _getAccountsLegacy (from, to) {
     const accounts = []
 
     for (let i = from; i < to; i++) {
@@ -376,30 +384,30 @@ class LedgerBridgeKeyring extends EventEmitter {
       return str
   }
 
-  _getPathForIndex(index){
+  _getPathForIndex (index) {
     // Check if the path is BIP 44 (Ledger Live)
     return this._isBIP44() ? `m/44'/60'/${index}'/0/0` : `${this.hdPath}/${index}`
   }
 
-  _isBIP44(){
-    return this.hdPath === `m/44'/60'/0'/0/0` ? true : false
+  _isBIP44 () {
+    return this.hdPath === `m/44'/60'/0'/0/0`
   }
 
-  _toLedgerPath(path){
-    return path.toString().replace('m/','')
+  _toLedgerPath (path) {
+    return path.toString().replace('m/', '')
   }
 
-  async _hasPreviousTransactions(address) {
+  async _hasPreviousTransactions (address) {
     const apiUrl = this._getApiUrl()
     const response = await fetch(`${apiUrl}/api?module=account&action=txlist&address=${address}&tag=latest&page=1&offset=1`)
     const parsedResponse = await response.json()
-    if (parsedResponse.status!=='0' && parsedResponse.result.length > 0) {
+    if (parsedResponse.status !== '0' && parsedResponse.result.length > 0) {
       return true
     }
     return false
   }
 
-  _getApiUrl(){
+  _getApiUrl () {
     return NETWORK_API_URLS[this.network] ? NETWORK_API_URLS[this.network] : NETWORK_API_URLS['mainnet']
   }
 
