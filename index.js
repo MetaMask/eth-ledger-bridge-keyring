@@ -39,13 +39,12 @@ class LedgerBridgeKeyring extends EventEmitter {
   deserialize (opts = {}) {
     this.hdPath = opts.hdPath || hdPathString
     this.bridgeUrl = opts.bridgeUrl || BRIDGE_URL
-    this.unlocked = opts.unlocked || false
     this.accounts = opts.accounts || []
     return Promise.resolve()
   }
 
   isUnlocked () {
-    return this.unlocked
+    return this.hdk && this.hdk.publicKey ? true : false
   }
 
   setAccountToUnlock (index) {
@@ -64,7 +63,6 @@ class LedgerBridgeKeyring extends EventEmitter {
       },
       ({success, payload}) => {
         if (success) {
-          this.unlocked = true
           this.hdk.publicKey = new Buffer(payload.publicKey, 'hex')
           this.hdk.chainCode = new Buffer(payload.chainCode, 'hex')
           resolve(payload.address)
@@ -192,7 +190,6 @@ class LedgerBridgeKeyring extends EventEmitter {
     return new Promise((resolve, reject) => {
       this.unlock()
         .then(_ => {
-
           let hdPath
           if(this._isBIP44()){
             hdPath = this._getPathForIndex(this.unlockedAccount)
@@ -238,10 +235,10 @@ class LedgerBridgeKeyring extends EventEmitter {
 
   forgetDevice () {
     this.accounts = []
-    this.unlocked = false
     this.page = 0
     this.unlockedAccount = 0
     this.paths = {}
+    this.hdk = null
   }
 
   /* PRIVATE METHODS */
@@ -389,14 +386,13 @@ class LedgerBridgeKeyring extends EventEmitter {
   }
 
   _toLedgerPath(path){
-    return path.replace('m/','')
+    return path.toString().replace('m/','')
   }
 
   async _hasPreviousTransactions(address) {
     const apiUrl = this._getApiUrl()
     const response = await fetch(`${apiUrl}/api?module=account&action=txlist&address=${address}&tag=latest&page=1&offset=1`)
     const parsedResponse = await response.json()
-    console.log('[LEDGER]: got tx history for address:', parsedResponse)
     if (parsedResponse.status!=='0' && parsedResponse.result.length > 0) {
       return true
     }
