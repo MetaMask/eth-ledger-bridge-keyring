@@ -9,6 +9,12 @@ const type = 'Ledger Hardware'
 const BRIDGE_URL = 'https://metamask.github.io/eth-ledger-bridge-keyring'
 const pathBase = 'm'
 const MAX_INDEX = 1000
+const NETWORK_API_URLS = {
+  ropsten: 'http://api-ropsten.etherscan.io',
+  kovan: 'http://api-kovan.etherscan.io',
+  rinkeby: 'https://api-rinkeby.etherscan.io',
+  mainnet: 'https://api.etherscan.io'
+}
 
 class LedgerBridgeKeyring extends EventEmitter {
   constructor (opts = {}) {
@@ -21,6 +27,7 @@ class LedgerBridgeKeyring extends EventEmitter {
     this.hdk = new HDKey()
     this.paths = {}
     this.iframe = null
+    this.network = 'mainnet'
     this.deserialize(opts)
     this._setupIframe()
   }
@@ -32,35 +39,33 @@ class LedgerBridgeKeyring extends EventEmitter {
   deserialize (opts = {}) {
     this.hdPath = opts.hdPath || hdPathString
     this.bridgeUrl = opts.bridgeUrl || BRIDGE_URL
-    this.unlocked = opts.unlocked || false
     this.accounts = opts.accounts || []
     return Promise.resolve()
   }
 
   isUnlocked () {
-    return this.unlocked
+    return this.hdk && this.hdk.publicKey ? true : false
   }
 
   setAccountToUnlock (index) {
     this.unlockedAccount = parseInt(index, 10)
   }
 
-  unlock () {
-
-    if (this.isUnlocked()) return Promise.resolve('already unlocked')
+  unlock (hdPath) {
+    if (this.isUnlocked() && !hdPath) return Promise.resolve('already unlocked')
 
     return new Promise((resolve, reject) => {
       this._sendMessage({
         action: 'ledger-unlock',
         params: {
-          hdPath: this.hdPath,
+          hdPath: this._toLedgerPath(hdPath ? hdPath : this.hdPath),
         },
       },
       ({success, payload}) => {
         if (success) {
           this.hdk.publicKey = new Buffer(payload.publicKey, 'hex')
           this.hdk.chainCode = new Buffer(payload.chainCode, 'hex')
-          resolve('just unlocked')
+          resolve(payload.address)
         } else {
           reject(payload.error || 'Unknown error')
         }
@@ -72,13 +77,18 @@ class LedgerBridgeKeyring extends EventEmitter {
 
     return new Promise((resolve, reject) => {
       this.unlock()
-        .then(_ => {
+        .then(async _ => {
           const from = this.unlockedAccount
           const to = from + n
           this.accounts = []
-
           for (let i = from; i < to; i++) {
-            const address = this._addressFromIndex(pathBase, i)
+            let address
+            if(this._isBIP44()){
+              const path = this._getPathForIndex(i)
+              address = await this.unlock(path)
+            }else{
+              address = this._addressFromIndex(pathBase, i)
+            }
             this.accounts.push(address)
             this.page = 0
           }
@@ -114,9 +124,8 @@ class LedgerBridgeKeyring extends EventEmitter {
     this.accounts = this.accounts.filter(a => a.toLowerCase() !== address.toLowerCase())
   }
 
-
   // tx is an instance of the ethereumjs-transaction class.
-  async signTransaction (address, tx) {
+  signTransaction (address, tx) {
     return new Promise((resolve, reject) => {
       this.unlock()
         .then(_ => {
@@ -135,11 +144,18 @@ class LedgerBridgeKeyring extends EventEmitter {
             s: '0x00',
           })
 
+          let hdPath
+          if(this._isBIP44()){
+            hdPath = this._getPathForIndex(this.unlockedAccount)
+          }else{
+            hdPath = this._toLedgerPath(this._pathFromAddress(address))
+          }
+
           this._sendMessage({
             action: 'ledger-sign-transaction',
             params: {
               tx: newTx.serialize().toString('hex'),
-              hdPath: this._pathFromAddress(address),
+              hdPath,
             },
           },
           ({success, payload}) => {
@@ -163,21 +179,28 @@ class LedgerBridgeKeyring extends EventEmitter {
     })
   }
 
-  async signMessage (withAccount, data) {
+  signMessage (withAccount, data) {
     throw new Error('Not supported on this device')
   }
 
   // For personal_sign, we need to prefix the message:
-  async signPersonalMessage (withAccount, message) {
+  signPersonalMessage (withAccount, message) {
     const humanReadableMsg = this._toAscii(message)
     const bufferMsg = Buffer.from(humanReadableMsg).toString('hex')
     return new Promise((resolve, reject) => {
       this.unlock()
         .then(_ => {
+          let hdPath
+          if(this._isBIP44()){
+            hdPath = this._getPathForIndex(this.unlockedAccount)
+          }else{
+            hdPath = this._toLedgerPath(this._pathFromAddress(withAccount))
+          }
+
           this._sendMessage({
             action: 'ledger-sign-personal-message',
             params: {
-              hdPath: this._pathFromAddress(withAccount),
+              hdPath,
               message: bufferMsg,
             },
           },
@@ -202,20 +225,20 @@ class LedgerBridgeKeyring extends EventEmitter {
     })
   }
 
-  async signTypedData (withAccount, typedData) {
+  signTypedData (withAccount, typedData) {
     throw new Error('Not supported on this device')
   }
 
-  async exportAccount (address) {
+  exportAccount (address) {
     throw new Error('Not supported on this device')
   }
 
   forgetDevice () {
     this.accounts = []
-    this.unlocked = false
     this.page = 0
     this.unlockedAccount = 0
     this.paths = {}
+    this.hdk = null
   }
 
   /* PRIVATE METHODS */
@@ -247,25 +270,17 @@ class LedgerBridgeKeyring extends EventEmitter {
     this.page += increment
 
     if (this.page <= 0) { this.page = 1 }
+    const from = (this.page - 1) * this.perPage
+    const to = from + this.perPage
 
-    return new Promise((resolve, reject) => {
-      this.unlock()
-        .then(_ => {
-
-          const from = (this.page - 1) * this.perPage
-          const to = from + this.perPage
-
-          const accounts = []
-
-          for (let i = from; i < to; i++) {
-            const address = this._addressFromIndex(pathBase, i)
-             accounts.push({
-              address: address,
-              balance: null,
-              index: i,
-            })
-            this.paths[ethUtil.toChecksumAddress(address)] = i
-
+    return new Promise((resolve, reject) =>  {
+      this.unlock(from)
+        .then( async _ => {
+          let accounts
+          if(this._isBIP44()){
+            accounts = await this._getAccountsBIP44(from, to)
+          }else{
+            accounts = this._getAccountsLegacy(from, to)
           }
           resolve(accounts)
         })
@@ -275,6 +290,43 @@ class LedgerBridgeKeyring extends EventEmitter {
     })
   }
 
+  async _getAccountsBIP44(from, to) {
+    const accounts = []
+
+    for (let i = from; i < to; i++) {
+      const path = this._getPathForIndex(i)
+      const address = await this.unlock(path)
+      const valid = await this._hasPreviousTransactions(address)
+      accounts.push({
+        address: address,
+        balance: null,
+        index: i,
+      })
+      // PER BIP44
+      // "Software should prevent a creation of an account if
+      // a previous account does not have a transaction history 
+      // (meaning none of its addresses have been used before)."
+      if(!valid){
+        break
+      }
+    }
+    return accounts
+  }
+
+  _getAccountsLegacy(from, to){
+    const accounts = []
+
+    for (let i = from; i < to; i++) {
+      const address = this._addressFromIndex(pathBase, i)
+      accounts.push({
+        address: address,
+        balance: null,
+        index: i,
+      })
+      this.paths[ethUtil.toChecksumAddress(address)] = i
+    }
+    return accounts
+  }
 
   _padLeftEven (hex) {
     return hex.length % 2 !== 0 ? `0${hex}` : hex
@@ -307,7 +359,7 @@ class LedgerBridgeKeyring extends EventEmitter {
     if (typeof index === 'undefined') {
       throw new Error('Unknown address')
     }
-    return `${this.hdPath}/${index}`
+    return this._getPathForIndex(index)
   }
 
   _toAscii (hex) {
@@ -322,6 +374,33 @@ class LedgerBridgeKeyring extends EventEmitter {
       }
 
       return str
+  }
+
+  _getPathForIndex(index){
+    // Check if the path is BIP 44 (Ledger Live)
+    return this._isBIP44() ? `m/44'/60'/${index}'/0/0` : `${this.hdPath}/${index}`
+  }
+
+  _isBIP44(){
+    return this.hdPath === `m/44'/60'/0'/0/0` ? true : false
+  }
+
+  _toLedgerPath(path){
+    return path.toString().replace('m/','')
+  }
+
+  async _hasPreviousTransactions(address) {
+    const apiUrl = this._getApiUrl()
+    const response = await fetch(`${apiUrl}/api?module=account&action=txlist&address=${address}&tag=latest&page=1&offset=1`)
+    const parsedResponse = await response.json()
+    if (parsedResponse.status!=='0' && parsedResponse.result.length > 0) {
+      return true
+    }
+    return false
+  }
+
+  _getApiUrl(){
+    return NETWORK_API_URLS[this.network] ? NETWORK_API_URLS[this.network] : NETWORK_API_URLS['mainnet']
   }
 
 }

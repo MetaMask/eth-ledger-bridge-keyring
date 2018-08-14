@@ -1,3 +1,5 @@
+global.document = require('./document.shim')
+global.window = require('./window.shim')
 const chai = require('chai')
 const spies = require('chai-spies')
 const {expect} = chai
@@ -44,7 +46,7 @@ describe('LedgerBridgeKeyring', function () {
 
     let keyring
 
-    beforeEach(async function () {
+    beforeEach(() => {
         keyring = new LedgerBridgeKeyring()
         keyring.hdk = fakeHdKey
     })
@@ -64,7 +66,7 @@ describe('LedgerBridgeKeyring', function () {
 
     describe('constructor', function () {
         it('constructs', function (done) {
-            const t = new LedgerBridgeKeyring({hdPath: `m/44'/60'/0'/0`})
+            const t = new LedgerBridgeKeyring({hdPath: `44'/60'/0'`})
             assert.equal(typeof t, 'object')
             t.getAccounts()
             .then(accounts => {
@@ -78,8 +80,8 @@ describe('LedgerBridgeKeyring', function () {
         it('serializes an instance', function (done) {
             keyring.serialize()
             .then((output) => {
-              assert.equal(output.page, 0)
-              assert.equal(output.hdPath, `m/44'/60'/0'/0`)
+              assert.equal(output.bridgeUrl, 'https://metamask.github.io/eth-ledger-bridge-keyring')
+              assert.equal(output.hdPath, `44'/60'/0'`)
               assert.equal(Array.isArray(output.accounts), true)
               assert.equal(output.accounts.length, 0)
               done()
@@ -90,7 +92,7 @@ describe('LedgerBridgeKeyring', function () {
     describe('deserialize', function () {
         it('serializes what it deserializes', function (done) {
 
-            const someHdPath = `m/44'/60'/0'/1`
+            const someHdPath = `44'/60'/0'/1`
 
             keyring.deserialize({
                 page: 10,
@@ -101,7 +103,7 @@ describe('LedgerBridgeKeyring', function () {
                 return keyring.serialize()
             }).then((serialized) => {
                 assert.equal(serialized.accounts.length, 0, 'restores 0 accounts')
-                assert.equal(serialized.page, 10, 'restores page')
+                assert.equal(serialized.bridgeUrl, 'https://metamask.github.io/eth-ledger-bridge-keyring', 'restores bridgeUrl')
                 assert.equal(serialized.hdPath, someHdPath, 'restores hdPath')
                 done()
             })
@@ -121,20 +123,6 @@ describe('LedgerBridgeKeyring', function () {
                 done()
             })
         })
-
-        /*chai.spy.on(keyring, 'sendMessage')
-
-        it('should call keyring.sendMessage if we dont have a public key', async function () {
-            keyring.hdk = new HDKey()
-            try {
-                await keyring.unlock()
-            } catch (e) {
-               // because we're trying to open the trezor popup in node
-               // it will throw an exception
-            } finally {
-                expect(keyring.sendMessage).to.have.been.called()
-            }
-        })*/
     })
 
     describe('setAccountToUnlock', function () {
@@ -234,19 +222,6 @@ describe('LedgerBridgeKeyring', function () {
             expect(accounts[3].address, fakeAccounts[3])
             expect(accounts[4].address, fakeAccounts[4])
         })
-
-        it('should be able to advance to the next page', async function () {
-            // manually advance 1 page
-            await keyring.getNextPage()
-
-            const accounts = await keyring.getNextPage()
-            expect(accounts.length, keyring.perPage)
-            expect(accounts[0].address, fakeAccounts[keyring.perPage + 0])
-            expect(accounts[1].address, fakeAccounts[keyring.perPage + 1])
-            expect(accounts[2].address, fakeAccounts[keyring.perPage + 2])
-            expect(accounts[3].address, fakeAccounts[keyring.perPage + 3])
-            expect(accounts[4].address, fakeAccounts[keyring.perPage + 4])
-        })
     })
 
     describe('getPreviousPage', function () {
@@ -297,40 +272,13 @@ describe('LedgerBridgeKeyring', function () {
             const expectedAccount = fakeAccounts[accountIndex]
             assert.equal(accounts[0], expectedAccount)
         })
-    })
-
-    describe('signTransaction', function () {
-        it('should call TrezorConnect.ethereumSignTransaction', function (done) {
-
-            chai.spy.on(TrezorConnect, 'ethereumSignTransaction')
-
-            keyring.signTransaction(fakeAccounts[0], fakeTx).catch(e => {
-                // we expect this to be rejected because
-                // we are trying to open a popup from node
-                expect(TrezorConnect.ethereumSignTransaction).to.have.been.called()
-                done()
-            })
-        })
-    })
+    }) 
 
     describe('signMessage', function () {
         it('should throw an error because it is not supported', function () {
             expect(_ => {
                 keyring.signMessage()
             }).to.throw('Not supported on this device')
-        })
-    })
-
-    describe('signPersonalMessage', function () {
-        it('should call TrezorConnect.ethereumSignMessage', function (done) {
-
-            chai.spy.on(TrezorConnect, 'ethereumSignMessage')
-            keyring.signPersonalMessage(fakeAccounts[0], 'some msg').catch(e => {
-                // we expect this to be rejected because
-                // we are trying to open a popup from node
-                expect(TrezorConnect.ethereumSignMessage).to.have.been.called()
-                done()
-            })
         })
     })
 
@@ -363,6 +311,33 @@ describe('LedgerBridgeKeyring', function () {
 
             assert.equal(keyring.isUnlocked(), false)
             assert.equal(accounts.length, 0)
+        })
+    })
+
+    describe('signTransaction', function () {
+        it('should call  window.addEventListener', function (done) {
+
+            chai.spy.on(window, 'addEventListener')
+            setTimeout(_ => {
+                keyring.signTransaction(fakeAccounts[0], fakeTx)
+                expect(window.addEventListener).to.have.been.calledWith('message')
+            }, 1800)
+            chai.spy.restore(window, 'addEventListener')
+            done()
+
+        })
+    })
+
+    describe('signPersonalMessage', function () {
+        it('should call TrezorConnect.ethereumSignMessage', function (done) {
+
+            chai.spy.on(window, 'addEventListener')
+            setTimeout(_ => {
+                keyring.signPersonalMessage(fakeAccounts[0], 'some msg')
+                expect(window.addEventListener).to.have.been.calledWith('message')
+            })
+            chai.spy.restore(window, 'addEventListener')
+            done()
         })
     })
 
