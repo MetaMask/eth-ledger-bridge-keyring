@@ -331,7 +331,7 @@ describe('LedgerBridgeKeyring', function () {
     })
 
     describe('signTransaction', function () {
-        it('should call  window.addEventListener', function (done) {
+        it('should call should call create a listener waiting for the iframe response', function (done) {
 
             chai.spy.on(window, 'addEventListener')
             setTimeout(_ => {
@@ -345,7 +345,7 @@ describe('LedgerBridgeKeyring', function () {
     })
 
     describe('signPersonalMessage', function () {
-        it('should call TrezorConnect.ethereumSignMessage', function (done) {
+        it('should call create a listener waiting for the iframe response', function (done) {
 
             chai.spy.on(window, 'addEventListener')
             setTimeout(_ => {
