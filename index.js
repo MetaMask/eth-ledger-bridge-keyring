@@ -28,18 +28,25 @@ class LedgerBridgeKeyring extends EventEmitter {
     this.paths = {}
     this.iframe = null
     this.network = 'mainnet'
+    this.implementFullBIP44 = false
     this.deserialize(opts)
     this._setupIframe()
   }
 
   serialize () {
-    return Promise.resolve({hdPath: this.hdPath, accounts: this.accounts, bridgeUrl: this.bridgeUrl})
+    return Promise.resolve({
+      hdPath: this.hdPath,
+      accounts: this.accounts,
+      bridgeUrl: this.bridgeUrl,
+      implementFullBIP44: false,
+    })
   }
 
   deserialize (opts = {}) {
     this.hdPath = opts.hdPath || hdPathString
     this.bridgeUrl = opts.bridgeUrl || BRIDGE_URL
     this.accounts = opts.accounts || []
+    this.implementFullBIP44 = opts.implementFullBIP44 || false
     return Promise.resolve()
   }
 
@@ -272,7 +279,7 @@ class LedgerBridgeKeyring extends EventEmitter {
     const to = from + this.perPage
 
     return new Promise((resolve, reject) => {
-      this.unlock(from)
+      this.unlock()
         .then(async _ => {
           let accounts
           if (this._isBIP44()) {
@@ -294,7 +301,7 @@ class LedgerBridgeKeyring extends EventEmitter {
     for (let i = from; i < to; i++) {
       const path = this._getPathForIndex(i)
       const address = await this.unlock(path)
-      const valid = await this._hasPreviousTransactions(address)
+      const valid = this.implementFullBIP44 ? await this._hasPreviousTransactions(address) : true
       accounts.push({
         address: address,
         balance: null,
