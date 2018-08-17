@@ -41,7 +41,6 @@ var LedgerBridge = function () {
                         action = _e$data.action,
                         params = _e$data.params;
 
-                    console.log('[IFRAME]: GOT A MESSAGE!', action, params);
                     var replyAction = action + '-reply';
                     switch (action) {
                         case 'ledger-unlock':
@@ -60,7 +59,6 @@ var LedgerBridge = function () {
     }, {
         key: 'sendMessageToExtension',
         value: function sendMessageToExtension(msg) {
-            console.log('[IFRAME]: SENDING MESSAGE!', msg);
             window.parent.postMessage(msg, '*');
         }
     }, {

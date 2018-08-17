@@ -7,15 +7,14 @@ import LedgerEth from '@ledgerhq/hw-app-eth'
 import { translateRaw } from 'translations'
 
 export default class LedgerBridge {
-    constructor(){
+    constructor () {
         this.addEventListeners()
     }
 
-    addEventListeners() {
+    addEventListeners () {
         window.addEventListener('message', async e => {
-            if(e && e.data && e.data.target === 'LEDGER-IFRAME'){
+            if (e && e.data && e.data.target === 'LEDGER-IFRAME') {
                 const { action, params } = e.data
-                console.log('[IFRAME]: GOT A MESSAGE!', action, params)
                 const replyAction = `${action}-reply`
                 switch (action) {
                     case 'ledger-unlock':
@@ -32,14 +31,13 @@ export default class LedgerBridge {
         }, false)
     }
 
-    sendMessageToExtension(msg){
-        console.log('[IFRAME]: SENDING MESSAGE!', msg)
+    sendMessageToExtension (msg) {
         window.parent.postMessage(msg, '*')
     }
 
-    async makeApp() {
+    async makeApp () {
         this.transport = await TransportU2F.create()
-        this.app =  new LedgerEth(this.transport)
+        this.app = new LedgerEth(this.transport)
     }
 
     cleanUp () {
@@ -47,7 +45,7 @@ export default class LedgerBridge {
         this.transport.close()
     }
 
-    async unlock(replyAction, hdPath){
+    async unlock (replyAction, hdPath) {
         try {
             await this.makeApp()
             const res = await this.app.getAddress(hdPath, false, true)
@@ -59,7 +57,7 @@ export default class LedgerBridge {
             })
 
         } catch (err) {
-            const e = this.ledgerErrToMessage(err);
+            const e = this.ledgerErrToMessage(err)
 
             this.sendMessageToExtension({
                 action: replyAction,
@@ -72,7 +70,7 @@ export default class LedgerBridge {
         }
     }
 
-    async signTransaction(replyAction, hdPath, tx) {
+    async signTransaction (replyAction, hdPath, tx) {
         try {
             await this.makeApp()
             const res = await this.app.signTransaction(hdPath, tx)
@@ -95,7 +93,7 @@ export default class LedgerBridge {
         }
     }
 
-    async signPersonalMessage(replyAction, hdPath, message){
+    async signPersonalMessage (replyAction, hdPath, message) {
         try {
             await this.makeApp()
             const res = await this.app.signPersonalMessage(hdPath, message)
@@ -117,10 +115,10 @@ export default class LedgerBridge {
         }
     }
 
-    ledgerErrToMessage(err) {
+    ledgerErrToMessage (err) {
         const isU2FError = (err) => !!err && !!(err).metaData
         const isStringError = (err) => typeof err === 'string'
-        const isErrorWithId = (err)  => err.hasOwnProperty('id') && err.hasOwnProperty('message')
+        const isErrorWithId = (err) => err.hasOwnProperty('id') && err.hasOwnProperty('message')
 
         // https://developers.yubico.com/U2F/Libraries/Client_error_codes.html
         if (isU2FError(err)) {
