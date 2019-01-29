@@ -190,7 +190,7 @@ class LedgerBridgeKeyring extends EventEmitter {
   // For personal_sign, we need to prefix the message:
   signPersonalMessage (withAccount, message) {
     const humanReadableMsg = this._toAscii(message)
-    const bufferMsg = Buffer.from(humanReadableMsg).toString('hex')
+    const bufferMsg = Buffer.from(humanReadableMsg, "ascii").toString('hex')
     return new Promise((resolve, reject) => {
       this.unlock()
         .then(_ => {
