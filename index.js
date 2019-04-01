@@ -160,6 +160,7 @@ class LedgerBridgeKeyring extends EventEmitter {
             params: {
               tx: tx.serialize().toString('hex'),
               hdPath,
+              to: ethUtil.bufferToHex(tx.to).toLowerCase()
             },
           },
           ({success, payload}) => {
