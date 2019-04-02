@@ -185,13 +185,11 @@ class LedgerBridgeKeyring extends EventEmitter {
   }
 
   signMessage (withAccount, data) {
-    return Promise.reject(new Error('Not supported on this device'))
+    return this.signPersonalMessage(withAccount, data);
   }
 
   // For personal_sign, we need to prefix the message:
   signPersonalMessage (withAccount, message) {
-    const humanReadableMsg = this._toAscii(message)
-    const bufferMsg = Buffer.from(humanReadableMsg, "ascii").toString('hex')
     return new Promise((resolve, reject) => {
       this.unlock()
         .then(_ => {
@@ -206,7 +204,7 @@ class LedgerBridgeKeyring extends EventEmitter {
             action: 'ledger-sign-personal-message',
             params: {
               hdPath,
-              message: bufferMsg,
+              message: ethUtil.stripHexPrefix(message),
             },
           },
           ({success, payload}) => {
@@ -231,11 +229,11 @@ class LedgerBridgeKeyring extends EventEmitter {
   }
 
   signTypedData (withAccount, typedData) {
-    return Promise.reject(new Error('Not supported on this device'))
+    throw new Error('Not supported on this device')
   }
 
   exportAccount (address) {
-    return Promise.reject(new Error('Not supported on this device'))
+    throw new Error('Not supported on this device')
   }
 
   forgetDevice () {
