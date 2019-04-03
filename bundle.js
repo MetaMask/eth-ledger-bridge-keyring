@@ -218,8 +218,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 (async function () {
     var bridge = new _ledgerBridge2.default();
-    var res = await bridge.unlock('ledger-unlock-account', '44\'/60\'/0\'');
-    console.log('res', res);
 })();
 console.log('MetaMask < = > Ledger Bridge initialized!');
 
