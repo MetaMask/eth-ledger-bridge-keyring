@@ -291,10 +291,15 @@ describe('LedgerBridgeKeyring', function () {
     })
 
     describe('signMessage', function () {
-        it('should throw an error because it is not supported', function () {
-            expect(_ => {
-                keyring.signMessage()
-            }).to.throw('Not supported on this device')
+        it('should call create a listener waiting for the iframe response', function (done) {
+
+            chai.spy.on(window, 'addEventListener')
+            setTimeout(_ => {
+                keyring.signPersonalMessage(fakeAccounts[0], '0x123')
+                expect(window.addEventListener).to.have.been.calledWith('message')
+            }, 1800)
+            chai.spy.restore(window, 'addEventListener')
+            done()
         })
     })
 
