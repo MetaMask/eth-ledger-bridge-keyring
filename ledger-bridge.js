@@ -1,11 +1,11 @@
 'use strict'
-import 'babel-polyfill';
+import 'babel-polyfill'
 
 require('buffer')
 
-import TransportU2F from "@ledgerhq/hw-transport-u2f";
+import TransportU2F from '@ledgerhq/hw-transport-u2f'
 import LedgerEth from '@ledgerhq/hw-app-eth'
-import { byContractAddress } from "@ledgerhq/hw-app-eth/erc20";
+import { byContractAddress } from '@ledgerhq/hw-app-eth/erc20'
 
 export default class LedgerBridge {
     constructor () {
@@ -14,7 +14,6 @@ export default class LedgerBridge {
 
     addEventListeners () {
         window.addEventListener('message', async e => {
-            console.log('LEDGER:::GOT POST MESSAGE', e);
             if (e && e.data && e.data.target === 'LEDGER-IFRAME') {
                 const { action, params } = e.data
                 const replyAction = `${action}-reply`
@@ -34,16 +33,15 @@ export default class LedgerBridge {
     }
 
     sendMessageToExtension (msg) {
-        console.log('LEDGER:::sending back', msg);
         window.parent.postMessage(msg, '*')
     }
 
     async makeApp () {
-        try { 
+        try {
             this.transport = await TransportU2F.create()
             this.app = new LedgerEth(this.transport)
-        } catch (e){
-            console.log('LEDGER:::CREATE APP ERROR', e);
+        } catch (e) {
+            console.log('LEDGER:::CREATE APP ERROR', e)
         }
     }
 
@@ -54,10 +52,8 @@ export default class LedgerBridge {
 
     async unlock (replyAction, hdPath) {
         try {
-            console.log('LEDGER:::about to unlock')
             await this.makeApp()
             const res = await this.app.getAddress(hdPath, false, true)
-            console.log('LEDGER:::UNLOCKED', res);
 
             this.sendMessageToExtension({
                 action: replyAction,
@@ -67,7 +63,6 @@ export default class LedgerBridge {
 
         } catch (err) {
             const e = this.ledgerErrToMessage(err)
-            console.log('LEDGER:::UNLOCKED ERROR', res);
 
             this.sendMessageToExtension({
                 action: replyAction,
@@ -83,9 +78,9 @@ export default class LedgerBridge {
     async signTransaction (replyAction, hdPath, tx, to) {
         try {
             await this.makeApp()
-            if(to){
-                const isKnownERC20Token = byContractAddress(to);
-                if (isKnownERC20Token) await this.app.provideERC20TokenInformation(isKnownERC20Token);
+            if (to) {
+                const isKnownERC20Token = byContractAddress(to)
+                if (isKnownERC20Token) await this.app.provideERC20TokenInformation(isKnownERC20Token)
             }
             const res = await this.app.signTransaction(hdPath, tx)
             this.sendMessageToExtension({
@@ -111,7 +106,6 @@ export default class LedgerBridge {
         try {
             await this.makeApp()
             const res = await this.app.signPersonalMessage(hdPath, message)
-            console.log('LEDGER:::MESSAGE SIGNING SUCCESS', res);
 
             this.sendMessageToExtension({
                 action: replyAction,
@@ -120,7 +114,6 @@ export default class LedgerBridge {
             })
         } catch (err) {
             const e = this.ledgerErrToMessage(err)
-            console.log('LEDGER:::MESSAGE SIGNING ERROR', err);
             this.sendMessageToExtension({
                 action: replyAction,
                 success: false,

@@ -38,7 +38,6 @@ var LedgerBridge = function () {
             var _this = this;
 
             window.addEventListener('message', async function (e) {
-                console.log('LEDGER:::GOT POST MESSAGE', e);
                 if (e && e.data && e.data.target === 'LEDGER-IFRAME') {
                     var _e$data = e.data,
                         action = _e$data.action,
@@ -62,7 +61,6 @@ var LedgerBridge = function () {
     }, {
         key: 'sendMessageToExtension',
         value: function sendMessageToExtension(msg) {
-            console.log('LEDGER:::sending back', msg);
             window.parent.postMessage(msg, '*');
         }
     }, {
@@ -85,19 +83,16 @@ var LedgerBridge = function () {
         key: 'unlock',
         value: async function unlock(replyAction, hdPath) {
             try {
-                console.log('LEDGER:::about to unlock');
                 await this.makeApp();
-                var _res = await this.app.getAddress(hdPath, false, true);
-                console.log('LEDGER:::UNLOCKED', _res);
+                var res = await this.app.getAddress(hdPath, false, true);
 
                 this.sendMessageToExtension({
                     action: replyAction,
                     success: true,
-                    payload: _res
+                    payload: res
                 });
             } catch (err) {
                 var e = this.ledgerErrToMessage(err);
-                console.log('LEDGER:::UNLOCKED ERROR', res);
 
                 this.sendMessageToExtension({
                     action: replyAction,
@@ -117,11 +112,11 @@ var LedgerBridge = function () {
                     var isKnownERC20Token = (0, _erc.byContractAddress)(to);
                     if (isKnownERC20Token) await this.app.provideERC20TokenInformation(isKnownERC20Token);
                 }
-                var _res2 = await this.app.signTransaction(hdPath, tx);
+                var res = await this.app.signTransaction(hdPath, tx);
                 this.sendMessageToExtension({
                     action: replyAction,
                     success: true,
-                    payload: _res2
+                    payload: res
                 });
             } catch (err) {
                 var e = this.ledgerErrToMessage(err);
@@ -139,17 +134,15 @@ var LedgerBridge = function () {
         value: async function signPersonalMessage(replyAction, hdPath, message) {
             try {
                 await this.makeApp();
-                var _res3 = await this.app.signPersonalMessage(hdPath, message);
-                console.log('LEDGER:::MESSAGE SIGNING SUCCESS', _res3);
+                var res = await this.app.signPersonalMessage(hdPath, message);
 
                 this.sendMessageToExtension({
                     action: replyAction,
                     success: true,
-                    payload: _res3
+                    payload: res
                 });
             } catch (err) {
                 var e = this.ledgerErrToMessage(err);
-                console.log('LEDGER:::MESSAGE SIGNING ERROR', err);
                 this.sendMessageToExtension({
                     action: replyAction,
                     success: false,
