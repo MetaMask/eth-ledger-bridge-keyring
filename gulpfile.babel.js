@@ -27,7 +27,7 @@ gulp.task('scripts', function() {
 });
 
 gulp.task('watch', function() {
-  gulp.watch(paths.scripts.watch, ['scripts']);
+  gulp.watch(paths.scripts.watch, gulp.series('scripts'));
 });
 
 
@@ -41,4 +41,4 @@ gulp.task('browser-sync', function() {
   });
 });
 
-gulp.task('default', ['scripts', 'watch', 'browser-sync']);
+gulp.task('default', gulp.parallel('scripts', 'watch', 'browser-sync'));
