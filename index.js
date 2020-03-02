@@ -18,6 +18,7 @@ const NETWORK_API_URLS = {
 class LedgerBridgeKeyring extends EventEmitter {
   constructor (opts = {}) {
     super()
+    this.accountIndexes = {}
     this.bridgeUrl = null
     this.type = type
     this.page = 0
@@ -36,6 +37,7 @@ class LedgerBridgeKeyring extends EventEmitter {
     return Promise.resolve({
       hdPath: this.hdPath,
       accounts: this.accounts,
+      accountIndexes: this.accountIndexes,
       bridgeUrl: this.bridgeUrl,
       implementFullBIP44: false,
     })
@@ -45,6 +47,7 @@ class LedgerBridgeKeyring extends EventEmitter {
     this.hdPath = opts.hdPath || hdPathString
     this.bridgeUrl = opts.bridgeUrl || BRIDGE_URL
     this.accounts = opts.accounts || []
+    this.accountIndexes = opts.accountIndexes || {}
     this.implementFullBIP44 = opts.implementFullBIP44 || false
     return Promise.resolve()
   }
@@ -100,6 +103,7 @@ class LedgerBridgeKeyring extends EventEmitter {
             if (this._isBIP44()) {
               const path = this._getPathForIndex(i)
               address = await this.unlock(path)
+              this.accountIndexes[ethUtil.toChecksumAddress(address)] = i
             } else {
               address = this._addressFromIndex(pathBase, i)
             }
@@ -136,6 +140,7 @@ class LedgerBridgeKeyring extends EventEmitter {
       throw new Error(`Address ${address} not found in this keyring`)
     }
     this.accounts = this.accounts.filter(a => a.toLowerCase() !== address.toLowerCase())
+    delete this.accountIndexes[ethUtil.toChecksumAddress(address)]
   }
 
   // tx is an instance of the ethereumjs-transaction class.
@@ -150,7 +155,11 @@ class LedgerBridgeKeyring extends EventEmitter {
 
           let hdPath
           if (this._isBIP44()) {
-            hdPath = this._getPathForIndex(this.unlockedAccount)
+            const checksummedAddress = ethUtil.toChecksumAddress(address)
+            if (!this.accountIndexes[checksummedAddress]) {
+              reject(new Error(`Ledger: Index for address '${checksummedAddress}' not found`))
+            }
+            hdPath = this._getPathForIndex(this.accountIndexes[checksummedAddress])
           } else {
             hdPath = this._toLedgerPath(this._pathFromAddress(address))
           }
@@ -195,7 +204,11 @@ class LedgerBridgeKeyring extends EventEmitter {
         .then(_ => {
           let hdPath
           if (this._isBIP44()) {
-            hdPath = this._getPathForIndex(this.unlockedAccount)
+            const checksummedAddress = ethUtil.toChecksumAddress(withAccount)
+            if (!this.accountIndexes[checksummedAddress]) {
+              reject(new Error(`Ledger: Index for address '${checksummedAddress}' not found`))
+            }
+            hdPath = this._getPathForIndex(this.accountIndexes[checksummedAddress])
           } else {
             hdPath = this._toLedgerPath(this._pathFromAddress(withAccount))
           }
