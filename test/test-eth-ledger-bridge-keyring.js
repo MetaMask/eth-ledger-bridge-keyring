@@ -84,6 +84,7 @@ describe('LedgerBridgeKeyring', function () {
               assert.equal(output.hdPath, `m/44'/60'/0'`)
               assert.equal(Array.isArray(output.accounts), true)
               assert.equal(output.accounts.length, 0)
+              assert.deepEqual(output.accountIndexes, {})
               done()
             })
           })
