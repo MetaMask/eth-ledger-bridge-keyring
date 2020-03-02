@@ -169,7 +169,7 @@ class LedgerBridgeKeyring extends EventEmitter {
             params: {
               tx: tx.serialize().toString('hex'),
               hdPath,
-              to: ethUtil.bufferToHex(tx.to).toLowerCase()
+              to: ethUtil.bufferToHex(tx.to).toLowerCase(),
             },
           },
           ({success, payload}) => {
@@ -194,7 +194,7 @@ class LedgerBridgeKeyring extends EventEmitter {
   }
 
   signMessage (withAccount, data) {
-    return this.signPersonalMessage(withAccount, data);
+    return this.signPersonalMessage(withAccount, data)
   }
 
   // For personal_sign, we need to prefix the message:
