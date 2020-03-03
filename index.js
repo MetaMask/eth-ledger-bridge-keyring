@@ -281,7 +281,7 @@ class LedgerBridgeKeyring extends EventEmitter {
     })
   }
 
-  __getPage (increment) {
+  async __getPage (increment) {
 
     this.page += increment
 
@@ -289,18 +289,14 @@ class LedgerBridgeKeyring extends EventEmitter {
     const from = (this.page - 1) * this.perPage
     const to = from + this.perPage
 
-    return new Promise((resolve, reject) => {
-      this.unlock()
-        .then(async _ => {
-          let accounts
-          if (this._isBIP44()) {
-            accounts = await this._getAccountsBIP44(from, to)
-          } else {
-            accounts = this._getAccountsLegacy(from, to)
-          }
-          resolve(accounts)
-        })
-    })
+    await this.unlock()
+    let accounts
+    if (this._isBIP44()) {
+      accounts = await this._getAccountsBIP44(from, to)
+    } else {
+      accounts = this._getAccountsLegacy(from, to)
+    }
+    return accounts
   }
 
   async _getAccountsBIP44 (from, to) {
