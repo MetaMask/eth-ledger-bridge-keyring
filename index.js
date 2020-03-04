@@ -53,7 +53,7 @@ class LedgerBridgeKeyring extends EventEmitter {
     if (this._isBIP44()) {
       // Remove accounts that don't have corresponding account indexes
       this.accounts = this.accounts
-        .filter(account => Boolean(this.accountIndexes[ethUtil.toChecksumAddress(account)]))
+        .filter(account => Object.keys(this.accountIndexes).includes(ethUtil.toChecksumAddress(account)))
     }
 
     return Promise.resolve()
@@ -163,7 +163,7 @@ class LedgerBridgeKeyring extends EventEmitter {
           let hdPath
           if (this._isBIP44()) {
             const checksummedAddress = ethUtil.toChecksumAddress(address)
-            if (!this.accountIndexes[checksummedAddress]) {
+            if (!Object.keys(this.accountIndexes).includes(checksummedAddress)) {
               reject(new Error(`Ledger: Index for address '${checksummedAddress}' not found`))
             }
             hdPath = this._getPathForIndex(this.accountIndexes[checksummedAddress])
@@ -212,7 +212,7 @@ class LedgerBridgeKeyring extends EventEmitter {
           let hdPath
           if (this._isBIP44()) {
             const checksummedAddress = ethUtil.toChecksumAddress(withAccount)
-            if (!this.accountIndexes[checksummedAddress]) {
+            if (!Object.keys(this.accountIndexes).includes(checksummedAddress)) {
               reject(new Error(`Ledger: Index for address '${checksummedAddress}' not found`))
             }
             hdPath = this._getPathForIndex(this.accountIndexes[checksummedAddress])
