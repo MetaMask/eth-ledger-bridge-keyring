@@ -31,6 +31,9 @@
     "url": "https://github.com/MetaMask/eth-ledger-bridge-keyring/issues"
   },
   "homepage": "https://github.com/MetaMask/eth-ledger-bridge-keyring#readme",
+  "resolutions": {
+    "mocha/**/mkdirp": "^0.5.3"
+  },
   "dependencies": {
     "eth-sig-util": "^1.4.2",
     "ethereumjs-tx": "^1.3.4",
