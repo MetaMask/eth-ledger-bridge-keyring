@@ -42,7 +42,6 @@
     "hdkey": "0.8.0"
   },
   "devDependencies": {
-    "acorn": "^6.0.4",
     "assert": "^1.4.1",
     "babel-eslint": "^8.0.0",
     "babel-runtime": "^6.26.0",
