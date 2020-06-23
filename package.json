@@ -8,8 +8,8 @@
   ],
   "scripts": {
     "test": "mocha",
-    "lint": "./node_modules/.bin/eslint . --ext .js",
-    "lint:fix": "./node_modules/.bin/eslint --fix . --ext .js"
+    "lint": "eslint . --ext .js",
+    "lint:fix": "eslint --fix . --ext .js"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
