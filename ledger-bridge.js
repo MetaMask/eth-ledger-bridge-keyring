@@ -1,6 +1,4 @@
 'use strict'
-import 'babel-polyfill'
-
 require('buffer')
 
 import TransportU2F from '@ledgerhq/hw-transport-u2f'
