@@ -272,7 +272,7 @@ class LedgerBridgeKeyring extends EventEmitter {
   _setupIframe () {
     this.iframe = document.createElement('iframe')
     this.iframe.src = this.bridgeUrl
-    this.iframe.allow = 'usd'
+    this.iframe.allow = 'usb'
     document.head.appendChild(this.iframe)
   }
 
