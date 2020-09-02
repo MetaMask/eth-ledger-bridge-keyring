@@ -1,27 +1,27 @@
 try {
-    module.exports = document || {
-        head: {
-            appendChild: _ => false,
-        },
-        createElement: _ => ({
-            src: false,
-            contentWindow: {
-                postMessage: _ => false,
-            },
-        }),
-        addEventListener: _ => false,
-    }
+  module.exports = document || {
+    head: {
+      appendChild: () => false,
+    },
+    createElement: () => ({
+      src: false,
+      contentWindow: {
+        postMessage: () => false,
+      },
+    }),
+    addEventListener: () => false,
+  }
 } catch (e) {
-	module.exports = {
-        head: {
-            appendChild: _ => false,
-        },
-        createElement: _ => ({
-            src: false,
-            contentWindow: {
-                postMessage: _ => false,
-            },
-        }),
-        addEventListener: _ => false,
-    }
+  module.exports = {
+    head: {
+      appendChild: () => false,
+    },
+    createElement: () => ({
+      src: false,
+      contentWindow: {
+        postMessage: () => false,
+      },
+    }),
+    addEventListener: () => false,
+  }
 }
