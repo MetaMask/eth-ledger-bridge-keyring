@@ -23,6 +23,11 @@ module.exports = {
     'import',
   ],
 
+  globals: {
+    document: 'readonly',
+    window: 'readonly',
+  },
+
   overrides: [{
     files: [
       '.eslintrc.js',

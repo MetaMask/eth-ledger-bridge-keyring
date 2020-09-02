@@ -1,14 +1,14 @@
 global.document = require('./document.shim')
 global.window = require('./window.shim')
+
+const assert = require('assert')
 const chai = require('chai')
 const spies = require('chai-spies')
+const EthereumTx = require('ethereumjs-tx')
+const HDKey = require('hdkey')
+const LedgerBridgeKeyring = require('..')
 
 const { expect } = chai
-const EthereumTx = require('ethereumjs-tx')
-const assert = require('assert')
-const HDKey = require('hdkey')
-
-const LedgerBridgeKeyring = require('..')
 
 const fakeAccounts = [
   '0xF30952A1c534CDE7bC471380065726fa8686dfB3',

@@ -89,8 +89,8 @@ class LedgerBridgeKeyring extends EventEmitter {
       },
       ({ success, payload }) => {
         if (success) {
-          this.hdk.publicKey = new Buffer(payload.publicKey, 'hex')
-          this.hdk.chainCode = new Buffer(payload.chainCode, 'hex')
+          this.hdk.publicKey = Buffer.from(payload.publicKey, 'hex')
+          this.hdk.chainCode = Buffer.from(payload.chainCode, 'hex')
           resolve(payload.address)
         } else {
           reject(payload.error || 'Unknown error')
@@ -250,11 +250,11 @@ class LedgerBridgeKeyring extends EventEmitter {
     })
   }
 
-  signTypedData (withAccount, typedData) {
+  signTypedData () {
     throw new Error('Not supported on this device')
   }
 
-  exportAccount (address) {
+  exportAccount () {
     throw new Error('Not supported on this device')
   }
 
@@ -289,8 +289,10 @@ class LedgerBridgeKeyring extends EventEmitter {
       }
       if (data && data.action && data.action === `${msg.action}-reply`) {
         cb(data)
+        return undefined
       }
       window.removeEventListener('message', eventListener)
+      return undefined
     }
     window.addEventListener('message', eventListener)
   }
@@ -354,13 +356,14 @@ class LedgerBridgeKeyring extends EventEmitter {
   }
 
   _padLeftEven (hex) {
-    return hex.length % 2 !== 0 ? `0${hex}` : hex
+    return hex.length % 2 === 0 ? hex : `0${hex}`
   }
 
   _normalize (buf) {
     return this._padLeftEven(ethUtil.bufferToHex(buf).toLowerCase())
   }
 
+  // eslint-disable-next-line no-shadow
   _addressFromIndex (pathBase, i) {
     const dkey = this.hdk.derive(`${pathBase}/${i}`)
     const address = ethUtil
@@ -389,7 +392,8 @@ class LedgerBridgeKeyring extends EventEmitter {
 
   _toAscii (hex) {
     let str = ''
-    let i = 0; const l = hex.length
+    let i = 0
+    const l = hex.length
     if (hex.substring(0, 2) === '0x') {
       i = 2
     }
@@ -416,7 +420,7 @@ class LedgerBridgeKeyring extends EventEmitter {
 
   async _hasPreviousTransactions (address) {
     const apiUrl = this._getApiUrl()
-    const response = await fetch(`${apiUrl}/api?module=account&action=txlist&address=${address}&tag=latest&page=1&offset=1`)
+    const response = await window.fetch(`${apiUrl}/api?module=account&action=txlist&address=${address}&tag=latest&page=1&offset=1`)
     const parsedResponse = await response.json()
     if (parsedResponse.status !== '0' && parsedResponse.result.length > 0) {
       return true
