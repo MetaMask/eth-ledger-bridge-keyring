@@ -2,6 +2,7 @@ const { EventEmitter } = require('events')
 const HDKey = require('hdkey')
 const ethUtil = require('ethereumjs-util')
 const sigUtil = require('eth-sig-util')
+const { DH_CHECK_P_NOT_PRIME } = require('constants')
 
 const hdPathString = `m/44'/60'/0'`
 const type = 'Ledger Hardware'
@@ -83,6 +84,7 @@ class LedgerBridgeKeyring extends EventEmitter {
     const path = hdPath ? this._toLedgerPath(hdPath) : this.hdPath
     return new Promise((resolve, reject) => {
       console.log('BRIDGE: promise send message!')
+      chrome.extension.getBackgroundPage().console.log('BRIDGE: promise send message!')
       this._sendMessage({
         action: 'ledger-unlock',
         params: {
