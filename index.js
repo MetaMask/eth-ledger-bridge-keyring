@@ -82,6 +82,7 @@ class LedgerBridgeKeyring extends EventEmitter {
     }
     const path = hdPath ? this._toLedgerPath(hdPath) : this.hdPath
     return new Promise((resolve, reject) => {
+      console.log('BRIDGE: promise send message!')
       this._sendMessage({
         action: 'ledger-unlock',
         params: {
