@@ -2,7 +2,6 @@ const { EventEmitter } = require('events')
 const HDKey = require('hdkey')
 const ethUtil = require('ethereumjs-util')
 const sigUtil = require('eth-sig-util')
-const { DH_CHECK_P_NOT_PRIME } = require('constants')
 
 const hdPathString = `m/44'/60'/0'`
 const type = 'Ledger Hardware'
@@ -83,7 +82,6 @@ class LedgerBridgeKeyring extends EventEmitter {
     }
     const path = hdPath ? this._toLedgerPath(hdPath) : this.hdPath
     return new Promise((resolve, reject) => {
-      console.log('BRIDGE: promise send message!')
       chrome.extension.getBackgroundPage().console.log('BRIDGE: promise send message!')
       this._sendMessage({
         action: 'ledger-unlock',
@@ -123,9 +121,11 @@ class LedgerBridgeKeyring extends EventEmitter {
             this.accounts.push(address)
             this.page = 0
           }
+          this._sendMessage({ action: 'ledger-close-bridge' })
           resolve(this.accounts)
         })
-        .catch((e) => {
+        .catch(e => {
+          this._sendMessage({ action: 'ledger-close-bridge' })
           reject(e)
         })
     })
@@ -194,11 +194,14 @@ class LedgerBridgeKeyring extends EventEmitter {
 
               const valid = tx.verifySignature()
               if (valid) {
+                this._sendMessage({ action: 'ledger-close-bridge' })
                 resolve(tx)
               } else {
+                this._sendMessage({ action: 'ledger-close-bridge' })
                 reject(new Error('Ledger: The transaction signature is not valid'))
               }
             } else {
+              this._sendMessage({ action: 'ledger-close-bridge' })
               reject(new Error(payload.error || 'Ledger: Unknown error while signing transaction'))
             }
           })
@@ -243,10 +246,13 @@ class LedgerBridgeKeyring extends EventEmitter {
               const signature = `0x${payload.r}${payload.s}${v}`
               const addressSignedWith = sigUtil.recoverPersonalSignature({ data: message, sig: signature })
               if (ethUtil.toChecksumAddress(addressSignedWith) !== ethUtil.toChecksumAddress(withAccount)) {
+                this._sendMessage({ action: 'ledger-close-bridge' })
                 reject(new Error('Ledger: The signature doesnt match the right address'))
               }
+              this._sendMessage({ action: 'ledger-close-bridge' })
               resolve(signature)
             } else {
+              this._sendMessage({ action: 'ledger-close-bridge' })
               reject(new Error(payload.error || 'Ledger: Uknown error while signing message'))
             }
           })
@@ -319,14 +325,16 @@ class LedgerBridgeKeyring extends EventEmitter {
     } else {
       accounts = this._getAccountsLegacy(from, to)
     }
+    this._sendMessage({ action: 'ledger-close-bridge' })
     return accounts
   }
 
   async _getAccountsBIP44 (from, to) {
     const accounts = []
-
+    chrome.extension.getBackgroundPage().console.log('BRIDGE: BIP44!')
     for (let i = from; i < to; i++) {
       const path = this._getPathForIndex(i)
+      chrome.extension.getBackgroundPage().console.log('BRIDGE: unlocking for path: ', path)
       const address = await this.unlock(path)
       const valid = this.implementFullBIP44 ? await this._hasPreviousTransactions(address) : true
       accounts.push({
