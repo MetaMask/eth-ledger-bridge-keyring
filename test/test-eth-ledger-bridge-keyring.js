@@ -181,6 +181,23 @@ describe('LedgerBridgeKeyring', function () {
           })
       })
     })
+
+    describe('when called multiple times', function () {
+      it('should not remove existing accounts', function (done) {
+        keyring.setAccountToUnlock(0)
+        keyring.addAccounts(1)
+          .then(function () {
+            keyring.setAccountToUnlock(1)
+            keyring.addAccounts(1)
+              .then((accounts) => {
+                assert.equal(accounts.length, 2)
+                assert.equal(accounts[0], fakeAccounts[0])
+                assert.equal(accounts[1], fakeAccounts[1])
+                done()
+              })
+          })
+      })
+    })
   })
 
   describe('removeAccount', function () {
