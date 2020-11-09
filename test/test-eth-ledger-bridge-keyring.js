@@ -378,4 +378,34 @@ describe('LedgerBridgeKeyring', function () {
     })
   })
 
+  describe('unlockAccountByAddress', function () {
+
+    beforeEach(async function () {
+      keyring.setAccountToUnlock(0)
+      await keyring.addAccounts()
+    })
+
+    afterEach(function () {
+      chai.spy.restore(keyring, 'unlock')
+    })
+
+    it('should unlock the given account if found on device', function () {
+      chai.spy.on(keyring, 'unlock', (_) => Promise.resolve(fakeAccounts[0]))
+
+      return keyring.unlockAccountByAddress(fakeAccounts[0])
+        .then((hdPath) => {
+          assert.equal(hdPath, '44\'/60\'/0\'/0')
+        })
+    })
+
+    it('should reject if the account is not found on device', function () {
+
+      const requestedAccount = fakeAccounts[0]
+      const incorrectAccount = fakeAccounts[1]
+
+      chai.spy.on(keyring, 'unlock', (_) => Promise.resolve(incorrectAccount))
+
+      return assert.rejects(() => keyring.unlockAccountByAddress(requestedAccount), new Error(`Ledger: Account ${fakeAccounts[0]} does not belong to the connected device`))
+    })
+  })
 })
