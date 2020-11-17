@@ -95,6 +95,7 @@ class LedgerBridgeKeyring extends EventEmitter {
           this.hdk.chainCode = Buffer.from(payload.chainCode, 'hex')
           resolve(payload.address)
         } else {
+          this._sendMessage({ action: 'ledger-close-bridge' }, () => this.forgetDevice())
           reject(payload.error || 'Unknown error')
         }
       })
@@ -121,11 +122,11 @@ class LedgerBridgeKeyring extends EventEmitter {
             this.accounts.push(address)
             this.page = 0
           }
-          this._sendMessage({ action: 'ledger-close-bridge' })
+          this._sendMessage({ action: 'ledger-close-bridge' }, () => this.forgetDevice())
           resolve(this.accounts)
         })
         .catch(e => {
-          this._sendMessage({ action: 'ledger-close-bridge' })
+          this._sendMessage({ action: 'ledger-close-bridge' }, () => this.forgetDevice())
           reject(e)
         })
     })
@@ -194,14 +195,14 @@ class LedgerBridgeKeyring extends EventEmitter {
 
               const valid = tx.verifySignature()
               if (valid) {
-                this._sendMessage({ action: 'ledger-close-bridge' })
+                this._sendMessage({ action: 'ledger-close-bridge' }, () => this.forgetDevice())
                 resolve(tx)
               } else {
-                this._sendMessage({ action: 'ledger-close-bridge' })
+                this._sendMessage({ action: 'ledger-close-bridge' }, () => this.forgetDevice())
                 reject(new Error('Ledger: The transaction signature is not valid'))
               }
             } else {
-              this._sendMessage({ action: 'ledger-close-bridge' })
+              this._sendMessage({ action: 'ledger-close-bridge' }, () => this.forgetDevice())
               reject(new Error(payload.error || 'Ledger: Unknown error while signing transaction'))
             }
           })
@@ -246,13 +247,13 @@ class LedgerBridgeKeyring extends EventEmitter {
               const signature = `0x${payload.r}${payload.s}${v}`
               const addressSignedWith = sigUtil.recoverPersonalSignature({ data: message, sig: signature })
               if (ethUtil.toChecksumAddress(addressSignedWith) !== ethUtil.toChecksumAddress(withAccount)) {
-                this._sendMessage({ action: 'ledger-close-bridge' })
+                this._sendMessage({ action: 'ledger-close-bridge' }, () => this.forgetDevice())
                 reject(new Error('Ledger: The signature doesnt match the right address'))
               }
-              this._sendMessage({ action: 'ledger-close-bridge' })
+              this._sendMessage({ action: 'ledger-close-bridge' }, () => this.forgetDevice())
               resolve(signature)
             } else {
-              this._sendMessage({ action: 'ledger-close-bridge' })
+              this._sendMessage({ action: 'ledger-close-bridge' }, () => this.forgetDevice())
               reject(new Error(payload.error || 'Ledger: Uknown error while signing message'))
             }
           })
@@ -298,7 +299,7 @@ class LedgerBridgeKeyring extends EventEmitter {
       if (origin !== this._getOrigin()) {
         return false
       }
-      if (data && data.action && data.action === `${msg.action}-reply`) {
+      if (data && data.action && data.action === `${msg.action}-reply` && cb) {
         cb(data)
         return undefined
       }
@@ -325,7 +326,7 @@ class LedgerBridgeKeyring extends EventEmitter {
     } else {
       accounts = this._getAccountsLegacy(from, to)
     }
-    this._sendMessage({ action: 'ledger-close-bridge' })
+    this._sendMessage({ action: 'ledger-close-bridge' }, () => this.forgetDevice())
     return accounts
   }
 
