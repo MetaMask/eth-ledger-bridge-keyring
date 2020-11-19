@@ -82,8 +82,6 @@ class LedgerBridgeKeyring extends EventEmitter {
     }
     const path = hdPath ? this._toLedgerPath(hdPath) : this.hdPath
     return new Promise((resolve, reject) => {
-      chrome.extension.getBackgroundPage().console.log('BRIDGE: promise send message!')
-      console.log('BRIDGE2: promise send message!')
       this._sendMessage({
         action: 'ledger-unlock',
         params: {
@@ -333,10 +331,8 @@ class LedgerBridgeKeyring extends EventEmitter {
 
   async _getAccountsBIP44 (from, to) {
     const accounts = []
-    chrome.extension.getBackgroundPage().console.log('BRIDGE: BIP44!')
     for (let i = from; i < to; i++) {
       const path = this._getPathForIndex(i)
-      chrome.extension.getBackgroundPage().console.log('BRIDGE: unlocking for path: ', path)
       const address = await this.unlock(path)
       const valid = this.implementFullBIP44 ? await this._hasPreviousTransactions(address) : true
       accounts.push({
