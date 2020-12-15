@@ -18,7 +18,7 @@ const NETWORK_API_URLS = {
 class LedgerBridgeKeyring extends EventEmitter {
   constructor (opts = {}) {
     super()
-    this.accountIndexes = {}
+    this.accountDetails = {}
     this.bridgeUrl = null
     this.type = type
     this.page = 0
@@ -37,7 +37,7 @@ class LedgerBridgeKeyring extends EventEmitter {
     return Promise.resolve({
       hdPath: this.hdPath,
       accounts: this.accounts,
-      accountIndexes: this.accountIndexes,
+      accountDetails: this.accountDetails,
       bridgeUrl: this.bridgeUrl,
       implementFullBIP44: false,
     })
@@ -47,16 +47,43 @@ class LedgerBridgeKeyring extends EventEmitter {
     this.hdPath = opts.hdPath || hdPathString
     this.bridgeUrl = opts.bridgeUrl || BRIDGE_URL
     this.accounts = opts.accounts || []
-    this.accountIndexes = opts.accountIndexes || {}
-    this.implementFullBIP44 = opts.implementFullBIP44 || false
-
-    if (this._isBIP44()) {
-      // Remove accounts that don't have corresponding account indexes
-      this.accounts = this.accounts
-        .filter((account) => Object.keys(this.accountIndexes).includes(ethUtil.toChecksumAddress(account)))
+    this.accountDetails = opts.accountDetails || {}
+    if (!opts.accountDetails) {
+      this._migrateAccountDetails(opts)
     }
 
+    this.implementFullBIP44 = opts.implementFullBIP44 || false
+
+    // Remove accounts that don't have corresponding account details
+    this.accounts = this.accounts
+      .filter((account) => Object.keys(this.accountDetails).includes(ethUtil.toChecksumAddress(account)))
+
     return Promise.resolve()
+  }
+
+  _migrateAccountDetails (opts) {
+    if (this._isBIP44() && opts.accountIndexes) {
+      for (const account of Object.keys(opts.accountIndexes)) {
+        this.accountDetails[account] = {
+          bip44: true,
+          hdPath: this._getPathForIndex(opts.accountIndexes[account]),
+        }
+      }
+    }
+
+    // try to migrate non-bip44 accounts too
+    if (!this._isBIP44()) {
+      this.accounts.filter((account) => !Object.keys(this.accountDetails).includes(ethUtil.toChecksumAddress(account))).forEach((account) => {
+        try {
+          this.accountDetails[ethUtil.toChecksumAddress(account)] = {
+            bip44: false,
+            hdPath: this._pathFromAddress(account),
+          }
+        } catch (e) {
+          console.log(`failed to migrate account ${account}`)
+        }
+      })
+    }
   }
 
   isUnlocked () {
@@ -107,13 +134,16 @@ class LedgerBridgeKeyring extends EventEmitter {
           const from = this.unlockedAccount
           const to = from + n
           for (let i = from; i < to; i++) {
+            const path = this._getPathForIndex(i)
             let address
             if (this._isBIP44()) {
-              const path = this._getPathForIndex(i)
               address = await this.unlock(path)
-              this.accountIndexes[ethUtil.toChecksumAddress(address)] = i
             } else {
               address = this._addressFromIndex(pathBase, i)
+            }
+            this.accountDetails[ethUtil.toChecksumAddress(address)] = {
+              bip44: this._isBIP44(),
+              hdPath: path,
             }
 
             if (!this.accounts.includes(address)) {
@@ -151,7 +181,7 @@ class LedgerBridgeKeyring extends EventEmitter {
       throw new Error(`Address ${address} not found in this keyring`)
     }
     this.accounts = this.accounts.filter((a) => a.toLowerCase() !== address.toLowerCase())
-    delete this.accountIndexes[ethUtil.toChecksumAddress(address)]
+    delete this.accountDetails[ethUtil.toChecksumAddress(address)]
   }
 
   // tx is an instance of the ethereumjs-transaction class.
@@ -233,16 +263,13 @@ class LedgerBridgeKeyring extends EventEmitter {
 
   unlockAccountByAddress (address) {
     return new Promise((resolve, reject) => {
-      let hdPath
-      if (this._isBIP44()) {
-        const checksummedAddress = ethUtil.toChecksumAddress(address)
-        if (!Object.keys(this.accountIndexes).includes(checksummedAddress)) {
-          reject(new Error(`Ledger: Index for address '${checksummedAddress}' not found`))
-        }
-        hdPath = this._getPathForIndex(this.accountIndexes[checksummedAddress])
-      } else {
-        hdPath = this._toLedgerPath(this._pathFromAddress(address))
+
+      const checksummedAddress = ethUtil.toChecksumAddress(address)
+      if (!Object.keys(this.accountDetails).includes(checksummedAddress)) {
+        reject(new Error(`Ledger: Account for address '${checksummedAddress}' not found`))
+        return
       }
+      const { hdPath } = this.accountDetails[checksummedAddress]
 
       this.unlock(hdPath)
         .then((unlockedAddress) => {
@@ -270,6 +297,7 @@ class LedgerBridgeKeyring extends EventEmitter {
     this.page = 0
     this.unlockedAccount = 0
     this.paths = {}
+    this.accountDetails = {}
     this.hdk = new HDKey()
   }
 
