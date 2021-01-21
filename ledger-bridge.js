@@ -11,11 +11,14 @@ const TRANSPORT_CHECK_DELAY = 1000;
 
 export default class LedgerBridge {
     constructor() {
+        console.log('[LedgerBridge][constructor] called!')
         this.addEventListeners()
     }
 
     addEventListeners() {
+        console.log('[LedgerBridge][addListeners] called!')
         window.addEventListener('message', async e => {
+            console.log('[LedgerBridge][addListeners] message received!', e.data, e)
             if (e && e.data && e.data.target === 'LEDGER-IFRAME') {
                 const { action, params } = e.data
                 const replyAction = `${action}-reply`
@@ -38,6 +41,7 @@ export default class LedgerBridge {
     }
 
     sendMessageToExtension(msg) {
+        console.log('[LedgerBridge][sendMessageToExtension] message!', msg)
         window.parent.postMessage(msg, '*')
     }
 
@@ -48,6 +52,7 @@ export default class LedgerBridge {
     checkTransportLoop(i) {
         const iterator = i ? i : 0;
         return WebSocketTransport.check(BRIDGE_URL).catch(async () => {
+            console.log('[LedgerBridge][WebSocketTransport.check.catch] message!', i)
             await this.delay(TRANSPORT_CHECK_DELAY);
             if (iterator < TRANSPORT_CHECK_LIMIT) {
                 return this.checkTransportLoop(iterator + 1);
@@ -58,12 +63,15 @@ export default class LedgerBridge {
     }
 
     async makeApp(replyAction) {
+        console.log('[LedgerBridge][makeApp] called! replyAction:', replyAction)
         try {
             await WebSocketTransport.check(BRIDGE_URL).catch(async () => {
+                console.log('[LedgerBridge][makeApp] WebSocketTransport catch')
                 window.open('ledgerlive://bridge?appName=Ethereum')
                 await this.checkTransportLoop()
                 this.transport = await WebSocketTransport.open(BRIDGE_URL)
                 this.app = new LedgerEth(this.transport)
+                console.log('[LedgerBridge][makeApp] this.transport, app: ', this.transport, this.app)
             })
         } catch (e) {
             console.log('LEDGER:::CREATE APP ERROR', e)
@@ -73,6 +81,7 @@ export default class LedgerBridge {
     }
 
     cleanUp(replyAction) {
+        console.log('[LedgerBridge][cleanUp] called')
         this.app = null
         if (this.transport) {
             this.transport.close()
@@ -86,9 +95,12 @@ export default class LedgerBridge {
     }
 
     async unlock(replyAction, hdPath) {
+        console.log('[LedgerBridge][unlock] called')
         try {
             await this.makeApp()
             const res = await this.app.getAddress(hdPath, false, true)
+
+            console.log('[LedgerBridge][unlock] this.app.getAddress res:', res)
 
             this.sendMessageToExtension({
                 action: replyAction,
@@ -97,6 +109,7 @@ export default class LedgerBridge {
             })
 
         } catch (err) {
+            console.log('[LedgerBridge][unlock] error:', err)
             const e = this.ledgerErrToMessage(err)
 
             this.sendMessageToExtension({
@@ -109,6 +122,7 @@ export default class LedgerBridge {
     }
 
     async signTransaction (replyAction, hdPath, tx, to) {
+        console.log('[LedgerBridge][signTransaction] called:', replyAction, hdPath, tx, to)
         try {
             await this.makeApp()
             if (to) {
@@ -116,6 +130,8 @@ export default class LedgerBridge {
                 if (isKnownERC20Token) await this.app.provideERC20TokenInformation(isKnownERC20Token)
             }
             const res = await this.app.signTransaction(hdPath, tx)
+
+            console.log('[LedgerBridge][signTransaction] res:', res)
             this.sendMessageToExtension({
                 action: replyAction,
                 success: true,
@@ -123,6 +139,7 @@ export default class LedgerBridge {
             })
 
         } catch (err) {
+            console.log('[LedgerBridge][signTransaction] err:', err)
             const e = this.ledgerErrToMessage(err)
             this.sendMessageToExtension({
                 action: replyAction,
@@ -134,9 +151,12 @@ export default class LedgerBridge {
     }
 
     async signPersonalMessage (replyAction, hdPath, message) {
+        console.log('[LedgerBridge][signPersonalMessage] called:', replyAction, hdPath, message)
         try {
             await this.makeApp()
             const res = await this.app.signPersonalMessage(hdPath, message)
+
+            console.log('[LedgerBridge][signPersonalMessage] res:', res)
 
             this.sendMessageToExtension({
                 action: replyAction,
@@ -144,6 +164,7 @@ export default class LedgerBridge {
                 payload: res,
             })
         } catch (err) {
+            console.log('[LedgerBridge][signPersonalMessage] error:', err)
             const e = this.ledgerErrToMessage(err)
             this.sendMessageToExtension({
                 action: replyAction,
