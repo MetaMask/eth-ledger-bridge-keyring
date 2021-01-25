@@ -31,7 +31,7 @@ var LedgerBridge = function () {
     function LedgerBridge() {
         _classCallCheck(this, LedgerBridge);
 
-        console.log('[LedgerBridge][constructor] called!');
+        console.log('[LedgerBridge][constructor] called! ======================');
         this.addEventListeners();
     }
 
@@ -42,7 +42,7 @@ var LedgerBridge = function () {
 
             console.log('[LedgerBridge][addListeners] called!');
             window.addEventListener('message', async function (e) {
-                console.log('[LedgerBridge][addListeners] message received!', e.data, e);
+                console.log('[LedgerBridge][addListeners] message received!', e);
                 if (e && e.data && e.data.target === 'LEDGER-IFRAME') {
                     var _e$data = e.data,
                         action = _e$data.action,
@@ -138,9 +138,10 @@ var LedgerBridge = function () {
             console.log('[LedgerBridge][unlock] called');
             try {
                 await this.makeApp();
-                var res = await this.app.getAddress(hdPath, false, true);
 
-                console.log('[LedgerBridge][unlock] this.app.getAddress res:', res);
+                console.log('[LedgerBridge][unlock] About to call getAddress');
+                var res = await this.app.getAddress(hdPath, false, true);
+                console.log('[LedgerBridge][unlock] After getAddress ', res);
 
                 this.sendMessageToExtension({
                     action: replyAction,
@@ -148,9 +149,9 @@ var LedgerBridge = function () {
                     payload: res
                 });
 
-                console.log('[LedgerBridge][unlock] sentMessageToExtension:', res);
+                console.log('[LedgerBridge][unlock] sentMessageToExtension:', replyAction, res);
             } catch (err) {
-                console.log('[LedgerBridge][unlock] error:', err);
+                console.warn('[LedgerBridge][unlock] error:', err, replyAction);
                 var e = this.ledgerErrToMessage(err);
 
                 this.sendMessageToExtension({
@@ -158,6 +159,8 @@ var LedgerBridge = function () {
                     success: false,
                     payload: { error: e.toString() }
                 });
+
+                console.warn('[LedgerBridge][unlock] error: sendMessageToExtension: ', e);
             }
         }
     }, {

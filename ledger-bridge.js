@@ -11,14 +11,14 @@ const TRANSPORT_CHECK_DELAY = 1000;
 
 export default class LedgerBridge {
     constructor() {
-        console.log('[LedgerBridge][constructor] called!')
+        console.log('[LedgerBridge][constructor] called! ======================')
         this.addEventListeners()
     }
 
     addEventListeners() {
         console.log('[LedgerBridge][addListeners] called!')
         window.addEventListener('message', async e => {
-            console.log('[LedgerBridge][addListeners] message received!', e.data, e)
+            console.log('[LedgerBridge][addListeners] message received!', e)
             if (e && e.data && e.data.target === 'LEDGER-IFRAME') {
                 const { action, params } = e.data
                 const replyAction = `${action}-reply`
@@ -99,9 +99,10 @@ export default class LedgerBridge {
         console.log('[LedgerBridge][unlock] called')
         try {
             await this.makeApp()
+            
+            console.log('[LedgerBridge][unlock] About to call getAddress')
             const res = await this.app.getAddress(hdPath, false, true)
-
-            console.log('[LedgerBridge][unlock] this.app.getAddress res:', res)
+            console.log('[LedgerBridge][unlock] After getAddress ', res)
 
             this.sendMessageToExtension({
                 action: replyAction,
@@ -109,9 +110,9 @@ export default class LedgerBridge {
                 payload: res,
             })
 
-            console.log('[LedgerBridge][unlock] sentMessageToExtension:', res)
+            console.log('[LedgerBridge][unlock] sentMessageToExtension:', replyAction, res)
         } catch (err) {
-            console.log('[LedgerBridge][unlock] error:', err)
+            console.warn('[LedgerBridge][unlock] error:', err, replyAction)
             const e = this.ledgerErrToMessage(err)
 
             this.sendMessageToExtension({
@@ -120,6 +121,7 @@ export default class LedgerBridge {
                 payload: { error: e.toString() },
             })
 
+            console.warn('[LedgerBridge][unlock] error: sendMessageToExtension: ', e)
         }
     }
 
