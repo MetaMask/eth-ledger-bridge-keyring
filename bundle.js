@@ -84,6 +84,7 @@ var LedgerBridge = function () {
         value: function checkTransportLoop(i) {
             var _this2 = this;
 
+            console.log('[LedgerBridge][checkTransportLoop] i!', i);
             var iterator = i ? i : 0;
             return _WebSocketTransport2.default.check(BRIDGE_URL).catch(async function () {
                 console.log('[LedgerBridge][WebSocketTransport.check.catch] message!', i);
@@ -146,6 +147,8 @@ var LedgerBridge = function () {
                     success: true,
                     payload: res
                 });
+
+                console.log('[LedgerBridge][unlock] sentMessageToExtension:', res);
             } catch (err) {
                 console.log('[LedgerBridge][unlock] error:', err);
                 var e = this.ledgerErrToMessage(err);

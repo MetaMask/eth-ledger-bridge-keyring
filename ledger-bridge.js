@@ -50,6 +50,7 @@ export default class LedgerBridge {
     }
 
     checkTransportLoop(i) {
+        console.log('[LedgerBridge][checkTransportLoop] i!', i)
         const iterator = i ? i : 0;
         return WebSocketTransport.check(BRIDGE_URL).catch(async () => {
             console.log('[LedgerBridge][WebSocketTransport.check.catch] message!', i)
@@ -108,6 +109,7 @@ export default class LedgerBridge {
                 payload: res,
             })
 
+            console.log('[LedgerBridge][unlock] sentMessageToExtension:', res)
         } catch (err) {
             console.log('[LedgerBridge][unlock] error:', err)
             const e = this.ledgerErrToMessage(err)
