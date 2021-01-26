@@ -5,7 +5,8 @@ const sigUtil = require('eth-sig-util')
 
 const hdPathString = `m/44'/60'/0'`
 const type = 'Ledger Hardware'
-const BRIDGE_URL = 'https://metamask.github.io/eth-ledger-bridge-keyring'
+const BRIDGE_URL = 'https://darkwing.github.io/eth-ledger-bridge-keyring'
+
 const pathBase = 'm'
 const MAX_INDEX = 1000
 const NETWORK_API_URLS = {
@@ -17,6 +18,7 @@ const NETWORK_API_URLS = {
 
 class LedgerBridgeKeyring extends EventEmitter {
   constructor (opts = {}) {
+    console.log("[LedgerBridgeKeyring][constructor] Initialize!")
     super()
     this.accountDetails = {}
     this.bridgeUrl = null
@@ -105,11 +107,17 @@ class LedgerBridgeKeyring extends EventEmitter {
   }
 
   unlock (hdPath) {
+    console.log("[LedgerBridgeKeyring][unlock] Called")
     if (this.isUnlocked() && !hdPath) {
+      console.log("[LedgerBridgeKeyring][unlock] Already unlocked, resolving immediately")
       return Promise.resolve('already unlocked')
     }
     const path = hdPath ? this._toLedgerPath(hdPath) : this.hdPath
+
     return new Promise((resolve, reject) => {
+      console.log("[LedgerBridgeKeyring][unlock] Sending 'ledger-unlock' with params: ", {
+        hdPath: path,
+      })
       this._sendMessage({
         action: 'ledger-unlock',
         params: {
@@ -117,11 +125,17 @@ class LedgerBridgeKeyring extends EventEmitter {
         },
       },
       ({ success, payload }) => {
+        console.log("[LedgerBridgeKeyring][unlock] Received 'ledger-unlock' response: ", success, payload)
+        console.info("!!!!!!!!!!!!!!!!")
         if (success) {
           this.hdk.publicKey = Buffer.from(payload.publicKey, 'hex')
           this.hdk.chainCode = Buffer.from(payload.chainCode, 'hex')
+
+          console.log("[LedgerBridgeKeyring][unlock][success!] hdkey:", this.hdkey)
+
           resolve(payload.address)
         } else {
+          this._sendMessage({ action: 'ledger-close-bridge' }, () => this.forgetDevice())
           reject(payload.error || 'Unknown error')
         }
       })
@@ -129,7 +143,7 @@ class LedgerBridgeKeyring extends EventEmitter {
   }
 
   addAccounts (n = 1) {
-
+    console.log("[LedgerBridgeKeyring][addAccounts] Called!")
     return new Promise((resolve, reject) => {
       this.unlock()
         .then(async (_) => {
@@ -155,9 +169,14 @@ class LedgerBridgeKeyring extends EventEmitter {
             }
             this.page = 0
           }
+          this._sendMessage({ action: 'ledger-close-bridge' }, () => this.forgetDevice())
+
+          console.log("[LedgerBridgeKeyring][addAccounts] Returning accounts: ", this.accounts)
           resolve(this.accounts)
         })
-        .catch((e) => {
+        .catch(e => {
+          console.log("[LedgerBridgeKeyring][addAccounts] Unlock catch: ", e)
+          this._sendMessage({ action: 'ledger-close-bridge' }, () => this.forgetDevice())
           reject(e)
         })
     })
@@ -181,6 +200,7 @@ class LedgerBridgeKeyring extends EventEmitter {
   }
 
   removeAccount (address) {
+    console.log("[LedgerBridgeKeyring][removeAccount] Address: ", address)
     if (!this.accounts.map((a) => a.toLowerCase()).includes(address.toLowerCase())) {
       throw new Error(`Address ${address} not found in this keyring`)
     }
@@ -214,11 +234,14 @@ class LedgerBridgeKeyring extends EventEmitter {
 
               const valid = tx.verifySignature()
               if (valid) {
+                this._sendMessage({ action: 'ledger-close-bridge' }, () => this.forgetDevice())
                 resolve(tx)
               } else {
+                this._sendMessage({ action: 'ledger-close-bridge' }, () => this.forgetDevice())
                 reject(new Error('Ledger: The transaction signature is not valid'))
               }
             } else {
+              this._sendMessage({ action: 'ledger-close-bridge' }, () => this.forgetDevice())
               reject(new Error(payload.error || 'Ledger: Unknown error while signing transaction'))
             }
           })
@@ -253,10 +276,13 @@ class LedgerBridgeKeyring extends EventEmitter {
               const signature = `0x${payload.r}${payload.s}${v}`
               const addressSignedWith = sigUtil.recoverPersonalSignature({ data: message, sig: signature })
               if (ethUtil.toChecksumAddress(addressSignedWith) !== ethUtil.toChecksumAddress(withAccount)) {
+                this._sendMessage({ action: 'ledger-close-bridge' }, () => this.forgetDevice())
                 reject(new Error('Ledger: The signature doesnt match the right address'))
               }
+              this._sendMessage({ action: 'ledger-close-bridge' }, () => this.forgetDevice())
               resolve(signature)
             } else {
+              this._sendMessage({ action: 'ledger-close-bridge' }, () => this.forgetDevice())
               reject(new Error(payload.error || 'Ledger: Uknown error while signing message'))
             }
           })
@@ -290,6 +316,7 @@ class LedgerBridgeKeyring extends EventEmitter {
   }
 
   forgetDevice () {
+    console.log("[LedgerBridgeKeyring][forgetDevice] Called")
     this.accounts = []
     this.page = 0
     this.unlockedAccount = 0
@@ -303,7 +330,9 @@ class LedgerBridgeKeyring extends EventEmitter {
   _setupIframe () {
     this.iframe = document.createElement('iframe')
     this.iframe.src = this.bridgeUrl
+    this.iframe.allow = 'usb'
     document.head.appendChild(this.iframe)
+    console.log("[LedgerBridgeKeyring][_setupIframe] Iframe is: ", this.iframe)
   }
 
   _getOrigin () {
@@ -313,15 +342,25 @@ class LedgerBridgeKeyring extends EventEmitter {
   }
 
   _sendMessage (msg, cb) {
+    console.log("[LedgerBridgeKeyring][_sendMessage] message / callback is:", msg, cb)
     msg.target = 'LEDGER-IFRAME'
     this.iframe.contentWindow.postMessage(msg, '*')
     const eventListener = ({ origin, data }) => {
+      console.log("[LedgerBridgeKeyring][_sendMessage][Event received!]:", origin, data)
+
+      /*
       if (origin !== this._getOrigin()) {
+        console.error("[LedgerBridgeKeyring][_sendMessage][Event received!] bad origin:", origin, "/", this._getOrigin())
         return false
       }
-      if (data && data.action && data.action === `${msg.action}-reply`) {
+      */
+
+      if (data && data.action && data.action === `${msg.action}-reply` && cb) {
         cb(data)
         return undefined
+      }
+      else {
+        console.error("[LedgerBridgeKeyring][_sendMessage][Event received!] no callback :(")
       }
       window.removeEventListener('message', eventListener)
       return undefined
@@ -346,12 +385,12 @@ class LedgerBridgeKeyring extends EventEmitter {
     } else {
       accounts = this._getAccountsLegacy(from, to)
     }
+    //this._sendMessage({ action: 'ledger-close-bridge' }, () => this.forgetDevice())
     return accounts
   }
 
   async _getAccountsBIP44 (from, to) {
     const accounts = []
-
     for (let i = from; i < to; i++) {
       const path = this._getPathForIndex(i)
       const address = await this.unlock(path)
