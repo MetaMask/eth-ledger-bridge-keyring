@@ -17,16 +17,29 @@ var _hwAppEth2 = _interopRequireDefault(_hwAppEth);
 
 var _erc = require('@ledgerhq/hw-app-eth/erc20');
 
+var _WebSocketTransport = require('@ledgerhq/hw-transport-http/lib/WebSocketTransport');
+
+var _WebSocketTransport2 = _interopRequireDefault(_WebSocketTransport);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 require('buffer');
 
+var USE_LIVE = true;
+
+var BRIDGE_URL = "ws://localhost:8435";
+
+// Number of seconds to poll for Ledger Live and Ethereum app opening
+var TRANSPORT_CHECK_LIMIT = 30;
+var TRANSPORT_CHECK_DELAY = 1000;
+
 var LedgerBridge = function () {
     function LedgerBridge() {
         _classCallCheck(this, LedgerBridge);
 
+        console.log('[LedgerBridge][constructor] called!');
         this.addEventListeners();
     }
 
@@ -35,7 +48,9 @@ var LedgerBridge = function () {
         value: function addEventListeners() {
             var _this = this;
 
+            console.log('[LedgerBridge][addListeners] called!');
             window.addEventListener('message', async function (e) {
+                console.log('[LedgerBridge][addListeners] message received!', e);
                 if (e && e.data && e.data.target === 'LEDGER-IFRAME') {
                     var _e$data = e.data,
                         action = _e$data.action,
@@ -52,6 +67,9 @@ var LedgerBridge = function () {
                         case 'ledger-sign-personal-message':
                             _this.signPersonalMessage(replyAction, params.hdPath, params.message);
                             break;
+                        case 'ledger-close-bridge':
+                            _this.cleanUp(replyAction);
+                            break;
                     }
                 }
             }, false);
@@ -59,37 +77,98 @@ var LedgerBridge = function () {
     }, {
         key: 'sendMessageToExtension',
         value: function sendMessageToExtension(msg) {
+            console.log('[LedgerBridge][sendMessageToExtension] message!', msg);
             window.parent.postMessage(msg, '*');
+        }
+    }, {
+        key: 'sendMessageToExtension',
+        value: function sendMessageToExtension(msg) {
+            console.log('[LedgerBridge][sendMessageToExtension] message!', msg);
+            window.parent.postMessage(msg, '*');
+        }
+    }, {
+        key: 'delay',
+        value: function delay(ms) {
+            return new Promise(function (success) {
+                return setTimeout(success, ms);
+            });
+        }
+    }, {
+        key: 'checkTransportLoop',
+        value: function checkTransportLoop(i) {
+            var _this2 = this;
+
+            console.log('[LedgerBridge][checkTransportLoop] i!', i);
+            var iterator = i ? i : 0;
+            return _WebSocketTransport2.default.check(BRIDGE_URL).catch(async function () {
+                console.log('[LedgerBridge][WebSocketTransport.check.catch] message!', i);
+                await _this2.delay(TRANSPORT_CHECK_DELAY);
+                if (iterator < TRANSPORT_CHECK_LIMIT) {
+                    return _this2.checkTransportLoop(iterator + 1);
+                } else {
+                    throw new Error('Ledger transport check timeout');
+                }
+            });
         }
     }, {
         key: 'makeApp',
         value: async function makeApp() {
+            var _this3 = this;
+
             try {
-                this.transport = await _hwTransportU2f2.default.create();
-                this.app = new _hwAppEth2.default(this.transport);
+                if (USE_LIVE) {
+                    // Ledger Live
+                    await _WebSocketTransport2.default.check(BRIDGE_URL).catch(async function () {
+                        console.log('[LedgerBridge][makeApp] WebSocketTransport catch');
+                        window.open('ledgerlive://bridge?appName=Ethereum');
+                        await _this3.checkTransportLoop();
+                        _this3.transport = await _WebSocketTransport2.default.open(BRIDGE_URL);
+                        _this3.app = new _hwAppEth2.default(_this3.transport);
+                        console.log('[LedgerBridge][makeApp] this.transport, app: ', _this3.transport, _this3.app);
+                    });
+                } else {
+                    // U2F
+                    this.transport = await _hwTransportU2f2.default.create();
+                    this.app = new _hwAppEth2.default(this.transport);
+                }
             } catch (e) {
                 console.log('LEDGER:::CREATE APP ERROR', e);
             }
         }
     }, {
         key: 'cleanUp',
-        value: function cleanUp() {
+        value: function cleanUp(replyAction) {
+            console.log('[LedgerBridge][cleanUp] called');
             this.app = null;
-            this.transport.close();
+            if (this.transport) {
+                this.transport.close();
+            }
+            if (replyAction) {
+                this.sendMessageToExtension({
+                    action: replyAction,
+                    success: true
+                });
+            }
         }
     }, {
         key: 'unlock',
         value: async function unlock(replyAction, hdPath) {
+            console.log('[LedgerBridge][unlock] called');
             try {
                 await this.makeApp();
+
+                console.log('[LedgerBridge][unlock] About to call getAddress');
                 var res = await this.app.getAddress(hdPath, false, true);
+                console.log('[LedgerBridge][unlock] After getAddress ', res);
 
                 this.sendMessageToExtension({
                     action: replyAction,
                     success: true,
                     payload: res
                 });
+                console.log('[LedgerBridge][unlock] sentMessageToExtension:', replyAction, res);
             } catch (err) {
+                console.warn('[LedgerBridge][unlock] error:', err, replyAction);
                 var e = this.ledgerErrToMessage(err);
 
                 this.sendMessageToExtension({
@@ -97,13 +176,19 @@ var LedgerBridge = function () {
                     success: false,
                     payload: { error: e.toString() }
                 });
+
+                console.warn('[LedgerBridge][unlock] error: sendMessageToExtension: ', e);
             } finally {
-                this.cleanUp();
+                if (!USE_LIVE) {
+                    this.cleanUp();
+                }
             }
         }
     }, {
         key: 'signTransaction',
         value: async function signTransaction(replyAction, hdPath, tx, to) {
+            console.log('[LedgerBridge][signTransaction] called:', replyAction, hdPath, tx, to);
+
             try {
                 await this.makeApp();
                 if (to) {
@@ -111,28 +196,8 @@ var LedgerBridge = function () {
                     if (isKnownERC20Token) await this.app.provideERC20TokenInformation(isKnownERC20Token);
                 }
                 var res = await this.app.signTransaction(hdPath, tx);
-                this.sendMessageToExtension({
-                    action: replyAction,
-                    success: true,
-                    payload: res
-                });
-            } catch (err) {
-                var e = this.ledgerErrToMessage(err);
-                this.sendMessageToExtension({
-                    action: replyAction,
-                    success: false,
-                    payload: { error: e.toString() }
-                });
-            } finally {
-                this.cleanUp();
-            }
-        }
-    }, {
-        key: 'signPersonalMessage',
-        value: async function signPersonalMessage(replyAction, hdPath, message) {
-            try {
-                await this.makeApp();
-                var res = await this.app.signPersonalMessage(hdPath, message);
+
+                console.log('[LedgerBridge][signTransaction] res:', res);
 
                 this.sendMessageToExtension({
                     action: replyAction,
@@ -140,6 +205,8 @@ var LedgerBridge = function () {
                     payload: res
                 });
             } catch (err) {
+                console.log('[LedgerBridge][signTransaction] err:', err);
+
                 var e = this.ledgerErrToMessage(err);
                 this.sendMessageToExtension({
                     action: replyAction,
@@ -147,7 +214,39 @@ var LedgerBridge = function () {
                     payload: { error: e.toString() }
                 });
             } finally {
-                this.cleanUp();
+                if (!USE_LIVE) {
+                    this.cleanUp();
+                }
+            }
+        }
+    }, {
+        key: 'signPersonalMessage',
+        value: async function signPersonalMessage(replyAction, hdPath, message) {
+            console.log('[LedgerBridge][signPersonalMessage] called:', replyAction, hdPath, message);
+
+            try {
+                await this.makeApp();
+                var res = await this.app.signPersonalMessage(hdPath, message);
+
+                console.log('[LedgerBridge][signPersonalMessage] res:', res);
+
+                this.sendMessageToExtension({
+                    action: replyAction,
+                    success: true,
+                    payload: res
+                });
+            } catch (err) {
+                console.log('[LedgerBridge][signPersonalMessage] error:', err);
+                var e = this.ledgerErrToMessage(err);
+                this.sendMessageToExtension({
+                    action: replyAction,
+                    success: false,
+                    payload: { error: e.toString() }
+                });
+            } finally {
+                if (!USE_LIVE) {
+                    this.cleanUp();
+                }
             }
         }
     }, {
@@ -161,6 +260,12 @@ var LedgerBridge = function () {
             };
             var isErrorWithId = function isErrorWithId(err) {
                 return err.hasOwnProperty('id') && err.hasOwnProperty('message');
+            };
+            var isWrongAppError = function isWrongAppError(err) {
+                return err.message && err.message.includes('6804');
+            };
+            var isLedgerLockedError = function isLedgerLockedError(err) {
+                return err.message && err.message.includes('OpenFailed');
             };
 
             // https://developers.yubico.com/U2F/Libraries/Client_error_codes.html
@@ -186,6 +291,18 @@ var LedgerBridge = function () {
                 return err;
             }
 
+            if (isStringError(err)) {
+                // Wrong app logged into
+                if (err.includes('6804')) {
+                    return 'LEDGER_WRONG_APP';
+                }
+                // Ledger locked
+                if (err.includes('6801')) {
+                    return 'LEDGER_LOCKED';
+                }
+                return err;
+            }
+
             if (isErrorWithId(err)) {
                 // Browser doesn't support U2F
                 if (err.message.includes('U2F not supported')) {
@@ -203,7 +320,7 @@ var LedgerBridge = function () {
 
 exports.default = LedgerBridge;
 
-},{"@ledgerhq/hw-app-eth":6,"@ledgerhq/hw-app-eth/erc20":5,"@ledgerhq/hw-transport-u2f":9,"buffer":16}],2:[function(require,module,exports){
+},{"@ledgerhq/hw-app-eth":6,"@ledgerhq/hw-app-eth/erc20":5,"@ledgerhq/hw-transport-http/lib/WebSocketTransport":9,"@ledgerhq/hw-transport-u2f":10,"buffer":17}],2:[function(require,module,exports){
 'use strict';
 
 var _ledgerBridge = require('./ledger-bridge');
@@ -1412,7 +1529,7 @@ class Eth {
 exports.default = Eth;
 
 }).call(this,require("buffer").Buffer)
-},{"./utils":8,"@ledgerhq/errors":4,"bignumber.js":13,"buffer":16,"rlp":19}],7:[function(require,module,exports){
+},{"./utils":8,"@ledgerhq/errors":4,"bignumber.js":14,"buffer":17,"rlp":20}],7:[function(require,module,exports){
 (function (Buffer){
 "use strict";
 
@@ -1494,7 +1611,7 @@ const get = (() => {
 })();
 
 }).call(this,require("buffer").Buffer)
-},{"@ledgerhq/cryptoassets/data/erc20-signatures":3,"buffer":16}],8:[function(require,module,exports){
+},{"@ledgerhq/cryptoassets/data/erc20-signatures":3,"buffer":17}],8:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1600,6 +1717,150 @@ function asyncWhile(predicate, callback) {
 }
 
 },{}],9:[function(require,module,exports){
+(function (global,Buffer){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _hwTransport = _interopRequireDefault(require("@ledgerhq/hw-transport"));
+
+var _errors = require("@ledgerhq/errors");
+
+var _logs = require("@ledgerhq/logs");
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+const WebSocket = global.WebSocket || require("ws");
+/**
+ * WebSocket transport implementation
+ */
+
+
+class WebSocketTransport extends _hwTransport.default {
+  // this transport is not discoverable
+  static async open(url) {
+    const exchangeMethods = await new Promise((resolve, reject) => {
+      try {
+        const socket = new WebSocket(url);
+        const exchangeMethods = {
+          resolveExchange: _b => {},
+          rejectExchange: _e => {},
+          onDisconnect: () => {},
+          close: () => socket.close(),
+          send: msg => socket.send(msg)
+        };
+
+        socket.onopen = () => {
+          socket.send("open");
+        };
+
+        socket.onerror = e => {
+          exchangeMethods.onDisconnect();
+          reject(e);
+        };
+
+        socket.onclose = () => {
+          exchangeMethods.onDisconnect();
+          reject(new _errors.TransportError("OpenFailed", "OpenFailed"));
+        };
+
+        socket.onmessage = e => {
+          if (typeof e.data !== "string") return;
+          const data = JSON.parse(e.data);
+
+          switch (data.type) {
+            case "opened":
+              return resolve(exchangeMethods);
+
+            case "error":
+              reject(new Error(data.error));
+              return exchangeMethods.rejectExchange(new _errors.TransportError(data.error, "WSError"));
+
+            case "response":
+              return exchangeMethods.resolveExchange(Buffer.from(data.data, "hex"));
+          }
+        };
+      } catch (e) {
+        reject(e);
+      }
+    });
+    return new WebSocketTransport(exchangeMethods);
+  }
+
+  constructor(hook) {
+    super();
+    this.hook = void 0;
+    this.hook = hook;
+
+    hook.onDisconnect = () => {
+      this.emit("disconnect");
+      this.hook.rejectExchange(new _errors.TransportError("WebSocket disconnected", "WSDisconnect"));
+    };
+  }
+
+  async exchange(apdu) {
+    const hex = apdu.toString("hex");
+    (0, _logs.log)("apdu", "=> " + hex);
+    const res = await new Promise((resolve, reject) => {
+      this.hook.rejectExchange = e => reject(e);
+
+      this.hook.resolveExchange = b => resolve(b);
+
+      this.hook.send(hex);
+    });
+    (0, _logs.log)("apdu", "<= " + res.toString("hex"));
+    return res;
+  }
+
+  setScrambleKey() {}
+
+  async close() {
+    this.hook.close();
+    return new Promise(success => {
+      setTimeout(success, 200);
+    });
+  }
+
+}
+
+exports.default = WebSocketTransport;
+
+WebSocketTransport.isSupported = () => Promise.resolve(typeof WebSocket === "function");
+
+WebSocketTransport.list = () => Promise.resolve([]);
+
+WebSocketTransport.listen = _observer => ({
+  unsubscribe: () => {}
+});
+
+WebSocketTransport.check = async (url, timeout = 5000) => new Promise((resolve, reject) => {
+  const socket = new WebSocket(url);
+  let success = false;
+  setTimeout(() => {
+    socket.close();
+  }, timeout);
+
+  socket.onopen = () => {
+    success = true;
+    socket.close();
+  };
+
+  socket.onclose = () => {
+    if (success) resolve();else {
+      reject(new _errors.TransportError("failed to access WebSocketTransport(" + url + ")", "WebSocketTransportNotAccessible"));
+    }
+  };
+
+  socket.onerror = () => {
+    reject(new _errors.TransportError("failed to access WebSocketTransport(" + url + "): error", "WebSocketTransportNotAccessible"));
+  };
+});
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
+},{"@ledgerhq/errors":4,"@ledgerhq/hw-transport":11,"@ledgerhq/logs":12,"buffer":17,"ws":24}],10:[function(require,module,exports){
 (function (Buffer){
 "use strict";
 
@@ -1789,7 +2050,7 @@ TransportU2F.listen = observer => {
 };
 
 }).call(this,require("buffer").Buffer)
-},{"@ledgerhq/errors":4,"@ledgerhq/hw-transport":10,"@ledgerhq/logs":11,"buffer":16,"u2f-api":20}],10:[function(require,module,exports){
+},{"@ledgerhq/errors":4,"@ledgerhq/hw-transport":11,"@ledgerhq/logs":12,"buffer":17,"u2f-api":21}],11:[function(require,module,exports){
 (function (Buffer){
 "use strict";
 
@@ -2048,7 +2309,7 @@ Transport.ErrorMessage_ListenTimeout = "No Ledger device found (timeout)";
 Transport.ErrorMessage_NoDeviceFound = "No Ledger device found";
 
 }).call(this,require("buffer").Buffer)
-},{"@ledgerhq/errors":4,"buffer":16,"events":17}],11:[function(require,module,exports){
+},{"@ledgerhq/errors":4,"buffer":17,"events":18}],12:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2116,7 +2377,7 @@ if (typeof window !== "undefined") {
   window.__ledgerLogsListen = listen;
 }
 
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -2269,7 +2530,7 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 ;(function (globalObject) {
   'use strict';
 
@@ -5173,7 +5434,7 @@ function fromByteArray (uint8) {
   }
 })(this);
 
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 (function (module, exports) {
   'use strict';
 
@@ -8602,9 +8863,9 @@ function fromByteArray (uint8) {
   };
 })(typeof module === 'undefined' || module, this);
 
-},{"buffer":15}],15:[function(require,module,exports){
+},{"buffer":16}],16:[function(require,module,exports){
 
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 (function (Buffer){
 /*!
  * The buffer module from node.js, for the browser.
@@ -10385,7 +10646,7 @@ function numberIsNaN (obj) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"base64-js":12,"buffer":16,"ieee754":18}],17:[function(require,module,exports){
+},{"base64-js":13,"buffer":17,"ieee754":19}],18:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -10910,7 +11171,7 @@ function functionBindPolyfill(context) {
   };
 }
 
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = (nBytes * 8) - mLen - 1
@@ -10996,7 +11257,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 (function (Buffer){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -11248,10 +11509,10 @@ function toBuffer(v) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"bn.js":14,"buffer":16}],20:[function(require,module,exports){
+},{"bn.js":15,"buffer":17}],21:[function(require,module,exports){
 'use strict';
 module.exports = require( './lib/u2f-api' );
-},{"./lib/u2f-api":22}],21:[function(require,module,exports){
+},{"./lib/u2f-api":23}],22:[function(require,module,exports){
 // Copyright 2014 Google Inc. All rights reserved
 //
 // Use of this source code is governed by a BSD-style
@@ -11659,7 +11920,7 @@ u2f.register = function(registerRequests, signRequests,
   });
 };
 
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -11978,4 +12239,14 @@ makeDefault( 'register' );
 makeDefault( 'sign' );
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./google-u2f-api":21}]},{},[2]);
+},{"./google-u2f-api":22}],24:[function(require,module,exports){
+'use strict';
+
+module.exports = function() {
+  throw new Error(
+    'ws does not work in the browser. Browser clients must use the native ' +
+      'WebSocket object'
+  );
+};
+
+},{}]},{},[2]);
