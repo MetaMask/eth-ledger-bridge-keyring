@@ -45,18 +45,15 @@ export default class LedgerBridge {
         }, false)
     }
 
-    sendMessageToExtension (msg) {
-        console.log('[LedgerBridge][sendMessageToExtension] message!', msg)
-        window.parent.postMessage(msg, '*')
-    }
-
     sendMessageToExtension(msg) {
         console.log('[LedgerBridge][sendMessageToExtension] message!', msg)
         window.parent.postMessage(msg, '*')
     }
+
     delay(ms) {
         return new Promise((success) => setTimeout(success, ms));
     }
+
     checkTransportLoop(i) {
         console.log('[LedgerBridge][checkTransportLoop] i!', i)
         const iterator = i ? i : 0;
@@ -112,17 +109,14 @@ export default class LedgerBridge {
         try {
             await this.makeApp()
 
-            console.log('[LedgerBridge][unlock] About to call getAddress')
             const res = await this.app.getAddress(hdPath, false, true)
-            console.log('[LedgerBridge][unlock] After getAddress ', res)
+            console.log('[LedgerBridge][unlock] Got address: ', res)
 
             this.sendMessageToExtension({
                 action: replyAction,
                 success: true,
                 payload: res,
             })
-            console.log('[LedgerBridge][unlock] sentMessageToExtension:', replyAction, res)
-
         } catch (err) {
             console.warn('[LedgerBridge][unlock] error:', err, replyAction)
             const e = this.ledgerErrToMessage(err)
@@ -132,8 +126,6 @@ export default class LedgerBridge {
                 success: false,
                 payload: { error: e.toString() },
             })
-
-            console.warn('[LedgerBridge][unlock] error: sendMessageToExtension: ', e)
         } finally {
             if (!USE_LIVE) {
                 this.cleanUp()
