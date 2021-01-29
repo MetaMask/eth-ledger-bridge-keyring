@@ -126,12 +126,11 @@ class LedgerBridgeKeyring extends EventEmitter {
       },
       ({ success, payload }) => {
         console.log("[LedgerBridgeKeyring][unlock] Received 'ledger-unlock' response: ", success, payload)
-        console.info("!!!!!!!!!!!!!!!!")
         if (success) {
           this.hdk.publicKey = Buffer.from(payload.publicKey, 'hex')
           this.hdk.chainCode = Buffer.from(payload.chainCode, 'hex')
 
-          console.log("[LedgerBridgeKeyring][unlock][success!] hdkey:", this.hdkey)
+          console.log("[LedgerBridgeKeyring][unlock][success!] hdkey:", this.hdk)
 
           resolve(payload.address)
         } else {
@@ -346,7 +345,7 @@ class LedgerBridgeKeyring extends EventEmitter {
     msg.target = 'LEDGER-IFRAME'
     this.iframe.contentWindow.postMessage(msg, '*')
     const eventListener = ({ origin, data }) => {
-      console.log("[LedgerBridgeKeyring][_sendMessage][Event received!]:", origin, data)
+      console.log("[LedgerBridgeKeyring][_sendMessage][Event received!]:", origin, data, cb)
 
       /*
       if (origin !== this._getOrigin()) {
@@ -359,9 +358,7 @@ class LedgerBridgeKeyring extends EventEmitter {
         cb(data)
         return undefined
       }
-      else {
-        console.error("[LedgerBridgeKeyring][_sendMessage][Event received!] no callback :(")
-      }
+
       window.removeEventListener('message', eventListener)
       return undefined
     }
@@ -385,7 +382,11 @@ class LedgerBridgeKeyring extends EventEmitter {
     } else {
       accounts = this._getAccountsLegacy(from, to)
     }
+
+    // I believe we need this gone so that we don't close the bridge
+    // before the user chooses which account to add
     //this._sendMessage({ action: 'ledger-close-bridge' }, () => this.forgetDevice())
+
     return accounts
   }
 
