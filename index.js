@@ -2,6 +2,7 @@ const { EventEmitter } = require('events')
 const HDKey = require('hdkey')
 const ethUtil = require('ethereumjs-util')
 const sigUtil = require('eth-sig-util')
+const { URL, URLSearchParams } = require('globalthis/implementation')
 
 const hdPathString = `m/44'/60'/0'`
 const type = 'Ledger Hardware'
@@ -47,7 +48,11 @@ class LedgerBridgeKeyring extends EventEmitter {
 
   deserialize (opts = {}) {
     this.hdPath = opts.hdPath || hdPathString
-    this.bridgeUrl = opts.bridgeUrl || BRIDGE_URL
+    
+    const bridgeUrl = new URL(opts.bridgeUrl || BRIDGE_URL);
+    bridgeUrl.search = new URLSearchParams({ useLedgerLive: !!opts.useLedgerLive })
+    this.bridgeUrl = bridgeUrl.toString()
+
     this.accounts = opts.accounts || []
     this.accountDetails = opts.accountDetails || {}
     if (!opts.accountDetails) {
