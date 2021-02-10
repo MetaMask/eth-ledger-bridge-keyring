@@ -22,7 +22,7 @@
   "dependencies": {
     "@ledgerhq/hw-app-eth": "^5.45.0",
     "@ledgerhq/hw-transport-u2f": "^5.36.0-deprecated",
-    "@ledgerhq/hw-transport-http": "^5.39.0",
+    "@ledgerhq/hw-transport-http": "^5.43.0",
     "babel-polyfill": "^6.26.0",
     "babel-runtime": "^6.26.0",
     "babelify": "^8.0.0",
