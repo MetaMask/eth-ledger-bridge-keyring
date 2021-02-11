@@ -267,16 +267,12 @@ var LedgerBridge = function () {
                 return err;
             }
 
-            if (isStringError(err)) {
-                // Wrong app logged into
-                if (err.includes('6804')) {
-                    return 'LEDGER_WRONG_APP';
-                }
-                // Ledger locked
-                if (err.includes('6801')) {
-                    return 'LEDGER_LOCKED';
-                }
-                return err;
+            if (isWrongAppError(err) || isStringError(err) && err.includes('6804')) {
+                return 'LEDGER_WRONG_APP';
+            }
+
+            if (isLedgerLockedError(err) || isStringError(err) && err.includes('6801')) {
+                return 'LEDGER_LOCKED';
             }
 
             if (isErrorWithId(err)) {
