@@ -1,7 +1,13 @@
 'use strict'
 require('buffer')
 
-const USE_LIVE = (() => {
+import TransportU2F from '@ledgerhq/hw-transport-u2f'
+import LedgerEth from '@ledgerhq/hw-app-eth'
+import { byContractAddress } from '@ledgerhq/hw-app-eth/erc20'
+
+import WebSocketTransport from '@ledgerhq/hw-transport-http/lib/WebSocketTransport'
+
+const USE_LEDGER_LIVE = (() => {
     try {
         const searchParams = new URLSearchParams(document.location.search)
         return searchParams.get('useLedgerLive') === 'true' && 'usb' in navigator
@@ -10,31 +16,17 @@ const USE_LIVE = (() => {
         return false
     }
 })()
-console.info(`[LedgerBridgeIFrame] Using LedgerLive? `, USE_LIVE ? 'Yes' : 'No')
-
-import TransportU2F from '@ledgerhq/hw-transport-u2f'
-import LedgerEth from '@ledgerhq/hw-app-eth'
-import { byContractAddress } from '@ledgerhq/hw-app-eth/erc20'
-
-import WebSocketTransport from '@ledgerhq/hw-transport-http/lib/WebSocketTransport'
 const BRIDGE_URL = 'ws://localhost:8435'
-
 // Number of seconds to poll for Ledger Live and Ethereum app opening
 const TRANSPORT_CHECK_LIMIT = 30
 const TRANSPORT_CHECK_DELAY = 1000
-
-console.log('[LedgerBridgeIFrame] File loaded!')
-
 export default class LedgerBridge {
     constructor () {
-        console.log('[LedgerBridgeIFrame][constructor] called!')
         this.addEventListeners()
     }
 
     addEventListeners () {
-        console.log('[LedgerBridgeIFrame][addListeners] called!')
         window.addEventListener('message', async e => {
-            console.log('[LedgerBridgeIFrame][addListeners] message received!', e)
             if (e && e.data && e.data.target === 'LEDGER-IFRAME') {
                 const { action, params } = e.data
                 const replyAction = `${action}-reply`
@@ -57,7 +49,6 @@ export default class LedgerBridge {
     }
 
     sendMessageToExtension(msg) {
-        console.log('[LedgerBridgeIFrame][sendMessageToExtension] message!', msg)
         window.parent.postMessage(msg, '*')
     }
 
@@ -66,10 +57,8 @@ export default class LedgerBridge {
     }
 
     checkTransportLoop(i) {
-        console.log('[LedgerBridgeIFrame][checkTransportLoop] i!', i)
         const iterator = i || 0
         return WebSocketTransport.check(BRIDGE_URL).catch(async () => {
-            console.log('[LedgerBridgeIFrame][WebSocketTransport.check.catch] message!', i)
             await this.delay(TRANSPORT_CHECK_DELAY)
             if (iterator < TRANSPORT_CHECK_LIMIT) {
                 return this.checkTransportLoop(iterator + 1)
@@ -81,21 +70,16 @@ export default class LedgerBridge {
 
 
     async makeApp () {
-        console.log('[LedgerBridgeIFrame][makeApp] called!')
         try {
-            if (USE_LIVE) { // Ledger Live
-                console.log('[LedgerBridgeIFrame][makeApp] About the check WebTransport!')
+            if (USE_LEDGER_LIVE) { // Ledger Live
                 await WebSocketTransport.check(BRIDGE_URL).catch(async () => {
-                    console.log('[LedgerBridgeIFrame][makeApp] WebSocketTransport catch')
                     window.open('ledgerlive://bridge?appName=Ethereum')
                     await this.checkTransportLoop()
                     this.transport = await WebSocketTransport.open(BRIDGE_URL)
                     this.app = new LedgerEth(this.transport)
-                    console.log('[LedgerBridgeIFrame][makeApp] this.transport, app: ', this.transport, this.app)
                 })
             }
             else { // U2F
-                console.log('[LedgerBridgeIFrame][makeApp] Using U2F!')
                 this.transport = await TransportU2F.create()
                 this.app = new LedgerEth(this.transport)
             }
@@ -105,7 +89,6 @@ export default class LedgerBridge {
     }
 
     cleanUp (replyAction) {
-        console.log('[LedgerBridgeIFrame][cleanUp] called')
         this.app = null
         if (this.transport) {
             this.transport.close()
@@ -119,20 +102,16 @@ export default class LedgerBridge {
     }
 
     async unlock (replyAction, hdPath) {
-        console.log('[LedgerBridgeIFrame][unlock] called')
         try {
             await this.makeApp()
 
             const res = await this.app.getAddress(hdPath, false, true)
-            console.log('[LedgerBridgeIFrame][unlock] Got address: ', res)
-
             this.sendMessageToExtension({
                 action: replyAction,
                 success: true,
                 payload: res,
             })
         } catch (err) {
-            console.warn('[LedgerBridgeIFrame][unlock] error:', err, replyAction)
             const e = this.ledgerErrToMessage(err)
 
             this.sendMessageToExtension({
@@ -141,15 +120,13 @@ export default class LedgerBridge {
                 payload: { error: e.toString() },
             })
         } finally {
-            if (!USE_LIVE) {
+            if (!USE_LEDGER_LIVE) {
                 this.cleanUp()
             }
         }
     }
 
     async signTransaction (replyAction, hdPath, tx, to) {
-        console.log('[LedgerBridgeIFrame][signTransaction] called:', replyAction, hdPath, tx, to)
-
         try {
             await this.makeApp()
             if (to) {
@@ -157,9 +134,6 @@ export default class LedgerBridge {
                 if (isKnownERC20Token) await this.app.provideERC20TokenInformation(isKnownERC20Token)
             }
             const res = await this.app.signTransaction(hdPath, tx)
-        
-            console.log('[LedgerBridgeIFrame][signTransaction] res:', res)
-
             this.sendMessageToExtension({
                 action: replyAction,
                 success: true,
@@ -177,21 +151,17 @@ export default class LedgerBridge {
             })
 
         } finally {
-            if (!USE_LIVE) {
+            if (!USE_LEDGER_LIVE) {
                 this.cleanUp()
             }
         }
     }
 
     async signPersonalMessage (replyAction, hdPath, message) {
-        console.log('[LedgerBridgeIFrame][signPersonalMessage] called:', replyAction, hdPath, message)
-
         try {
             await this.makeApp()
+
             const res = await this.app.signPersonalMessage(hdPath, message)
-
-            console.log('[LedgerBridgeIFrame][signPersonalMessage] res:', res)
-
             this.sendMessageToExtension({
                 action: replyAction,
                 success: true,
@@ -207,13 +177,16 @@ export default class LedgerBridge {
             })
 
         } finally {
-            if (!USE_LIVE) {
+            if (!USE_LEDGER_LIVE) {
                 this.cleanUp()
             }
         }
     }
 
     ledgerErrToMessage (err) {
+
+        console.log("ledgerErrToMessage: ", err);
+
         const isU2FError = (err) => !!err && !!(err).metaData
         const isStringError = (err) => typeof err === 'string'
         const isErrorWithId = (err) => err.hasOwnProperty('id') && err.hasOwnProperty('message')
