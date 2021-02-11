@@ -1,20 +1,29 @@
 'use strict'
 require('buffer')
 
-const USE_LIVE = true
+const USE_LIVE = (() => {
+    try {
+        const searchParams = new URLSearchParams(document.location.search)
+        return searchParams.get('useLedgerLive') === 'true' && 'usb' in navigator
+    }
+    catch(e) {
+        return false
+    }
+})()
+console.info(`[LedgerBridgeIFrame] Using LedgerLive? `, USE_LIVE ? 'Yes' : 'No')
 
 import TransportU2F from '@ledgerhq/hw-transport-u2f'
 import LedgerEth from '@ledgerhq/hw-app-eth'
 import { byContractAddress } from '@ledgerhq/hw-app-eth/erc20'
 
-import WebSocketTransport from "@ledgerhq/hw-transport-http/lib/WebSocketTransport"
-const BRIDGE_URL = "ws://localhost:8435"
+import WebSocketTransport from '@ledgerhq/hw-transport-http/lib/WebSocketTransport'
+const BRIDGE_URL = 'ws://localhost:8435'
 
 // Number of seconds to poll for Ledger Live and Ethereum app opening
-const TRANSPORT_CHECK_LIMIT = 30;
-const TRANSPORT_CHECK_DELAY = 1000;
+const TRANSPORT_CHECK_LIMIT = 30
+const TRANSPORT_CHECK_DELAY = 1000
 
-console.log("[LedgerBridgeIFrame] File loaded!")
+console.log('[LedgerBridgeIFrame] File loaded!')
 
 export default class LedgerBridge {
     constructor () {
@@ -41,7 +50,7 @@ export default class LedgerBridge {
                         break
                     case 'ledger-close-bridge':
                         this.cleanUp(replyAction)
-                        break;
+                        break
                 }
             }
         }, false)
@@ -53,21 +62,21 @@ export default class LedgerBridge {
     }
 
     delay(ms) {
-        return new Promise((success) => setTimeout(success, ms));
+        return new Promise((success) => setTimeout(success, ms))
     }
 
     checkTransportLoop(i) {
         console.log('[LedgerBridgeIFrame][checkTransportLoop] i!', i)
-        const iterator = i ? i : 0;
+        const iterator = i || 0
         return WebSocketTransport.check(BRIDGE_URL).catch(async () => {
             console.log('[LedgerBridgeIFrame][WebSocketTransport.check.catch] message!', i)
-            await this.delay(TRANSPORT_CHECK_DELAY);
+            await this.delay(TRANSPORT_CHECK_DELAY)
             if (iterator < TRANSPORT_CHECK_LIMIT) {
-                return this.checkTransportLoop(iterator + 1);
+                return this.checkTransportLoop(iterator + 1)
             } else {
-                throw new Error('Ledger transport check timeout');
+                throw new Error('Ledger transport check timeout')
             }
-        });
+        })
     }
 
 

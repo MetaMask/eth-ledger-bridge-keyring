@@ -27,15 +27,23 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 require('buffer');
 
-var USE_LIVE = true;
+var USE_LIVE = function () {
+    try {
+        var searchParams = new URLSearchParams(document.location.search);
+        return searchParams.get('useLedgerLive') === 'true' && 'usb' in navigator;
+    } catch (e) {
+        return false;
+    }
+}();
+console.info('[LedgerBridgeIFrame] Using LedgerLive? ', USE_LIVE ? 'Yes' : 'No');
 
-var BRIDGE_URL = "ws://localhost:8435";
+var BRIDGE_URL = 'ws://localhost:8435';
 
 // Number of seconds to poll for Ledger Live and Ethereum app opening
 var TRANSPORT_CHECK_LIMIT = 30;
 var TRANSPORT_CHECK_DELAY = 1000;
 
-console.log("[LedgerBridgeIFrame] File loaded!");
+console.log('[LedgerBridgeIFrame] File loaded!');
 
 var LedgerBridge = function () {
     function LedgerBridge() {
@@ -95,7 +103,7 @@ var LedgerBridge = function () {
             var _this2 = this;
 
             console.log('[LedgerBridgeIFrame][checkTransportLoop] i!', i);
-            var iterator = i ? i : 0;
+            var iterator = i || 0;
             return _WebSocketTransport2.default.check(BRIDGE_URL).catch(async function () {
                 console.log('[LedgerBridgeIFrame][WebSocketTransport.check.catch] message!', i);
                 await _this2.delay(TRANSPORT_CHECK_DELAY);
