@@ -16,6 +16,8 @@ const USE_LEDGER_LIVE = (() => {
     }
 })()
 
+console.info('Using Ledger Live?  ', USE_LEDGER_LIVE ? "Yes" : "No");
+
 // URL which triggers Ledger Live app to open and handle communication
 const BRIDGE_URL = 'ws://localhost:8435'
 
@@ -92,6 +94,7 @@ export default class LedgerBridge {
     }
 
     cleanUp (replyAction) {
+        console.log("Cleaning up, closing transports");
         this.app = null
         if (this.transport) {
             this.transport.close()

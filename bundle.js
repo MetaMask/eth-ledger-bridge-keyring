@@ -35,7 +35,12 @@ var USE_LEDGER_LIVE = function () {
         return false;
     }
 }();
+
+console.info('Using Ledger Live?  ', USE_LEDGER_LIVE ? "Yes" : "No");
+
+// URL which triggers Ledger Live app to open and handle communication
 var BRIDGE_URL = 'ws://localhost:8435';
+
 // Number of seconds to poll for Ledger Live and Ethereum app opening
 var TRANSPORT_CHECK_LIMIT = 30;
 var TRANSPORT_CHECK_DELAY = 1000;
@@ -129,6 +134,7 @@ var LedgerBridge = function () {
     }, {
         key: 'cleanUp',
         value: function cleanUp(replyAction) {
+            console.log("Cleaning up, closing transports");
             this.app = null;
             if (this.transport) {
                 this.transport.close();
@@ -225,9 +231,6 @@ var LedgerBridge = function () {
     }, {
         key: 'ledgerErrToMessage',
         value: function ledgerErrToMessage(err) {
-
-            console.log("ledgerErrToMessage: ", err);
-
             var isU2FError = function isU2FError(err) {
                 return !!err && !!err.metaData;
             };
@@ -252,19 +255,6 @@ var LedgerBridge = function () {
                 }
 
                 return err.metaData.type;
-            }
-
-            if (isStringError(err)) {
-                // Wrong app logged into
-                if (err.includes('6804')) {
-                    return 'LEDGER_WRONG_APP';
-                }
-                // Ledger locked
-                if (err.includes('6801')) {
-                    return 'LEDGER_LOCKED';
-                }
-
-                return err;
             }
 
             if (isWrongAppError(err) || isStringError(err) && err.includes('6804')) {
