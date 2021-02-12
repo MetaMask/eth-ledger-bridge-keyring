@@ -15,10 +15,14 @@ const USE_LEDGER_LIVE = (() => {
         return false
     }
 })()
+
+// URL which triggers Ledger Live app to open and handle communication
 const BRIDGE_URL = 'ws://localhost:8435'
+
 // Number of seconds to poll for Ledger Live and Ethereum app opening
 const TRANSPORT_CHECK_LIMIT = 30
 const TRANSPORT_CHECK_DELAY = 1000
+
 export default class LedgerBridge {
     constructor () {
         this.addEventListeners()
@@ -183,9 +187,6 @@ export default class LedgerBridge {
     }
 
     ledgerErrToMessage (err) {
-
-        console.log("ledgerErrToMessage: ", err);
-
         const isU2FError = (err) => !!err && !!(err).metaData
         const isStringError = (err) => typeof err === 'string'
         const isErrorWithId = (err) => err.hasOwnProperty('id') && err.hasOwnProperty('message')
@@ -200,19 +201,6 @@ export default class LedgerBridge {
           }
 
           return err.metaData.type
-        }
-
-        if (isStringError(err)) {
-          // Wrong app logged into
-          if (err.includes('6804')) {
-            return 'LEDGER_WRONG_APP'
-          }
-          // Ledger locked
-          if (err.includes('6801')) {
-            return 'LEDGER_LOCKED'
-          }
-
-          return err
         }
 
         if (isWrongAppError(err) || (isStringError(err) && err.includes('6804'))) {
