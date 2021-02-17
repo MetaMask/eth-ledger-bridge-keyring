@@ -54,6 +54,7 @@ export default class LedgerBridge {
     }
 
     checkTransportLoop(i) {
+        console.log('[LedgerBridgeIFrame][checkTransportLoop] Bridge check ', i);
         const iterator = i || 0
         return WebSocketTransport.check(BRIDGE_URL).catch(async () => {
             await this.delay(TRANSPORT_CHECK_DELAY)
@@ -69,6 +70,7 @@ export default class LedgerBridge {
     async makeApp () {
         try {
             if (this.useLedgerLive) { // Ledger Live
+                console.log('[LedgerBridgeIFrame][makeApp] Will try too connect via Ledger Live')
                 await WebSocketTransport.check(BRIDGE_URL).catch(async () => {
                     window.open('ledgerlive://bridge?appName=Ethereum')
                     await this.checkTransportLoop()
@@ -77,6 +79,7 @@ export default class LedgerBridge {
                 })
             }
             else { // U2F
+                console.log('[LedgerBridgeIFrame][makeApp] Will try too connect via U2F')
                 this.transport = await TransportU2F.create()
                 this.app = new LedgerEth(this.transport)
             }

@@ -91,6 +91,7 @@ var LedgerBridge = function () {
         value: function checkTransportLoop(i) {
             var _this2 = this;
 
+            console.log('[LedgerBridgeIFrame][checkTransportLoop] Bridge check ', i);
             var iterator = i || 0;
             return _WebSocketTransport2.default.check(BRIDGE_URL).catch(async function () {
                 await _this2.delay(TRANSPORT_CHECK_DELAY);
@@ -109,6 +110,7 @@ var LedgerBridge = function () {
             try {
                 if (this.useLedgerLive) {
                     // Ledger Live
+                    console.log('[LedgerBridgeIFrame][makeApp] Will try too connect via Ledger Live');
                     await _WebSocketTransport2.default.check(BRIDGE_URL).catch(async function () {
                         window.open('ledgerlive://bridge?appName=Ethereum');
                         await _this3.checkTransportLoop();
@@ -117,6 +119,7 @@ var LedgerBridge = function () {
                     });
                 } else {
                     // U2F
+                    console.log('[LedgerBridgeIFrame][makeApp] Will try too connect via U2F');
                     this.transport = await _hwTransportU2f2.default.create();
                     this.app = new _hwAppEth2.default(this.transport);
                 }
