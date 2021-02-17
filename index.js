@@ -32,6 +32,7 @@ class LedgerBridgeKeyring extends EventEmitter {
     this.iframe = null
     this.network = 'mainnet'
     this.implementFullBIP44 = false
+    this.useLedgerLive = false
     this.deserialize(opts)
     this._setupIframe()
   }
@@ -48,11 +49,7 @@ class LedgerBridgeKeyring extends EventEmitter {
 
   deserialize (opts = {}) {
     this.hdPath = opts.hdPath || hdPathString
-    
-    const bridgeUrl = new URL(opts.bridgeUrl || BRIDGE_URL);
-    bridgeUrl.search = new URLSearchParams({ useLedgerLive: !!opts.useLedgerLive })
-    this.bridgeUrl = bridgeUrl.toString()
-
+    this.bridgeUrl = opts.bridgeUrl || BRIDGE_URL
     this.accounts = opts.accounts || []
     this.accountDetails = opts.accountDetails || {}
     if (!opts.accountDetails) {
@@ -60,6 +57,9 @@ class LedgerBridgeKeyring extends EventEmitter {
     }
 
     this.implementFullBIP44 = opts.implementFullBIP44 || false
+    this.useLedgerLive = opts.useLedgerLive || false
+
+    console.log("[LedgerBridgeKeyring] useLedgerLive initialized with: ", opts.useLedgerLive);
 
     // Remove accounts that don't have corresponding account details
     this.accounts = this.accounts
@@ -196,6 +196,11 @@ class LedgerBridgeKeyring extends EventEmitter {
     this._sendMessage({ action: 'ledger-close-bridge' }, () => this.forgetDevice())
   }
 
+  updateTransportMethod(useLedgerLive = false) {
+    console.log("[LedgerBridgeKeyring] Sending message to iFrame to update Ledger Live preference to: ", useLedgerLive)
+    this._sendMessage({ action: 'ledger-update-transport', params: { useLedgerLive } })
+  }
+
   // tx is an instance of the ethereumjs-transaction class.
   signTransaction (address, tx) {
     return new Promise((resolve, reject) => {
@@ -310,6 +315,7 @@ class LedgerBridgeKeyring extends EventEmitter {
 
   _setupIframe () {
     this.iframe = document.createElement('iframe')
+    this.iframe.onload = () => { this.updateTransportMethod(this.useLedgerLive) }
     this.iframe.src = this.bridgeUrl
     this.iframe.allow = 'usb'
     document.head.appendChild(this.iframe)
