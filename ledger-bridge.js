@@ -6,18 +6,6 @@ import LedgerEth from '@ledgerhq/hw-app-eth'
 import { byContractAddress } from '@ledgerhq/hw-app-eth/erc20'
 import WebSocketTransport from '@ledgerhq/hw-transport-http/lib/WebSocketTransport'
 
-const USE_LEDGER_LIVE = (() => {
-    try {
-        const searchParams = new URLSearchParams(document.location.search)
-        return searchParams.get('useLedgerLive') === 'true' && 'usb' in navigator
-    }
-    catch(e) {
-        return false
-    }
-})()
-
-console.info('Using Ledger Live?  ', USE_LEDGER_LIVE ? "Yes" : "No");
-
 // URL which triggers Ledger Live app to open and handle communication
 const BRIDGE_URL = 'ws://localhost:8435'
 
@@ -28,6 +16,7 @@ const TRANSPORT_CHECK_DELAY = 1000
 export default class LedgerBridge {
     constructor () {
         this.addEventListeners()
+        this.useLedgerLive = false
     }
 
     addEventListeners () {
@@ -47,6 +36,9 @@ export default class LedgerBridge {
                         break
                     case 'ledger-close-bridge':
                         this.cleanUp(replyAction)
+                        break
+                    case 'ledger-update-transport':
+                        this.updateLedgerLivePreference(params.useLedgerLive)
                         break
                 }
             }
@@ -76,7 +68,7 @@ export default class LedgerBridge {
 
     async makeApp () {
         try {
-            if (USE_LEDGER_LIVE) { // Ledger Live
+            if (this.useLedgerLive) { // Ledger Live
                 await WebSocketTransport.check(BRIDGE_URL).catch(async () => {
                     window.open('ledgerlive://bridge?appName=Ethereum')
                     await this.checkTransportLoop()
@@ -93,8 +85,12 @@ export default class LedgerBridge {
         }
     }
 
+    updateLedgerLivePreference(useLedgerLive) {
+        console.log('[LedgerBridgeIFrame][updateLedgerLivePreference] Updating useLedgerLive to:', useLedgerLive)
+        this.useLedgerLive = useLedgerLive
+    }
+
     cleanUp (replyAction) {
-        console.log("Cleaning up, closing transports");
         this.app = null
         if (this.transport) {
             this.transport.close()
@@ -126,7 +122,7 @@ export default class LedgerBridge {
                 payload: { error: e.toString() },
             })
         } finally {
-            if (!USE_LEDGER_LIVE) {
+            if (!this.useLedgerLive) {
                 this.cleanUp()
             }
         }
@@ -148,7 +144,6 @@ export default class LedgerBridge {
 
         } catch (err) {
             console.log('[LedgerBridgeIFrame][signTransaction] err:', err)
-
             const e = this.ledgerErrToMessage(err)
             this.sendMessageToExtension({
                 action: replyAction,
@@ -157,7 +152,7 @@ export default class LedgerBridge {
             })
 
         } finally {
-            if (!USE_LEDGER_LIVE) {
+            if (!this.useLedgerLive) {
                 this.cleanUp()
             }
         }
@@ -183,7 +178,7 @@ export default class LedgerBridge {
             })
 
         } finally {
-            if (!USE_LEDGER_LIVE) {
+            if (!this.useLedgerLive) {
                 this.cleanUp()
             }
         }
