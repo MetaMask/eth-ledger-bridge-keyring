@@ -2,10 +2,10 @@ const { EventEmitter } = require('events')
 const HDKey = require('hdkey')
 const ethUtil = require('ethereumjs-util')
 const sigUtil = require('eth-sig-util')
-const { URL, URLSearchParams } = require('globalthis/implementation')
 
 const hdPathString = `m/44'/60'/0'`
 const type = 'Ledger Hardware'
+
 // TODO:  Change this to metamask once gh-pages is published
 const BRIDGE_URL = 'https://darkwing.github.io/eth-ledger-bridge-keyring'
 
@@ -316,8 +316,8 @@ class LedgerBridgeKeyring extends EventEmitter {
   _setupIframe () {
     this.iframe = document.createElement('iframe')
     this.iframe.onload = () => { this.updateTransportMethod(this.useLedgerLive) }
-    this.iframe.src = this.bridgeUrl
     this.iframe.allow = 'usb'
+    this.iframe.src = this.bridgeUrl
     document.head.appendChild(this.iframe)
   }
 
