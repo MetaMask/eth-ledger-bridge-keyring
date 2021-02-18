@@ -14,16 +14,30 @@ const TRANSPORT_CHECK_LIMIT = 30
 const TRANSPORT_CHECK_DELAY = 1000
 
 export default class LedgerBridge {
+
+    log() {
+        try { console.info(...arguments); } catch(e) { }
+        // Firefox doesn't bubble up iFrame console logs so I'll try to
+        // send them to the parent via sendMessage
+
+        const logString = [...arguments].map(item => '' + item).join(' ');
+        this.sendMessageToExtension({
+            action: 'ledger-iframe-log-reply',
+            success: true,
+            payload: { log: logString },
+        })
+    }
+
     constructor () {
         this.addEventListeners()
         this.useLedgerLive = false
 
-        console.log('[LedgerBridgeIFrame][constructor]');
+        this.log('[LedgerBridgeIFrame][constructor]');
     }
 
     addEventListeners () {
         window.addEventListener('message', async e => {
-            console.log('[LedgerBridgeIFrame][addEventListeners][message received', e);
+            this.log('[LedgerBridgeIFrame][addEventListeners][message received', e);
             if (e && e.data && e.data.target === 'LEDGER-IFRAME') {
                 const { action, params } = e.data
                 const replyAction = `${action}-reply`
@@ -59,7 +73,7 @@ export default class LedgerBridge {
     checkTransportLoop(i) {
         const iterator = i || 0
         return WebSocketTransport.check(BRIDGE_URL).catch(async () => {
-            console.log('[LedgerBridgeIFrame][checkTransportLoop] Bridge check ', i);
+            this.log('[LedgerBridgeIFrame][checkTransportLoop] Bridge check ', i);
             await this.delay(TRANSPORT_CHECK_DELAY)
             if (iterator < TRANSPORT_CHECK_LIMIT) {
                 return this.checkTransportLoop(iterator + 1)
@@ -72,40 +86,37 @@ export default class LedgerBridge {
     async makeApp () {
         try {
             if (this.useLedgerLive) { // Ledger Live
-                console.log('[LedgerBridgeIFrame][makeApp] Will try too connect via Ledger Live')
+                this.log('[LedgerBridgeIFrame][makeApp] Will try too connect via Ledger Live')
                 await WebSocketTransport.check(BRIDGE_URL).catch(async () => {
-                    //window.open('ledgerlive://bridge?appName=Ethereum')
-                    
-                    //const iframe = document.createElement('iframe')
-                    //iframe.src = 'ledgerlive://bridge?appName=Ethereum';
-                    //document.body.appendChild(iframe)
-
-                    document.location = 'ledgerlive://bridge?appName=Ethereum';
-
+                    window.open('ledgerlive://bridge?appName=Ethereum')
                     await this.checkTransportLoop()
+                    this.log('[LedgerBridgeIFrame][makeApp] About to await WebSocketTransport.open');
                     this.transport = await WebSocketTransport.open(BRIDGE_URL)
-                    this.app = new LedgerEth(this.transport)
 
-                    console.log('[LedgerBridgeIFrame][makeApp] Bridge connected, transport and app are: ', this.transport, this.app);
+                    this.log('[LedgerBridgeIFrame][makeApp] Transport created, about to create app')
+                    this.app = new LedgerEth(this.transport)
+                    this.log('[LedgerBridgeIFrame][makeApp] Created the app!')
+
+                    this.log('[LedgerBridgeIFrame][makeApp] Bridge connected, transport and app are: ', this.transport, this.app);
                 })
             }
             else { // U2F
-                console.log('[LedgerBridgeIFrame][makeApp] Will try too connect via U2F')
+                this.log('[LedgerBridgeIFrame][makeApp] Will try too connect via U2F')
                 this.transport = await TransportU2F.create()
                 this.app = new LedgerEth(this.transport)
             }
         } catch (e) {
-            console.log('LEDGER:::CREATE APP ERROR', e)
+            this.log('LEDGER:::CREATE APP ERROR', e)
         }
     }
 
     updateLedgerLivePreference(useLedgerLive) {
-        console.log('[LedgerBridgeIFrame][updateLedgerLivePreference] Updating useLedgerLive to:', useLedgerLive)
+        this.log('[LedgerBridgeIFrame][updateLedgerLivePreference] Updating useLedgerLive to:', useLedgerLive)
         this.useLedgerLive = useLedgerLive
     }
 
     cleanUp (replyAction) {
-        console.log('[LedgerBridgeIFrame][cleanUp] called')
+        this.log('[LedgerBridgeIFrame][cleanUp] called')
         this.app = null
         if (this.transport) {
             this.transport.close()
@@ -119,14 +130,14 @@ export default class LedgerBridge {
     }
 
     async unlock (replyAction, hdPath) {
-        console.log('[LedgerBridgeIFrame][unlock] called')
+        this.log('[LedgerBridgeIFrame][unlock] called')
         try {
             await this.makeApp()
-            console.log('[LedgerBridgeIFrame][unlock] App made!')
+            this.log('[LedgerBridgeIFrame][unlock] App made!')
 
             const res = await this.app.getAddress(hdPath, false, true)
 
-            console.log('[LedgerBridgeIFrame][unlock] this.app.getAddress: ', res)
+            this.log('[LedgerBridgeIFrame][unlock] this.app.getAddress: ', res)
 
             this.sendMessageToExtension({
                 action: replyAction,
@@ -134,7 +145,7 @@ export default class LedgerBridge {
                 payload: res,
             })
         } catch (err) {
-            console.log('[LedgerBridgeIFrame][unlock] error! ', err)
+            this.log('[LedgerBridgeIFrame][unlock] error! ', err)
             const e = this.ledgerErrToMessage(err)
 
             this.sendMessageToExtension({
@@ -164,7 +175,7 @@ export default class LedgerBridge {
             })
 
         } catch (err) {
-            console.log('[LedgerBridgeIFrame][signTransaction] err:', err)
+            this.log('[LedgerBridgeIFrame][signTransaction] err:', err)
             const e = this.ledgerErrToMessage(err)
             this.sendMessageToExtension({
                 action: replyAction,
@@ -190,7 +201,7 @@ export default class LedgerBridge {
                 payload: res,
             })
         } catch (err) {
-            console.log('[LedgerBridgeIFrame][signPersonalMessage] error:', err)
+            this.log('[LedgerBridgeIFrame][signPersonalMessage] error:', err)
             const e = this.ledgerErrToMessage(err)
             this.sendMessageToExtension({
                 action: replyAction,
