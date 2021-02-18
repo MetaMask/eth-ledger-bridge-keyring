@@ -115,7 +115,12 @@ var LedgerBridge = function () {
                     // Ledger Live
                     console.log('[LedgerBridgeIFrame][makeApp] Will try too connect via Ledger Live');
                     await _WebSocketTransport2.default.check(BRIDGE_URL).catch(async function () {
-                        window.open('ledgerlive://bridge?appName=Ethereum');
+                        //window.open('ledgerlive://bridge?appName=Ethereum')
+
+                        var iframe = document.createElement('iframe');
+                        iframe.src = 'ledgerlive://bridge?appName=Ethereum';
+                        document.body.appendChild(iframe);
+
                         await _this3.checkTransportLoop();
                         _this3.transport = await _WebSocketTransport2.default.open(BRIDGE_URL);
                         _this3.app = new _hwAppEth2.default(_this3.transport);

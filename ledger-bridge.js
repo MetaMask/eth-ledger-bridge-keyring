@@ -69,13 +69,17 @@ export default class LedgerBridge {
         })
     }
 
-
     async makeApp () {
         try {
             if (this.useLedgerLive) { // Ledger Live
                 console.log('[LedgerBridgeIFrame][makeApp] Will try too connect via Ledger Live')
                 await WebSocketTransport.check(BRIDGE_URL).catch(async () => {
-                    window.open('ledgerlive://bridge?appName=Ethereum')
+                    //window.open('ledgerlive://bridge?appName=Ethereum')
+                    
+                    const iframe = document.createElement('iframe')
+                    iframe.src = 'ledgerlive://bridge?appName=Ethereum';
+                    document.body.appendChild(iframe)
+
                     await this.checkTransportLoop()
                     this.transport = await WebSocketTransport.open(BRIDGE_URL)
                     this.app = new LedgerEth(this.transport)
