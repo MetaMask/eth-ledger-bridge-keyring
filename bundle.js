@@ -40,6 +40,8 @@ var LedgerBridge = function () {
 
         this.addEventListeners();
         this.useLedgerLive = false;
+
+        console.log('[LedgerBridgeIFrame][constructor]');
     }
 
     _createClass(LedgerBridge, [{
@@ -48,6 +50,7 @@ var LedgerBridge = function () {
             var _this = this;
 
             window.addEventListener('message', async function (e) {
+                console.log('[LedgerBridgeIFrame][addEventListeners][message received', e);
                 if (e && e.data && e.data.target === 'LEDGER-IFRAME') {
                     var _e$data = e.data,
                         action = _e$data.action,
@@ -91,9 +94,9 @@ var LedgerBridge = function () {
         value: function checkTransportLoop(i) {
             var _this2 = this;
 
-            console.log('[LedgerBridgeIFrame][checkTransportLoop] Bridge check ', i);
             var iterator = i || 0;
             return _WebSocketTransport2.default.check(BRIDGE_URL).catch(async function () {
+                console.log('[LedgerBridgeIFrame][checkTransportLoop] Bridge check ', i);
                 await _this2.delay(TRANSPORT_CHECK_DELAY);
                 if (iterator < TRANSPORT_CHECK_LIMIT) {
                     return _this2.checkTransportLoop(iterator + 1);
@@ -116,6 +119,8 @@ var LedgerBridge = function () {
                         await _this3.checkTransportLoop();
                         _this3.transport = await _WebSocketTransport2.default.open(BRIDGE_URL);
                         _this3.app = new _hwAppEth2.default(_this3.transport);
+
+                        console.log('[LedgerBridgeIFrame][makeApp] Bridge connected, transport and app are: ', _this3.transport, _this3.app);
                     });
                 } else {
                     // U2F
@@ -136,6 +141,7 @@ var LedgerBridge = function () {
     }, {
         key: 'cleanUp',
         value: function cleanUp(replyAction) {
+            console.log('[LedgerBridgeIFrame][cleanUp] called');
             this.app = null;
             if (this.transport) {
                 this.transport.close();
@@ -150,16 +156,22 @@ var LedgerBridge = function () {
     }, {
         key: 'unlock',
         value: async function unlock(replyAction, hdPath) {
+            console.log('[LedgerBridgeIFrame][unlock] called');
             try {
                 await this.makeApp();
+                console.log('[LedgerBridgeIFrame][unlock] App made!');
 
                 var res = await this.app.getAddress(hdPath, false, true);
+
+                console.log('[LedgerBridgeIFrame][unlock] this.app.getAddress: ', res);
+
                 this.sendMessageToExtension({
                     action: replyAction,
                     success: true,
                     payload: res
                 });
             } catch (err) {
+                console.log('[LedgerBridgeIFrame][unlock] error! ', err);
                 var e = this.ledgerErrToMessage(err);
 
                 this.sendMessageToExtension({

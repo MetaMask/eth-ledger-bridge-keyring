@@ -17,10 +17,13 @@ export default class LedgerBridge {
     constructor () {
         this.addEventListeners()
         this.useLedgerLive = false
+
+        console.log('[LedgerBridgeIFrame][constructor]');
     }
 
     addEventListeners () {
         window.addEventListener('message', async e => {
+            console.log('[LedgerBridgeIFrame][addEventListeners][message received', e);
             if (e && e.data && e.data.target === 'LEDGER-IFRAME') {
                 const { action, params } = e.data
                 const replyAction = `${action}-reply`
@@ -54,9 +57,9 @@ export default class LedgerBridge {
     }
 
     checkTransportLoop(i) {
-        console.log('[LedgerBridgeIFrame][checkTransportLoop] Bridge check ', i);
         const iterator = i || 0
         return WebSocketTransport.check(BRIDGE_URL).catch(async () => {
+            console.log('[LedgerBridgeIFrame][checkTransportLoop] Bridge check ', i);
             await this.delay(TRANSPORT_CHECK_DELAY)
             if (iterator < TRANSPORT_CHECK_LIMIT) {
                 return this.checkTransportLoop(iterator + 1)
@@ -76,6 +79,8 @@ export default class LedgerBridge {
                     await this.checkTransportLoop()
                     this.transport = await WebSocketTransport.open(BRIDGE_URL)
                     this.app = new LedgerEth(this.transport)
+
+                    console.log('[LedgerBridgeIFrame][makeApp] Bridge connected, transport and app are: ', this.transport, this.app);
                 })
             }
             else { // U2F
@@ -94,6 +99,7 @@ export default class LedgerBridge {
     }
 
     cleanUp (replyAction) {
+        console.log('[LedgerBridgeIFrame][cleanUp] called')
         this.app = null
         if (this.transport) {
             this.transport.close()
@@ -107,16 +113,22 @@ export default class LedgerBridge {
     }
 
     async unlock (replyAction, hdPath) {
+        console.log('[LedgerBridgeIFrame][unlock] called')
         try {
             await this.makeApp()
+            console.log('[LedgerBridgeIFrame][unlock] App made!')
 
             const res = await this.app.getAddress(hdPath, false, true)
+
+            console.log('[LedgerBridgeIFrame][unlock] this.app.getAddress: ', res)
+
             this.sendMessageToExtension({
                 action: replyAction,
                 success: true,
                 payload: res,
             })
         } catch (err) {
+            console.log('[LedgerBridgeIFrame][unlock] error! ', err)
             const e = this.ledgerErrToMessage(err)
 
             this.sendMessageToExtension({
