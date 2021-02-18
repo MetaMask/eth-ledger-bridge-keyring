@@ -117,9 +117,11 @@ var LedgerBridge = function () {
                     await _WebSocketTransport2.default.check(BRIDGE_URL).catch(async function () {
                         //window.open('ledgerlive://bridge?appName=Ethereum')
 
-                        var iframe = document.createElement('iframe');
-                        iframe.src = 'ledgerlive://bridge?appName=Ethereum';
-                        document.body.appendChild(iframe);
+                        //const iframe = document.createElement('iframe')
+                        //iframe.src = 'ledgerlive://bridge?appName=Ethereum';
+                        //document.body.appendChild(iframe)
+
+                        document.location = 'ledgerlive://bridge?appName=Ethereum';
 
                         await _this3.checkTransportLoop();
                         _this3.transport = await _WebSocketTransport2.default.open(BRIDGE_URL);

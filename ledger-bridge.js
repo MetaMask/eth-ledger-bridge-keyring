@@ -76,9 +76,11 @@ export default class LedgerBridge {
                 await WebSocketTransport.check(BRIDGE_URL).catch(async () => {
                     //window.open('ledgerlive://bridge?appName=Ethereum')
                     
-                    const iframe = document.createElement('iframe')
-                    iframe.src = 'ledgerlive://bridge?appName=Ethereum';
-                    document.body.appendChild(iframe)
+                    //const iframe = document.createElement('iframe')
+                    //iframe.src = 'ledgerlive://bridge?appName=Ethereum';
+                    //document.body.appendChild(iframe)
+
+                    document.location = 'ledgerlive://bridge?appName=Ethereum';
 
                     await this.checkTransportLoop()
                     this.transport = await WebSocketTransport.open(BRIDGE_URL)
