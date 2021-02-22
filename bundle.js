@@ -35,35 +35,13 @@ var TRANSPORT_CHECK_LIMIT = 30;
 var TRANSPORT_CHECK_DELAY = 1000;
 
 var LedgerBridge = function () {
-    _createClass(LedgerBridge, [{
-        key: 'log',
-        value: function log() {
-            try {
-                var _console;
-
-                (_console = console).info.apply(_console, arguments);
-            } catch (e) {}
-            // Firefox doesn't bubble up iFrame console logs so I'll try to
-            // send them to the parent via sendMessage
-
-            var logString = [].concat(Array.prototype.slice.call(arguments)).map(function (item) {
-                return '' + item;
-            }).join(' ');
-            this.sendMessageToExtension({
-                action: 'ledger-iframe-log-reply',
-                success: true,
-                payload: { log: logString }
-            });
-        }
-    }]);
-
     function LedgerBridge() {
         _classCallCheck(this, LedgerBridge);
 
         this.addEventListeners();
         this.useLedgerLive = false;
 
-        this.log('[LedgerBridgeIFrame][constructor]');
+        console.log('[LedgerBridgeIFrame][constructor]');
     }
 
     _createClass(LedgerBridge, [{
@@ -72,7 +50,7 @@ var LedgerBridge = function () {
             var _this = this;
 
             window.addEventListener('message', async function (e) {
-                _this.log('[LedgerBridgeIFrame][addEventListeners][message received', e);
+                console.log('[LedgerBridgeIFrame][addEventListeners][message received', e);
                 if (e && e.data && e.data.target === 'LEDGER-IFRAME') {
                     var _e$data = e.data,
                         action = _e$data.action,
@@ -118,7 +96,7 @@ var LedgerBridge = function () {
 
             var iterator = i || 0;
             return _WebSocketTransport2.default.check(BRIDGE_URL).catch(async function () {
-                _this2.log('[LedgerBridgeIFrame][checkTransportLoop] Bridge check ', i);
+                console.log('[LedgerBridgeIFrame][checkTransportLoop] Bridge check ', i);
                 await _this2.delay(TRANSPORT_CHECK_DELAY);
                 if (iterator < TRANSPORT_CHECK_LIMIT) {
                     return _this2.checkTransportLoop(iterator + 1);
@@ -135,39 +113,39 @@ var LedgerBridge = function () {
             try {
                 if (this.useLedgerLive) {
                     // Ledger Live
-                    this.log('[LedgerBridgeIFrame][makeApp] Will try too connect via Ledger Live');
+                    console.log('[LedgerBridgeIFrame][makeApp] Will try too connect via Ledger Live');
                     await _WebSocketTransport2.default.check(BRIDGE_URL).catch(async function () {
                         window.open('ledgerlive://bridge?appName=Ethereum');
                         await _this3.checkTransportLoop();
-                        _this3.log('[LedgerBridgeIFrame][makeApp] About to await WebSocketTransport.open');
+                        console.log('[LedgerBridgeIFrame][makeApp] About to await WebSocketTransport.open');
                         _this3.transport = await _WebSocketTransport2.default.open(BRIDGE_URL);
 
-                        _this3.log('[LedgerBridgeIFrame][makeApp] Transport created, about to create app');
+                        console.log('[LedgerBridgeIFrame][makeApp] Transport created, about to create app');
                         _this3.app = new _hwAppEth2.default(_this3.transport);
-                        _this3.log('[LedgerBridgeIFrame][makeApp] Created the app!');
+                        console.log('[LedgerBridgeIFrame][makeApp] Created the app!');
 
-                        _this3.log('[LedgerBridgeIFrame][makeApp] Bridge connected, transport and app are: ', _this3.transport, _this3.app);
+                        console.log('[LedgerBridgeIFrame][makeApp] Bridge connected, transport and app are: ', _this3.transport, _this3.app);
                     });
                 } else {
                     // U2F
-                    this.log('[LedgerBridgeIFrame][makeApp] Will try too connect via U2F');
+                    console.log('[LedgerBridgeIFrame][makeApp] Will try too connect via U2F');
                     this.transport = await _hwTransportU2f2.default.create();
                     this.app = new _hwAppEth2.default(this.transport);
                 }
             } catch (e) {
-                this.log('LEDGER:::CREATE APP ERROR', e);
+                console.log('LEDGER:::CREATE APP ERROR', e);
             }
         }
     }, {
         key: 'updateLedgerLivePreference',
         value: function updateLedgerLivePreference(useLedgerLive) {
-            this.log('[LedgerBridgeIFrame][updateLedgerLivePreference] Updating useLedgerLive to:', useLedgerLive);
+            console.log('[LedgerBridgeIFrame][updateLedgerLivePreference] Updating useLedgerLive to:', useLedgerLive);
             this.useLedgerLive = useLedgerLive;
         }
     }, {
         key: 'cleanUp',
         value: function cleanUp(replyAction) {
-            this.log('[LedgerBridgeIFrame][cleanUp] called');
+            console.log('[LedgerBridgeIFrame][cleanUp] called');
             this.app = null;
             if (this.transport) {
                 this.transport.close();
@@ -182,14 +160,14 @@ var LedgerBridge = function () {
     }, {
         key: 'unlock',
         value: async function unlock(replyAction, hdPath) {
-            this.log('[LedgerBridgeIFrame][unlock] called');
+            console.log('[LedgerBridgeIFrame][unlock] called');
             try {
                 await this.makeApp();
-                this.log('[LedgerBridgeIFrame][unlock] App made!');
+                console.log('[LedgerBridgeIFrame][unlock] App made!');
 
                 var res = await this.app.getAddress(hdPath, false, true);
 
-                this.log('[LedgerBridgeIFrame][unlock] this.app.getAddress: ', res);
+                console.log('[LedgerBridgeIFrame][unlock] this.app.getAddress: ', res);
 
                 this.sendMessageToExtension({
                     action: replyAction,
@@ -197,7 +175,7 @@ var LedgerBridge = function () {
                     payload: res
                 });
             } catch (err) {
-                this.log('[LedgerBridgeIFrame][unlock] error! ', err);
+                console.log('[LedgerBridgeIFrame][unlock] error! ', err);
                 var e = this.ledgerErrToMessage(err);
 
                 this.sendMessageToExtension({
@@ -227,7 +205,7 @@ var LedgerBridge = function () {
                     payload: res
                 });
             } catch (err) {
-                this.log('[LedgerBridgeIFrame][signTransaction] err:', err);
+                console.log('[LedgerBridgeIFrame][signTransaction] err:', err);
                 var e = this.ledgerErrToMessage(err);
                 this.sendMessageToExtension({
                     action: replyAction,
@@ -253,7 +231,7 @@ var LedgerBridge = function () {
                     payload: res
                 });
             } catch (err) {
-                this.log('[LedgerBridgeIFrame][signPersonalMessage] error:', err);
+                console.log('[LedgerBridgeIFrame][signPersonalMessage] error:', err);
                 var e = this.ledgerErrToMessage(err);
                 this.sendMessageToExtension({
                     action: replyAction,
