@@ -45,6 +45,7 @@ class LedgerBridgeKeyring extends EventEmitter {
       accountDetails: this.accountDetails,
       bridgeUrl: this.bridgeUrl,
       implementFullBIP44: false,
+      useLedgerLive: this.useLedgerLive,
     })
   }
 
