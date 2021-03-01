@@ -323,6 +323,7 @@ class LedgerBridgeKeyring extends EventEmitter {
     this.paths = {}
     this.accountDetails = {}
     this.hdk = new HDKey()
+    this.useLedgerLive = false
   }
 
   /* PRIVATE METHODS */
