@@ -261,27 +261,20 @@ class LedgerBridgeKeyring extends EventEmitter {
     })
   }
 
-  unlockAccountByAddress (address) {
-    return new Promise((resolve, reject) => {
+  async unlockAccountByAddress (address) {
+    const checksummedAddress = ethUtil.toChecksumAddress(address)
+    if (!Object.keys(this.accountDetails).includes(checksummedAddress)) {
+      throw new Error(`Ledger: Account for address '${checksummedAddress}' not found`)
+    }
+    const { hdPath } = this.accountDetails[checksummedAddress]
+    const unlockedAddress = await this.unlock(hdPath)
 
-      const checksummedAddress = ethUtil.toChecksumAddress(address)
-      if (!Object.keys(this.accountDetails).includes(checksummedAddress)) {
-        reject(new Error(`Ledger: Account for address '${checksummedAddress}' not found`))
-        return
-      }
-      const { hdPath } = this.accountDetails[checksummedAddress]
-
-      this.unlock(hdPath)
-        .then((unlockedAddress) => {
-          // unlock resolves to the address for the given hdPath as reported by the ledger device
-          // if that address is not the requested address, then this account belongs to a different device or seed
-          if (unlockedAddress.toLowerCase() !== address.toLowerCase()) {
-            reject(new Error(`Ledger: Account ${address} does not belong to the connected device`))
-          }
-          resolve(hdPath)
-        })
-        .catch(reject)
-    })
+    // unlock resolves to the address for the given hdPath as reported by the ledger device
+    // if that address is not the requested address, then this account belongs to a different device or seed
+    if (unlockedAddress.toLowerCase() !== address.toLowerCase()) {
+      throw new Error(`Ledger: Account ${address} does not belong to the connected device`)
+    }
+    return hdPath
   }
 
   signTypedData () {
