@@ -48,15 +48,15 @@ export default class LedgerBridge {
         }, false)
     }
 
-    sendMessageToExtension(msg) {
+    sendMessageToExtension (msg) {
         window.parent.postMessage(msg, '*')
     }
 
-    delay(ms) {
+    delay (ms) {
         return new Promise((success) => setTimeout(success, ms))
     }
 
-    checkTransportLoop(i) {
+    checkTransportLoop (i) {
         const iterator = i || 0
         return WebSocketTransport.check(BRIDGE_URL).catch(async () => {
             console.log('[LedgerBridgeIFrame][checkTransportLoop] Bridge check ', i);
@@ -93,15 +93,19 @@ export default class LedgerBridge {
             }
         } catch (e) {
             console.log('LEDGER:::CREATE APP ERROR', e)
+            throw e
         }
     }
 
-    updateLedgerLivePreference(useLedgerLive) {
+    updateLedgerLivePreference (useLedgerLive) {
         console.log('[LedgerBridgeIFrame][updateLedgerLivePreference] Updating useLedgerLive to:', useLedgerLive)
         this.useLedgerLive = useLedgerLive
     }
 
     cleanUp (replyAction) {
+        if (this.useLedgerLive) {
+            return;
+        }
         console.log('[LedgerBridgeIFrame][cleanUp] called')
         this.app = null
         if (this.transport) {
@@ -140,9 +144,7 @@ export default class LedgerBridge {
                 payload: { error: e.toString() },
             })
         } finally {
-            if (!this.useLedgerLive) {
-                this.cleanUp()
-            }
+            this.cleanUp()
         }
     }
 
@@ -170,9 +172,7 @@ export default class LedgerBridge {
             })
 
         } finally {
-            if (!this.useLedgerLive) {
-                this.cleanUp()
-            }
+            this.cleanUp()
         }
     }
 
@@ -196,9 +196,7 @@ export default class LedgerBridge {
             })
 
         } finally {
-            if (!this.useLedgerLive) {
-                this.cleanUp()
-            }
+            this.cleanUp()
         }
     }
 
@@ -238,5 +236,4 @@ export default class LedgerBridge {
         // Other
         return err.toString()
     }
-
 }

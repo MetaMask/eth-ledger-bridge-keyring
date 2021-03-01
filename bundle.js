@@ -134,6 +134,7 @@ var LedgerBridge = function () {
                 }
             } catch (e) {
                 console.log('LEDGER:::CREATE APP ERROR', e);
+                throw e;
             }
         }
     }, {
@@ -146,6 +147,9 @@ var LedgerBridge = function () {
         key: 'cleanUp',
         value: function cleanUp(replyAction) {
             console.log('[LedgerBridgeIFrame][cleanUp] called');
+            if (this.useLedgerLive) {
+                return;
+            }
             this.app = null;
             if (this.transport) {
                 this.transport.close();
@@ -184,9 +188,7 @@ var LedgerBridge = function () {
                     payload: { error: e.toString() }
                 });
             } finally {
-                if (!this.useLedgerLive) {
-                    this.cleanUp();
-                }
+                this.cleanUp();
             }
         }
     }, {
@@ -213,9 +215,7 @@ var LedgerBridge = function () {
                     payload: { error: e.toString() }
                 });
             } finally {
-                if (!this.useLedgerLive) {
-                    this.cleanUp();
-                }
+                this.cleanUp();
             }
         }
     }, {
@@ -239,9 +239,7 @@ var LedgerBridge = function () {
                     payload: { error: e.toString() }
                 });
             } finally {
-                if (!this.useLedgerLive) {
-                    this.cleanUp();
-                }
+                this.cleanUp();
             }
         }
     }, {
