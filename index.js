@@ -3,13 +3,12 @@ const HDKey = require('hdkey')
 const ethUtil = require('ethereumjs-util')
 const sigUtil = require('eth-sig-util')
 
-const hdPathString = `m/44'/60'/0'`
+const pathBase = 'm'
+const hdPathString = `${pathBase}/44'/60'/0'`
 const type = 'Ledger Hardware'
 
-// TODO:  Change this to metamask once gh-pages is published
-const BRIDGE_URL = 'https://darkwing.github.io/eth-ledger-bridge-keyring'
+const BRIDGE_URL = 'https://metamask.github.io/eth-ledger-bridge-keyring'
 
-const pathBase = 'm'
 const MAX_INDEX = 1000
 const NETWORK_API_URLS = {
   ropsten: 'http://api-ropsten.etherscan.io',
@@ -20,7 +19,6 @@ const NETWORK_API_URLS = {
 
 class LedgerBridgeKeyring extends EventEmitter {
   constructor (opts = {}) {
-    console.log("[LedgerBridgeKeyring][constructor] Initialize with options: ", opts)
     super()
     this.accountDetails = {}
     this.bridgeUrl = null
@@ -114,17 +112,12 @@ class LedgerBridgeKeyring extends EventEmitter {
   }
 
   unlock (hdPath) {
-    console.log("[LedgerBridgeKeyring][unlock] Called")
     if (this.isUnlocked() && !hdPath) {
-      console.log("[LedgerBridgeKeyring][unlock] Already unlocked, resolving immediately")
       return Promise.resolve('already unlocked')
     }
     const path = hdPath ? this._toLedgerPath(hdPath) : this.hdPath
 
     return new Promise((resolve, reject) => {
-      console.log("[LedgerBridgeKeyring][unlock] Sending 'ledger-unlock' with params: ", {
-        hdPath: path,
-      })
       this._sendMessage({
         action: 'ledger-unlock',
         params: {
@@ -132,12 +125,9 @@ class LedgerBridgeKeyring extends EventEmitter {
         },
       },
       ({ success, payload }) => {
-        console.log("[LedgerBridgeKeyring][unlock] Received 'ledger-unlock' response: ", success, payload)
         if (success) {
           this.hdk.publicKey = Buffer.from(payload.publicKey, 'hex')
           this.hdk.chainCode = Buffer.from(payload.chainCode, 'hex')
-          console.log("[LedgerBridgeKeyring][unlock][success!] hdkey:", this.hdk)
-
           resolve(payload.address)
         } else {
           reject(payload.error || 'Unknown error')
@@ -147,7 +137,6 @@ class LedgerBridgeKeyring extends EventEmitter {
   }
 
   addAccounts (n = 1) {
-    console.log("[LedgerBridgeKeyring][addAccounts] Called!")
     return new Promise((resolve, reject) => {
       this.unlock()
         .then(async (_) => {
@@ -173,11 +162,9 @@ class LedgerBridgeKeyring extends EventEmitter {
             }
             this.page = 0
           }
-          console.log("[LedgerBridgeKeyring][addAccounts] Returning accounts: ", this.accounts)
           resolve(this.accounts)
         })
         .catch(e => {
-          console.log("[LedgerBridgeKeyring][addAccounts] Unlock catch: ", e)
           reject(e)
         })
     })
@@ -210,7 +197,6 @@ class LedgerBridgeKeyring extends EventEmitter {
   }
 
   updateTransportMethod(useLedgerLive = false) {
-    console.log("[LedgerBridgeKeyring] Sending message to iFrame to update Ledger Live preference to: ", useLedgerLive)
     this._sendMessage({ action: 'ledger-update-transport', params: { useLedgerLive } })
   }
 
@@ -316,7 +302,6 @@ class LedgerBridgeKeyring extends EventEmitter {
   }
 
   forgetDevice () {
-    console.log("[LedgerBridgeKeyring][forgetDevice] Called")
     this.accounts = []
     this.page = 0
     this.unlockedAccount = 0
@@ -331,7 +316,6 @@ class LedgerBridgeKeyring extends EventEmitter {
   _setupIframe () {
     this.iframe = document.createElement('iframe')
     this.iframe.onload = () => { this.updateTransportMethod(this.useLedgerLive) }
-    this.iframe.allow = 'usb'
     this.iframe.src = this.bridgeUrl
     document.head.appendChild(this.iframe)
   }
@@ -343,7 +327,6 @@ class LedgerBridgeKeyring extends EventEmitter {
   }
 
   _sendMessage (msg, cb) {
-    console.log("[LedgerBridgeKeyring][_sendMessage] message / callback is:", msg, cb)
     msg.target = 'LEDGER-IFRAME'
     this.iframe.contentWindow.postMessage(msg, '*')
     const eventListener = ({ origin, data }) => {
