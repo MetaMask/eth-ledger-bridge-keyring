@@ -68,7 +68,7 @@ var LedgerBridge = function () {
                             _this.cleanUp(replyAction);
                             break;
                         case 'ledger-update-transport':
-                            _this.updateLedgerLivePreference(params.useLedgerLive);
+                            _this.updateLedgerLivePreference(replyAction, params.useLedgerLive);
                             break;
                     }
                 }
@@ -125,8 +125,12 @@ var LedgerBridge = function () {
         }
     }, {
         key: 'updateLedgerLivePreference',
-        value: function updateLedgerLivePreference(useLedgerLive) {
+        value: function updateLedgerLivePreference(replyAction, useLedgerLive) {
             this.useLedgerLive = useLedgerLive;
+            this.sendMessageToExtension({
+                action: replyAction,
+                success: true
+            });
         }
     }, {
         key: 'cleanUp',

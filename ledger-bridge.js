@@ -38,7 +38,7 @@ export default class LedgerBridge {
                         this.cleanUp(replyAction)
                         break
                     case 'ledger-update-transport':
-                        this.updateLedgerLivePreference(params.useLedgerLive)
+                        this.updateLedgerLivePreference(replyAction, params.useLedgerLive)
                         break
                 }
             }
@@ -85,8 +85,12 @@ export default class LedgerBridge {
         }
     }
 
-    updateLedgerLivePreference (useLedgerLive) {
+    updateLedgerLivePreference (replyAction, useLedgerLive) {
         this.useLedgerLive = useLedgerLive
+        this.sendMessageToExtension({
+            action: replyAction,
+            success: true,
+        })
     }
 
     cleanUp (replyAction) {
