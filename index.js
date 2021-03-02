@@ -59,8 +59,6 @@ class LedgerBridgeKeyring extends EventEmitter {
     this.implementFullBIP44 = opts.implementFullBIP44 || false
     this.useLedgerLive = opts.useLedgerLive || false
 
-    console.log("[LedgerBridgeKeyring] useLedgerLive initialized with: ", opts.useLedgerLive);
-
     // Remove accounts that don't have corresponding account details
     this.accounts = this.accounts
       .filter((account) => Object.keys(this.accountDetails).includes(ethUtil.toChecksumAddress(account)))
@@ -116,7 +114,6 @@ class LedgerBridgeKeyring extends EventEmitter {
       return Promise.resolve('already unlocked')
     }
     const path = hdPath ? this._toLedgerPath(hdPath) : this.hdPath
-
     return new Promise((resolve, reject) => {
       this._sendMessage({
         action: 'ledger-unlock',
@@ -137,6 +134,7 @@ class LedgerBridgeKeyring extends EventEmitter {
   }
 
   addAccounts (n = 1) {
+
     return new Promise((resolve, reject) => {
       this.unlock()
         .then(async (_) => {
@@ -164,7 +162,7 @@ class LedgerBridgeKeyring extends EventEmitter {
           }
           resolve(this.accounts)
         })
-        .catch(e => {
+        .catch((e) => {
           reject(e)
         })
     })
@@ -192,12 +190,23 @@ class LedgerBridgeKeyring extends EventEmitter {
       throw new Error(`Address ${address} not found in this keyring`)
     }
     this.accounts = this.accounts.filter((a) => a.toLowerCase() !== address.toLowerCase())
-    delete this.accountIndexes[ethUtil.toChecksumAddress(address)]
+    delete this.accountDetails[ethUtil.toChecksumAddress(address)]
     this._sendMessage({ action: 'ledger-close-bridge' }, () => this.forgetDevice())
   }
 
   updateTransportMethod(useLedgerLive = false) {
-    this._sendMessage({ action: 'ledger-update-transport', params: { useLedgerLive } })
+    return new Promise((resolve, reject) => {
+      this._sendMessage({
+        action: 'ledger-update-transport',
+        params: { useLedgerLive }
+      }, ({ success }) => {
+        if(success) {
+          resolve(true)
+        } else {
+          reject(new Error('Ledger transport could not be updated'))
+        }
+      })
+    })
   }
 
   // tx is an instance of the ethereumjs-transaction class.
@@ -315,7 +324,9 @@ class LedgerBridgeKeyring extends EventEmitter {
 
   _setupIframe () {
     this.iframe = document.createElement('iframe')
-    this.iframe.onload = () => { this.updateTransportMethod(this.useLedgerLive) }
+    this.iframe.onload = () => {
+      this.updateTransportMethod(this.useLedgerLive)
+    }
     this.iframe.src = this.bridgeUrl
     document.head.appendChild(this.iframe)
   }
@@ -367,6 +378,7 @@ class LedgerBridgeKeyring extends EventEmitter {
 
   async _getAccountsBIP44 (from, to) {
     const accounts = []
+
     for (let i = from; i < to; i++) {
       const path = this._getPathForIndex(i)
       const address = await this.unlock(path)
