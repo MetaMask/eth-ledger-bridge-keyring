@@ -87,6 +87,7 @@ export default class LedgerBridge {
 
     updateLedgerLivePreference (replyAction, useLedgerLive) {
         this.useLedgerLive = useLedgerLive
+        this.cleanUp()
         this.sendMessageToExtension({
             action: replyAction,
             success: true,
