@@ -73,16 +73,18 @@ class LedgerBridgeKeyring extends EventEmitter {
 
     // try to migrate non-bip44 accounts too
     if (!this._isBIP44()) {
-      this.accounts.filter((account) => !Object.keys(this.accountDetails).includes(ethUtil.toChecksumAddress(account))).forEach((account) => {
-        try {
-          this.accountDetails[ethUtil.toChecksumAddress(account)] = {
-            bip44: false,
-            hdPath: this._pathFromAddress(account),
+      this.accounts
+        .filter((account) => !Object.keys(this.accountDetails).includes(ethUtil.toChecksumAddress(account)))
+        .forEach((account) => {
+          try {
+            this.accountDetails[ethUtil.toChecksumAddress(account)] = {
+              bip44: false,
+              hdPath: this._pathFromAddress(account),
+            }
+          } catch (e) {
+            console.log(`failed to migrate account ${account}`)
           }
-        } catch (e) {
-          console.log(`failed to migrate account ${account}`)
-        }
-      })
+        })
     }
   }
 
