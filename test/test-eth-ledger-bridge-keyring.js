@@ -6,6 +6,7 @@ const chai = require('chai')
 const spies = require('chai-spies')
 const EthereumTx = require('ethereumjs-tx')
 const HDKey = require('hdkey')
+const ethUtil = require('ethereumjs-util')
 const LedgerBridgeKeyring = require('..')
 
 const { expect } = chai
@@ -91,22 +92,72 @@ describe('LedgerBridgeKeyring', function () {
   })
 
   describe('deserialize', function () {
-    it('serializes what it deserializes', function (done) {
+    it('serializes what it deserializes', function () {
 
+      const account = fakeAccounts[0]
+      const checksum = ethUtil.toChecksumAddress(account)
       const someHdPath = `m/44'/60'/0'/1`
-
-      keyring.deserialize({
+      const accountDetails = {}
+      accountDetails[checksum] = {
+        index: 0,
+        hdPath: someHdPath,
+      }
+      return keyring.deserialize({
         page: 10,
         hdPath: someHdPath,
-        accounts: [],
+        accounts: [account],
+        accountDetails,
       })
         .then(() => {
           return keyring.serialize()
         }).then((serialized) => {
-          assert.equal(serialized.accounts.length, 0, 'restores 0 accounts')
+          assert.equal(serialized.accounts.length, 1, 'restores 1 account')
           assert.equal(serialized.bridgeUrl, 'https://metamask.github.io/eth-ledger-bridge-keyring', 'restores bridgeUrl')
           assert.equal(serialized.hdPath, someHdPath, 'restores hdPath')
-          done()
+          assert.deepEqual(serialized.accountDetails, accountDetails, 'restores accountDetails')
+        })
+    })
+
+    it('should migrate accountIndexes to accountDetails', function () {
+
+      const someHdPath = `m/44'/60'/0'/0/0`
+      const account = fakeAccounts[1]
+      const checksum = ethUtil.toChecksumAddress(account)
+      const accountIndexes = {}
+      accountIndexes[checksum] = 1
+      return keyring.deserialize({
+        accounts: [account],
+        accountIndexes,
+        hdPath: someHdPath,
+      })
+        .then(() => {
+          assert.equal(keyring.hdPath, someHdPath)
+          assert.equal(keyring.accounts[0], account)
+          assert.deepEqual(keyring.accountDetails[checksum], {
+            bip44: true,
+            hdPath: `m/44'/60'/1'/0/0`,
+          })
+
+        })
+    })
+
+    it('should migrate non-bip44 accounts to accountDetails', function () {
+
+      const someHdPath = `m/44'/60'/0'`
+      const account = fakeAccounts[1]
+      const checksum = ethUtil.toChecksumAddress(account)
+      return keyring.deserialize({
+        accounts: [account],
+        hdPath: someHdPath,
+      })
+        .then(() => {
+          assert.equal(keyring.hdPath, someHdPath)
+          assert.equal(keyring.accounts[0], account)
+          assert.deepEqual(keyring.accountDetails[checksum], {
+            bip44: false,
+            hdPath: `m/44'/60'/0'/1`,
+          })
+
         })
     })
   })
@@ -178,6 +229,51 @@ describe('LedgerBridgeKeyring', function () {
             assert.equal(accounts[1], fakeAccounts[1])
             assert.equal(accounts[2], fakeAccounts[2])
             done()
+          })
+      })
+    })
+
+    it('stores account details for bip44 accounts', function () {
+      keyring.setHdPath(`m/44'/60'/0'/0/0`)
+      keyring.setAccountToUnlock(1)
+      chai.spy.on(keyring, 'unlock', (_) => Promise.resolve(fakeAccounts[1]))
+      after(function () {
+        chai.spy.restore(keyring, 'unlock')
+      })
+      return keyring.addAccounts(1)
+        .then((accounts) => {
+          assert.deepEqual(keyring.accountDetails[accounts[0]], {
+            bip44: true,
+            hdPath: `m/44'/60'/1'/0/0`,
+          })
+        })
+    })
+
+    it('stores account details for non-bip44 accounts', function () {
+      keyring.setHdPath(`m/44'/60'/0'`)
+      keyring.setAccountToUnlock(2)
+      return keyring.addAccounts(1)
+        .then((accounts) => {
+          assert.deepEqual(keyring.accountDetails[accounts[0]], {
+            bip44: false,
+            hdPath: `m/44'/60'/0'/2`,
+          })
+        })
+    })
+
+    describe('when called multiple times', function () {
+      it('should not remove existing accounts', function (done) {
+        keyring.setAccountToUnlock(0)
+        keyring.addAccounts(1)
+          .then(function () {
+            keyring.setAccountToUnlock(1)
+            keyring.addAccounts(1)
+              .then((accounts) => {
+                assert.equal(accounts.length, 2)
+                assert.equal(accounts[0], fakeAccounts[0])
+                assert.equal(accounts[1], fakeAccounts[1])
+                done()
+              })
           })
       })
     })
@@ -361,4 +457,34 @@ describe('LedgerBridgeKeyring', function () {
     })
   })
 
+  describe('unlockAccountByAddress', function () {
+
+    beforeEach(async function () {
+      keyring.setAccountToUnlock(0)
+      await keyring.addAccounts()
+    })
+
+    afterEach(function () {
+      chai.spy.restore(keyring, 'unlock')
+    })
+
+    it('should unlock the given account if found on device', function () {
+      chai.spy.on(keyring, 'unlock', (_) => Promise.resolve(fakeAccounts[0]))
+
+      return keyring.unlockAccountByAddress(fakeAccounts[0])
+        .then((hdPath) => {
+          assert.equal(hdPath, 'm/44\'/60\'/0\'/0')
+        })
+    })
+
+    it('should reject if the account is not found on device', function () {
+
+      const requestedAccount = fakeAccounts[0]
+      const incorrectAccount = fakeAccounts[1]
+
+      chai.spy.on(keyring, 'unlock', (_) => Promise.resolve(incorrectAccount))
+
+      return assert.rejects(() => keyring.unlockAccountByAddress(requestedAccount), new Error(`Ledger: Account ${fakeAccounts[0]} does not belong to the connected device`))
+    })
+  })
 })
