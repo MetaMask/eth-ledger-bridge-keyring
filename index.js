@@ -1,73 +1,73 @@
-const { EventEmitter } = require('events')
-const HDKey = require('hdkey')
-const ethUtil = require('ethereumjs-util')
-const sigUtil = require('eth-sig-util')
+const { EventEmitter } = require('events');
+const HDKey = require('hdkey');
+const ethUtil = require('ethereumjs-util');
+const sigUtil = require('eth-sig-util');
 
-const hdPathString = `m/44'/60'/0'`
-const type = 'Ledger Hardware'
-const BRIDGE_URL = 'https://metamask.github.io/eth-ledger-bridge-keyring'
-const pathBase = 'm'
-const MAX_INDEX = 1000
+const hdPathString = `m/44'/60'/0'`;
+const type = 'Ledger Hardware';
+const BRIDGE_URL = 'https://metamask.github.io/eth-ledger-bridge-keyring';
+const pathBase = 'm';
+const MAX_INDEX = 1000;
 const NETWORK_API_URLS = {
   ropsten: 'http://api-ropsten.etherscan.io',
   kovan: 'http://api-kovan.etherscan.io',
   rinkeby: 'https://api-rinkeby.etherscan.io',
   mainnet: 'https://api.etherscan.io',
-}
+};
 
 class LedgerBridgeKeyring extends EventEmitter {
-  constructor (opts = {}) {
-    super()
-    this.accountDetails = {}
-    this.bridgeUrl = null
-    this.type = type
-    this.page = 0
-    this.perPage = 5
-    this.unlockedAccount = 0
-    this.hdk = new HDKey()
-    this.paths = {}
-    this.iframe = null
-    this.network = 'mainnet'
-    this.implementFullBIP44 = false
-    this.deserialize(opts)
-    this._setupIframe()
+  constructor(opts = {}) {
+    super();
+    this.accountDetails = {};
+    this.bridgeUrl = null;
+    this.type = type;
+    this.page = 0;
+    this.perPage = 5;
+    this.unlockedAccount = 0;
+    this.hdk = new HDKey();
+    this.paths = {};
+    this.iframe = null;
+    this.network = 'mainnet';
+    this.implementFullBIP44 = false;
+    this.deserialize(opts);
+    this._setupIframe();
   }
 
-  serialize () {
+  serialize() {
     return Promise.resolve({
       hdPath: this.hdPath,
       accounts: this.accounts,
       accountDetails: this.accountDetails,
       bridgeUrl: this.bridgeUrl,
       implementFullBIP44: false,
-    })
+    });
   }
 
-  deserialize (opts = {}) {
-    this.hdPath = opts.hdPath || hdPathString
-    this.bridgeUrl = opts.bridgeUrl || BRIDGE_URL
-    this.accounts = opts.accounts || []
-    this.accountDetails = opts.accountDetails || {}
+  deserialize(opts = {}) {
+    this.hdPath = opts.hdPath || hdPathString;
+    this.bridgeUrl = opts.bridgeUrl || BRIDGE_URL;
+    this.accounts = opts.accounts || [];
+    this.accountDetails = opts.accountDetails || {};
     if (!opts.accountDetails) {
-      this._migrateAccountDetails(opts)
+      this._migrateAccountDetails(opts);
     }
 
-    this.implementFullBIP44 = opts.implementFullBIP44 || false
+    this.implementFullBIP44 = opts.implementFullBIP44 || false;
 
     // Remove accounts that don't have corresponding account details
     this.accounts = this.accounts
-      .filter((account) => Object.keys(this.accountDetails).includes(ethUtil.toChecksumAddress(account)))
+      .filter((account) => Object.keys(this.accountDetails).includes(ethUtil.toChecksumAddress(account)));
 
-    return Promise.resolve()
+    return Promise.resolve();
   }
 
-  _migrateAccountDetails (opts) {
+  _migrateAccountDetails(opts) {
     if (this._isBIP44() && opts.accountIndexes) {
       for (const account of Object.keys(opts.accountIndexes)) {
         this.accountDetails[account] = {
           bip44: true,
           hdPath: this._getPathForIndex(opts.accountIndexes[account]),
-        }
+        };
       }
     }
 
@@ -80,35 +80,35 @@ class LedgerBridgeKeyring extends EventEmitter {
             this.accountDetails[ethUtil.toChecksumAddress(account)] = {
               bip44: false,
               hdPath: this._pathFromAddress(account),
-            }
+            };
           } catch (e) {
-            console.log(`failed to migrate account ${account}`)
+            console.log(`failed to migrate account ${account}`);
           }
-        })
+        });
     }
   }
 
-  isUnlocked () {
-    return Boolean(this.hdk && this.hdk.publicKey)
+  isUnlocked() {
+    return Boolean(this.hdk && this.hdk.publicKey);
   }
 
-  setAccountToUnlock (index) {
-    this.unlockedAccount = parseInt(index, 10)
+  setAccountToUnlock(index) {
+    this.unlockedAccount = parseInt(index, 10);
   }
 
-  setHdPath (hdPath) {
+  setHdPath(hdPath) {
     // Reset HDKey if the path changes
     if (this.hdPath !== hdPath) {
-      this.hdk = new HDKey()
+      this.hdk = new HDKey();
     }
-    this.hdPath = hdPath
+    this.hdPath = hdPath;
   }
 
-  unlock (hdPath) {
+  unlock(hdPath) {
     if (this.isUnlocked() && !hdPath) {
-      return Promise.resolve('already unlocked')
+      return Promise.resolve('already unlocked');
     }
-    const path = hdPath ? this._toLedgerPath(hdPath) : this.hdPath
+    const path = hdPath ? this._toLedgerPath(hdPath) : this.hdPath;
     return new Promise((resolve, reject) => {
       this._sendMessage({
         action: 'ledger-unlock',
@@ -118,82 +118,82 @@ class LedgerBridgeKeyring extends EventEmitter {
       },
       ({ success, payload }) => {
         if (success) {
-          this.hdk.publicKey = Buffer.from(payload.publicKey, 'hex')
-          this.hdk.chainCode = Buffer.from(payload.chainCode, 'hex')
-          resolve(payload.address)
+          this.hdk.publicKey = Buffer.from(payload.publicKey, 'hex');
+          this.hdk.chainCode = Buffer.from(payload.chainCode, 'hex');
+          resolve(payload.address);
         } else {
-          reject(payload.error || 'Unknown error')
+          reject(payload.error || 'Unknown error');
         }
-      })
-    })
+      });
+    });
   }
 
-  addAccounts (n = 1) {
+  addAccounts(n = 1) {
 
     return new Promise((resolve, reject) => {
       this.unlock()
         .then(async (_) => {
-          const from = this.unlockedAccount
-          const to = from + n
+          const from = this.unlockedAccount;
+          const to = from + n;
           for (let i = from; i < to; i++) {
-            const path = this._getPathForIndex(i)
-            let address
+            const path = this._getPathForIndex(i);
+            let address;
             if (this._isBIP44()) {
-              address = await this.unlock(path)
+              address = await this.unlock(path);
             } else {
-              address = this._addressFromIndex(pathBase, i)
+              address = this._addressFromIndex(pathBase, i);
             }
             this.accountDetails[ethUtil.toChecksumAddress(address)] = {
               bip44: this._isBIP44(),
               hdPath: path,
-            }
+            };
 
             if (!this.accounts.includes(address)) {
-              this.accounts.push(address)
+              this.accounts.push(address);
             }
-            this.page = 0
+            this.page = 0;
           }
-          resolve(this.accounts)
+          resolve(this.accounts);
         })
         .catch((e) => {
-          reject(e)
-        })
-    })
+          reject(e);
+        });
+    });
   }
 
-  getFirstPage () {
-    this.page = 0
-    return this.__getPage(1)
+  getFirstPage() {
+    this.page = 0;
+    return this.__getPage(1);
   }
 
-  getNextPage () {
-    return this.__getPage(1)
+  getNextPage() {
+    return this.__getPage(1);
   }
 
-  getPreviousPage () {
-    return this.__getPage(-1)
+  getPreviousPage() {
+    return this.__getPage(-1);
   }
 
-  getAccounts () {
-    return Promise.resolve(this.accounts.slice())
+  getAccounts() {
+    return Promise.resolve(this.accounts.slice());
   }
 
-  removeAccount (address) {
+  removeAccount(address) {
     if (!this.accounts.map((a) => a.toLowerCase()).includes(address.toLowerCase())) {
-      throw new Error(`Address ${address} not found in this keyring`)
+      throw new Error(`Address ${address} not found in this keyring`);
     }
-    this.accounts = this.accounts.filter((a) => a.toLowerCase() !== address.toLowerCase())
-    delete this.accountDetails[ethUtil.toChecksumAddress(address)]
+    this.accounts = this.accounts.filter((a) => a.toLowerCase() !== address.toLowerCase());
+    delete this.accountDetails[ethUtil.toChecksumAddress(address)];
   }
 
   // tx is an instance of the ethereumjs-transaction class.
-  signTransaction (address, tx) {
+  signTransaction(address, tx) {
     return new Promise((resolve, reject) => {
       this.unlockAccountByAddress(address)
         .then((hdPath) => {
-          tx.v = ethUtil.bufferToHex(tx.getChainId())
-          tx.r = '0x00'
-          tx.s = '0x00'
+          tx.v = ethUtil.bufferToHex(tx.getChainId());
+          tx.r = '0x00';
+          tx.s = '0x00';
 
           this._sendMessage({
             action: 'ledger-sign-transaction',
@@ -206,31 +206,31 @@ class LedgerBridgeKeyring extends EventEmitter {
           ({ success, payload }) => {
             if (success) {
 
-              tx.v = Buffer.from(payload.v, 'hex')
-              tx.r = Buffer.from(payload.r, 'hex')
-              tx.s = Buffer.from(payload.s, 'hex')
+              tx.v = Buffer.from(payload.v, 'hex');
+              tx.r = Buffer.from(payload.r, 'hex');
+              tx.s = Buffer.from(payload.s, 'hex');
 
-              const valid = tx.verifySignature()
+              const valid = tx.verifySignature();
               if (valid) {
-                resolve(tx)
+                resolve(tx);
               } else {
-                reject(new Error('Ledger: The transaction signature is not valid'))
+                reject(new Error('Ledger: The transaction signature is not valid'));
               }
             } else {
-              reject(new Error(payload.error || 'Ledger: Unknown error while signing transaction'))
+              reject(new Error(payload.error || 'Ledger: Unknown error while signing transaction'));
             }
-          })
+          });
         })
-        .catch(reject)
-    })
+        .catch(reject);
+    });
   }
 
-  signMessage (withAccount, data) {
-    return this.signPersonalMessage(withAccount, data)
+  signMessage(withAccount, data) {
+    return this.signPersonalMessage(withAccount, data);
   }
 
   // For personal_sign, we need to prefix the message:
-  signPersonalMessage (withAccount, message) {
+  signPersonalMessage(withAccount, message) {
     return new Promise((resolve, reject) => {
       this.unlockAccountByAddress(withAccount)
         .then((hdPath) => {
@@ -243,226 +243,226 @@ class LedgerBridgeKeyring extends EventEmitter {
           },
           ({ success, payload }) => {
             if (success) {
-              let v = payload.v - 27
-              v = v.toString(16)
+              let v = payload.v - 27;
+              v = v.toString(16);
               if (v.length < 2) {
-                v = `0${v}`
+                v = `0${v}`;
               }
-              const signature = `0x${payload.r}${payload.s}${v}`
-              const addressSignedWith = sigUtil.recoverPersonalSignature({ data: message, sig: signature })
+              const signature = `0x${payload.r}${payload.s}${v}`;
+              const addressSignedWith = sigUtil.recoverPersonalSignature({ data: message, sig: signature });
               if (ethUtil.toChecksumAddress(addressSignedWith) !== ethUtil.toChecksumAddress(withAccount)) {
-                reject(new Error('Ledger: The signature doesnt match the right address'))
+                reject(new Error('Ledger: The signature doesnt match the right address'));
               }
-              resolve(signature)
+              resolve(signature);
             } else {
-              reject(new Error(payload.error || 'Ledger: Uknown error while signing message'))
+              reject(new Error(payload.error || 'Ledger: Uknown error while signing message'));
             }
-          })
+          });
         })
-        .catch(reject)
-    })
+        .catch(reject);
+    });
   }
 
-  async unlockAccountByAddress (address) {
-    const checksummedAddress = ethUtil.toChecksumAddress(address)
+  async unlockAccountByAddress(address) {
+    const checksummedAddress = ethUtil.toChecksumAddress(address);
     if (!Object.keys(this.accountDetails).includes(checksummedAddress)) {
-      throw new Error(`Ledger: Account for address '${checksummedAddress}' not found`)
+      throw new Error(`Ledger: Account for address '${checksummedAddress}' not found`);
     }
-    const { hdPath } = this.accountDetails[checksummedAddress]
-    const unlockedAddress = await this.unlock(hdPath)
+    const { hdPath } = this.accountDetails[checksummedAddress];
+    const unlockedAddress = await this.unlock(hdPath);
 
     // unlock resolves to the address for the given hdPath as reported by the ledger device
     // if that address is not the requested address, then this account belongs to a different device or seed
     if (unlockedAddress.toLowerCase() !== address.toLowerCase()) {
-      throw new Error(`Ledger: Account ${address} does not belong to the connected device`)
+      throw new Error(`Ledger: Account ${address} does not belong to the connected device`);
     }
-    return hdPath
+    return hdPath;
   }
 
-  signTypedData () {
-    throw new Error('Not supported on this device')
+  signTypedData() {
+    throw new Error('Not supported on this device');
   }
 
-  exportAccount () {
-    throw new Error('Not supported on this device')
+  exportAccount() {
+    throw new Error('Not supported on this device');
   }
 
-  forgetDevice () {
-    this.accounts = []
-    this.page = 0
-    this.unlockedAccount = 0
-    this.paths = {}
-    this.accountDetails = {}
-    this.hdk = new HDKey()
+  forgetDevice() {
+    this.accounts = [];
+    this.page = 0;
+    this.unlockedAccount = 0;
+    this.paths = {};
+    this.accountDetails = {};
+    this.hdk = new HDKey();
   }
 
   /* PRIVATE METHODS */
 
-  _setupIframe () {
-    this.iframe = document.createElement('iframe')
-    this.iframe.src = this.bridgeUrl
-    document.head.appendChild(this.iframe)
+  _setupIframe() {
+    this.iframe = document.createElement('iframe');
+    this.iframe.src = this.bridgeUrl;
+    document.head.appendChild(this.iframe);
   }
 
-  _getOrigin () {
-    const tmp = this.bridgeUrl.split('/')
-    tmp.splice(-1, 1)
-    return tmp.join('/')
+  _getOrigin() {
+    const tmp = this.bridgeUrl.split('/');
+    tmp.splice(-1, 1);
+    return tmp.join('/');
   }
 
-  _sendMessage (msg, cb) {
-    msg.target = 'LEDGER-IFRAME'
-    this.iframe.contentWindow.postMessage(msg, '*')
+  _sendMessage(msg, cb) {
+    msg.target = 'LEDGER-IFRAME';
+    this.iframe.contentWindow.postMessage(msg, '*');
     const eventListener = ({ origin, data }) => {
       if (origin !== this._getOrigin()) {
-        return false
+        return false;
       }
       if (data && data.action && data.action === `${msg.action}-reply`) {
-        cb(data)
-        return undefined
+        cb(data);
+        return undefined;
       }
-      window.removeEventListener('message', eventListener)
-      return undefined
-    }
-    window.addEventListener('message', eventListener)
+      window.removeEventListener('message', eventListener);
+      return undefined;
+    };
+    window.addEventListener('message', eventListener);
   }
 
-  async __getPage (increment) {
+  async __getPage(increment) {
 
-    this.page += increment
+    this.page += increment;
 
     if (this.page <= 0) {
-      this.page = 1
+      this.page = 1;
     }
-    const from = (this.page - 1) * this.perPage
-    const to = from + this.perPage
+    const from = (this.page - 1) * this.perPage;
+    const to = from + this.perPage;
 
-    await this.unlock()
-    let accounts
+    await this.unlock();
+    let accounts;
     if (this._isBIP44()) {
-      accounts = await this._getAccountsBIP44(from, to)
+      accounts = await this._getAccountsBIP44(from, to);
     } else {
-      accounts = this._getAccountsLegacy(from, to)
+      accounts = this._getAccountsLegacy(from, to);
     }
-    return accounts
+    return accounts;
   }
 
-  async _getAccountsBIP44 (from, to) {
-    const accounts = []
+  async _getAccountsBIP44(from, to) {
+    const accounts = [];
 
     for (let i = from; i < to; i++) {
-      const path = this._getPathForIndex(i)
-      const address = await this.unlock(path)
-      const valid = this.implementFullBIP44 ? await this._hasPreviousTransactions(address) : true
+      const path = this._getPathForIndex(i);
+      const address = await this.unlock(path);
+      const valid = this.implementFullBIP44 ? await this._hasPreviousTransactions(address) : true;
       accounts.push({
         address,
         balance: null,
         index: i,
-      })
+      });
       // PER BIP44
       // "Software should prevent a creation of an account if
       // a previous account does not have a transaction history
       // (meaning none of its addresses have been used before)."
       if (!valid) {
-        break
+        break;
       }
     }
-    return accounts
+    return accounts;
   }
 
-  _getAccountsLegacy (from, to) {
-    const accounts = []
+  _getAccountsLegacy(from, to) {
+    const accounts = [];
 
     for (let i = from; i < to; i++) {
-      const address = this._addressFromIndex(pathBase, i)
+      const address = this._addressFromIndex(pathBase, i);
       accounts.push({
         address,
         balance: null,
         index: i,
-      })
-      this.paths[ethUtil.toChecksumAddress(address)] = i
+      });
+      this.paths[ethUtil.toChecksumAddress(address)] = i;
     }
-    return accounts
+    return accounts;
   }
 
-  _padLeftEven (hex) {
-    return hex.length % 2 === 0 ? hex : `0${hex}`
+  _padLeftEven(hex) {
+    return hex.length % 2 === 0 ? hex : `0${hex}`;
   }
 
-  _normalize (buf) {
-    return this._padLeftEven(ethUtil.bufferToHex(buf).toLowerCase())
+  _normalize(buf) {
+    return this._padLeftEven(ethUtil.bufferToHex(buf).toLowerCase());
   }
 
   // eslint-disable-next-line no-shadow
-  _addressFromIndex (pathBase, i) {
-    const dkey = this.hdk.derive(`${pathBase}/${i}`)
+  _addressFromIndex(pathBase, i) {
+    const dkey = this.hdk.derive(`${pathBase}/${i}`);
     const address = ethUtil
       .publicToAddress(dkey.publicKey, true)
-      .toString('hex')
-    return ethUtil.toChecksumAddress(address)
+      .toString('hex');
+    return ethUtil.toChecksumAddress(address);
   }
 
-  _pathFromAddress (address) {
-    const checksummedAddress = ethUtil.toChecksumAddress(address)
-    let index = this.paths[checksummedAddress]
+  _pathFromAddress(address) {
+    const checksummedAddress = ethUtil.toChecksumAddress(address);
+    let index = this.paths[checksummedAddress];
     if (typeof index === 'undefined') {
       for (let i = 0; i < MAX_INDEX; i++) {
         if (checksummedAddress === this._addressFromIndex(pathBase, i)) {
-          index = i
-          break
+          index = i;
+          break;
         }
       }
     }
 
     if (typeof index === 'undefined') {
-      throw new Error('Unknown address')
+      throw new Error('Unknown address');
     }
-    return this._getPathForIndex(index)
+    return this._getPathForIndex(index);
   }
 
-  _toAscii (hex) {
-    let str = ''
-    let i = 0
-    const l = hex.length
+  _toAscii(hex) {
+    let str = '';
+    let i = 0;
+    const l = hex.length;
     if (hex.substring(0, 2) === '0x') {
-      i = 2
+      i = 2;
     }
     for (; i < l; i += 2) {
-      const code = parseInt(hex.substr(i, 2), 16)
-      str += String.fromCharCode(code)
+      const code = parseInt(hex.substr(i, 2), 16);
+      str += String.fromCharCode(code);
     }
 
-    return str
+    return str;
   }
 
-  _getPathForIndex (index) {
+  _getPathForIndex(index) {
     // Check if the path is BIP 44 (Ledger Live)
-    return this._isBIP44() ? `m/44'/60'/${index}'/0/0` : `${this.hdPath}/${index}`
+    return this._isBIP44() ? `m/44'/60'/${index}'/0/0` : `${this.hdPath}/${index}`;
   }
 
-  _isBIP44 () {
-    return this.hdPath === `m/44'/60'/0'/0/0`
+  _isBIP44() {
+    return this.hdPath === `m/44'/60'/0'/0/0`;
   }
 
-  _toLedgerPath (path) {
-    return path.toString().replace('m/', '')
+  _toLedgerPath(path) {
+    return path.toString().replace('m/', '');
   }
 
-  async _hasPreviousTransactions (address) {
-    const apiUrl = this._getApiUrl()
-    const response = await window.fetch(`${apiUrl}/api?module=account&action=txlist&address=${address}&tag=latest&page=1&offset=1`)
-    const parsedResponse = await response.json()
+  async _hasPreviousTransactions(address) {
+    const apiUrl = this._getApiUrl();
+    const response = await window.fetch(`${apiUrl}/api?module=account&action=txlist&address=${address}&tag=latest&page=1&offset=1`);
+    const parsedResponse = await response.json();
     if (parsedResponse.status !== '0' && parsedResponse.result.length > 0) {
-      return true
+      return true;
     }
-    return false
+    return false;
   }
 
-  _getApiUrl () {
-    return NETWORK_API_URLS[this.network] ? NETWORK_API_URLS[this.network] : NETWORK_API_URLS.mainnet
+  _getApiUrl() {
+    return NETWORK_API_URLS[this.network] ? NETWORK_API_URLS[this.network] : NETWORK_API_URLS.mainnet;
   }
 
 }
 
-LedgerBridgeKeyring.type = type
-module.exports = LedgerBridgeKeyring
+LedgerBridgeKeyring.type = type;
+module.exports = LedgerBridgeKeyring;
