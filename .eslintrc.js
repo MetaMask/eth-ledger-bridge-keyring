@@ -33,4 +33,4 @@ module.exports = {
   }],
 
   ignorePatterns: ['dist'],
-}
+};

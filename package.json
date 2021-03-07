@@ -8,8 +8,8 @@
   ],
   "scripts": {
     "test": "mocha",
-    "lint": "eslint . --ext .js",
-    "lint:fix": "eslint --fix . --ext .js"
+    "lint": "prettier --check ./**/*.json && eslint . --ext js",
+    "lint:fix": "prettier --write ./**/*.json && eslint . --ext js --fix"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
@@ -42,14 +42,18 @@
     "hdkey": "0.8.0"
   },
   "devDependencies": {
-    "@metamask/eslint-config": "^3.0.0",
+    "@metamask/eslint-config": "^5.0.0",
     "babel-eslint": "^10.1.0",
-    "chai": "^4.1.2",
+    "chai": "^4.3.3",
     "chai-spies": "^1.0.0",
-    "eslint": "^6.8.0",
-    "eslint-plugin-import": "^2.20.1",
+    "eslint": "^7.7.0",
+    "eslint-plugin-import": "^2.22.0",
     "eslint-plugin-json": "^1.2.0",
-    "eslint-plugin-mocha": "^6.2.2",
-    "mocha": "^5.0.4"
+    "eslint-plugin-mocha": "^8.0.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-prettier": "^3.1.4",
+    "mocha": "^7.2.0",
+    "prettier": "^2.1.1",
+    "prettier-plugin-sort-json": "^0.0.1"
   }
 }

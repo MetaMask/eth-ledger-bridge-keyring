@@ -10,7 +10,7 @@ try {
       },
     }),
     addEventListener: () => false,
-  }
+  };
 } catch (e) {
   module.exports = {
     head: {
@@ -23,5 +23,5 @@ try {
       },
     }),
     addEventListener: () => false,
-  }
+  };
 }
