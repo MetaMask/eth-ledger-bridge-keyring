@@ -4,7 +4,7 @@ require('buffer')
 import TransportU2F from '@ledgerhq/hw-transport-u2f'
 import LedgerEth from '@ledgerhq/hw-app-eth'
 import { byContractAddress } from '@ledgerhq/hw-app-eth/erc20'
-import WebSocketTransport from '@ledgerhq/hw-transport-http/lib/WebSocketTransport'
+import { WebSocketTransport } from '@ledgerhq/hw-transport-http'
 
 // URL which triggers Ledger Live app to open and handle communication
 const BRIDGE_URL = 'ws://localhost:8435'
