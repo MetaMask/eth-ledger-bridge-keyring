@@ -66,6 +66,7 @@ export default class LedgerBridge {
     }
 
     async makeApp () {
+        console.log("[LedgerBridgeIframe][makeApp] called; useLedgerLive is: ", this.useLedgerLive)
         try {
             if (this.useLedgerLive) {
                 await WebSocketTransport.check(BRIDGE_URL).catch(async () => {
@@ -86,6 +87,7 @@ export default class LedgerBridge {
     }
 
     updateLedgerLivePreference (replyAction, useLedgerLive) {
+        console.log("[LedgerBridgeIframe][makeApp] called; useLedgerLive is: ", useLedgerLive)
         this.useLedgerLive = useLedgerLive
         this.cleanUp()
         this.sendMessageToExtension({
