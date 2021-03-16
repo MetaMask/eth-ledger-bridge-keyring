@@ -4,7 +4,7 @@ require('buffer')
 import TransportU2F from '@ledgerhq/hw-transport-u2f'
 import LedgerEth from '@ledgerhq/hw-app-eth'
 import { byContractAddress } from '@ledgerhq/hw-app-eth/erc20'
-import { WebSocketTransport } from '@ledgerhq/hw-transport-http'
+import WebSocketTransport from '@ledgerhq/hw-transport-http/lib/WebSocketTransport'
 
 // URL which triggers Ledger Live app to open and handle communication
 const BRIDGE_URL = 'ws://localhost:8435'
@@ -21,6 +21,7 @@ export default class LedgerBridge {
 
     addEventListeners () {
         window.addEventListener('message', async e => {
+            console.log('[LedgerBridgeIframe][addEventListeners] event:', e)
             if (e && e.data && e.data.target === 'LEDGER-IFRAME') {
                 const { action, params } = e.data
                 const replyAction = `${action}-reply`
@@ -46,6 +47,7 @@ export default class LedgerBridge {
     }
 
     sendMessageToExtension (msg) {
+        console.log('[LedgerBridgeIframe][sendMessageToExtension] msg:', msg)
         window.parent.postMessage(msg, '*')
     }
 
@@ -56,6 +58,7 @@ export default class LedgerBridge {
     checkTransportLoop (i) {
         const iterator = i || 0
         return WebSocketTransport.check(BRIDGE_URL).catch(async () => {
+            console.log('[LedgerBridgeIframe][checkTransportLoop] i:', iterator)
             await this.delay(TRANSPORT_CHECK_DELAY)
             if (iterator < TRANSPORT_CHECK_LIMIT) {
                 return this.checkTransportLoop(iterator + 1)
@@ -66,17 +69,20 @@ export default class LedgerBridge {
     }
 
     async makeApp () {
-        console.log("[LedgerBridgeIframe][makeApp] called; useLedgerLive is: ", this.useLedgerLive)
         try {
             if (this.useLedgerLive) {
+                console.log('[LedgerBridgeIframe][makeApp] using ledger live:')
                 await WebSocketTransport.check(BRIDGE_URL).catch(async () => {
                     window.open('ledgerlive://bridge?appName=Ethereum')
+                    console.log('[LedgerBridgeIframe][makeApp] opening app!')
                     await this.checkTransportLoop()
                     this.transport = await WebSocketTransport.open(BRIDGE_URL)
                     this.app = new LedgerEth(this.transport)
+                    console.log('[LedgerBridgeIframe][makeApp] transport, app:', this.transport, this.app)
                 })
             }
             else {
+                console.log('[LedgerBridgeIframe][makeApp] using U2F:')
                 this.transport = await TransportU2F.create()
                 this.app = new LedgerEth(this.transport)
             }
@@ -87,7 +93,7 @@ export default class LedgerBridge {
     }
 
     updateLedgerLivePreference (replyAction, useLedgerLive) {
-        console.log("[LedgerBridgeIframe][makeApp] called; useLedgerLive is: ", useLedgerLive)
+        console.log('[LedgerBridgeIframe][updateLedgerLivePreference] setting to:', useLedgerLive)
         this.useLedgerLive = useLedgerLive
         this.cleanUp()
         this.sendMessageToExtension({
@@ -97,6 +103,7 @@ export default class LedgerBridge {
     }
 
     cleanUp (replyAction) {
+        console.log('[LedgerBridgeIframe][cleanup] called!')
         if (this.useLedgerLive) {
             return
         }
@@ -113,9 +120,13 @@ export default class LedgerBridge {
     }
 
     async unlock (replyAction, hdPath) {
+        console.log('[LedgerBridgeIframe][unlock] called! hdPath: ', hdPath)
         try {
             await this.makeApp()
             const res = await this.app.getAddress(hdPath, false, true)
+
+            console.log('[LedgerBridgeIframe][unlock] getAddress returns: ', res)
+
             this.sendMessageToExtension({
                 action: replyAction,
                 success: true,
