@@ -8,7 +8,6 @@
       (() => {
         const script = document.createElement('script');
         script.type = 'text/javascript';
-        script.async = true;
         script.src = `bundle.js?${Date.now()}`;
         document.body.appendChild(script);
       })();
