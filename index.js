@@ -19,6 +19,7 @@ class LedgerBridgeKeyring extends EventEmitter {
   constructor (opts = {}) {
     super()
     this.accountDetails = {}
+    this.bip44Children = [0, 1]
     this.bridgeUrl = null
     this.type = type
     this.page = 0
@@ -66,7 +67,7 @@ class LedgerBridgeKeyring extends EventEmitter {
       for (const account of Object.keys(opts.accountIndexes)) {
         this.accountDetails[account] = {
           bip44: true,
-          hdPath: this._getPathForIndex(opts.accountIndexes[account]),
+          hdPath: this._getBIP44PathForIndex(opts.accountIndexes[account], 0),
         }
       }
     }
@@ -135,22 +136,31 @@ class LedgerBridgeKeyring extends EventEmitter {
         .then(async (_) => {
           const from = this.unlockedAccount
           const to = from + n
-          for (let i = from; i < to; i++) {
-            const path = this._getPathForIndex(i)
-            let address
-            if (this._isBIP44()) {
-              address = await this.unlock(path)
-            } else {
-              address = this._addressFromIndex(pathBase, i)
-            }
+
+          const addAccount = (address, path) => {
             this.accountDetails[ethUtil.toChecksumAddress(address)] = {
               bip44: this._isBIP44(),
               hdPath: path,
             }
-
             if (!this.accounts.includes(address)) {
               this.accounts.push(address)
             }
+          }
+
+          for (let i = from; i < to; i++) {
+            let address, path
+            if (this._isBIP44()) {
+              for (const childIndex of this.bip44Children) {
+                path = this._getBIP44PathForIndex(i, childIndex)
+                address = await this.unlock(path)
+                addAccount(address, path)
+              }
+            } else {
+              path = this._getPathForIndex(i)
+              address = this._addressFromIndex(pathBase, i)
+              addAccount(address, path)
+            }
+
             this.page = 0
           }
           resolve(this.accounts)
@@ -435,13 +445,17 @@ class LedgerBridgeKeyring extends EventEmitter {
     return str
   }
 
+  _getBIP44PathForIndex (account, childIndex) {
+    return `m/44'/60'/${account}'/0/${childIndex}`
+  }
+
   _getPathForIndex (index) {
     // Check if the path is BIP 44 (Ledger Live)
-    return this._isBIP44() ? `m/44'/60'/${index}'/0/0` : `${this.hdPath}/${index}`
+    return `${this.hdPath}/${index}`
   }
 
   _isBIP44 () {
-    return this.hdPath === `m/44'/60'/0'/0/0`
+    return this.hdPath.match("m/44'/60'/\\d+'/0/\\d+") !== null
   }
 
   _toLedgerPath (path) {

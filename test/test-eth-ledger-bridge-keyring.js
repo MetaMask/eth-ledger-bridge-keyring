@@ -236,16 +236,25 @@ describe('LedgerBridgeKeyring', function () {
     it('stores account details for bip44 accounts', function () {
       keyring.setHdPath(`m/44'/60'/0'/0/0`)
       keyring.setAccountToUnlock(1)
-      chai.spy.on(keyring, 'unlock', (_) => Promise.resolve(fakeAccounts[1]))
+      chai.spy.on(keyring, 'unlock', function (args) {
+        const matches = args && args.match(/.*\/(\d)/u)
+        return Promise.resolve(fakeAccounts[(matches && matches[1]) || 1])
+      })
       after(function () {
         chai.spy.restore(keyring, 'unlock')
       })
       return keyring.addAccounts(1)
         .then((accounts) => {
+
           assert.deepEqual(keyring.accountDetails[accounts[0]], {
             bip44: true,
             hdPath: `m/44'/60'/1'/0/0`,
           })
+          assert.deepEqual(keyring.accountDetails[accounts[1]], {
+            bip44: true,
+            hdPath: `m/44'/60'/1'/0/1`,
+          })
+
         })
     })
 
