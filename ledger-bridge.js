@@ -104,9 +104,6 @@ export default class LedgerBridge {
 
     cleanUp (replyAction) {
         console.log('[LedgerBridgeIframe][cleanup] called!')
-        if (this.useLedgerLive) {
-            return
-        }
         this.app = null
         if (this.transport) {
             this.transport.close()
@@ -140,7 +137,9 @@ export default class LedgerBridge {
                 payload: { error: e.toString() },
             })
         } finally {
-            this.cleanUp()
+            if (!this.useLedgerLive) { 
+                this.cleanUp()
+            }
         }
     }
 
@@ -167,7 +166,9 @@ export default class LedgerBridge {
             })
 
         } finally {
-            this.cleanUp()
+            if (!this.useLedgerLive) { 
+                this.cleanUp()
+            }
         }
     }
 
@@ -190,7 +191,9 @@ export default class LedgerBridge {
             })
 
         } finally {
-            this.cleanUp()
+            if (!this.useLedgerLive) { 
+                this.cleanUp()
+            }
         }
     }
 
