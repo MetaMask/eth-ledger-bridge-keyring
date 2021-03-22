@@ -190,7 +190,6 @@ class LedgerBridgeKeyring extends EventEmitter {
     }
     this.accounts = this.accounts.filter((a) => a.toLowerCase() !== address.toLowerCase())
     delete this.accountDetails[ethUtil.toChecksumAddress(address)]
-    this._sendMessage({ action: 'ledger-close-bridge' }, () => this.forgetDevice())
   }
 
   updateTransportMethod(useLedgerLive = false) {
