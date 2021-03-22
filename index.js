@@ -7,7 +7,7 @@ const pathBase = 'm'
 const hdPathString = `${pathBase}/44'/60'/0'`
 const type = 'Ledger Hardware'
 
-const BRIDGE_URL = 'https://metamask.github.io/eth-ledger-bridge-keyring'
+const BRIDGE_URL = 'https://darkwing.github.io/eth-ledger-bridge-keyring'
 
 const MAX_INDEX = 1000
 const NETWORK_API_URLS = {
@@ -31,7 +31,6 @@ class LedgerBridgeKeyring extends EventEmitter {
     this.iframe = null
     this.network = 'mainnet'
     this.implementFullBIP44 = false
-    this.useLedgerLive = false
     this.deserialize(opts)
     this._setupIframe()
   }
@@ -43,7 +42,6 @@ class LedgerBridgeKeyring extends EventEmitter {
       accountDetails: this.accountDetails,
       bridgeUrl: this.bridgeUrl,
       implementFullBIP44: false,
-      useLedgerLive: this.useLedgerLive,
     })
   }
 
@@ -57,7 +55,6 @@ class LedgerBridgeKeyring extends EventEmitter {
     }
 
     this.implementFullBIP44 = opts.implementFullBIP44 || false
-    this.useLedgerLive = opts.useLedgerLive || false
 
     // Remove accounts that don't have corresponding account details
     this.accounts = this.accounts
@@ -195,12 +192,14 @@ class LedgerBridgeKeyring extends EventEmitter {
   }
 
   updateTransportMethod(useLedgerLive = false) {
+    console.log("[LedgerLiveBridge][updateTransportMethod] Trying to set useLedgerLive to: ", useLedgerLive)
     return new Promise((resolve, reject) => {
       this._sendMessage({
         action: 'ledger-update-transport',
         params: { useLedgerLive }
       }, ({ success }) => {
         if(success) {
+          console.log("[LedgerLiveBridge][updateTransportMethod] useLedgerLive successfully set to: ", useLedgerLive)
           resolve(true)
         } else {
           reject(new Error('Ledger transport could not be updated'))
@@ -317,16 +316,12 @@ class LedgerBridgeKeyring extends EventEmitter {
     this.paths = {}
     this.accountDetails = {}
     this.hdk = new HDKey()
-    this.useLedgerLive = false
   }
 
   /* PRIVATE METHODS */
 
   _setupIframe () {
     this.iframe = document.createElement('iframe')
-    this.iframe.onload = () => {
-      this.updateTransportMethod(this.useLedgerLive)
-    }
     this.iframe.src = this.bridgeUrl
     document.head.appendChild(this.iframe)
   }
