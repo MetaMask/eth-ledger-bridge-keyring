@@ -51,13 +51,16 @@ describe('LedgerBridgeKeyring', function () {
   let keyring
   let sandbox
 
-  beforeEach(async function () {
+  async function basicSetupToUnlockOneAccount () {
+    keyring.setAccountToUnlock(0)
+    await keyring.addAccounts()
+    sandbox.on(keyring, 'unlock', (_) => Promise.resolve(fakeAccounts[0]))
+  }
+
+  beforeEach(function () {
     sandbox = chai.spy.sandbox()
     keyring = new LedgerBridgeKeyring()
     keyring.hdk = fakeHdKey
-    keyring.setAccountToUnlock(fakeAccounts[0])
-    sandbox.on(keyring, 'unlock', (_) => Promise.resolve(fakeAccounts[0]))
-    await keyring.addAccounts()
   })
 
   afterEach(function () {
@@ -96,7 +99,7 @@ describe('LedgerBridgeKeyring', function () {
           assert.equal(output.bridgeUrl, 'https://metamask.github.io/eth-ledger-bridge-keyring')
           assert.equal(output.hdPath, `m/44'/60'/0'`)
           assert.equal(Array.isArray(output.accounts), true)
-          assert.equal(output.accounts.length, 1)
+          assert.equal(output.accounts.length, 0)
           done()
         })
     })
@@ -247,11 +250,10 @@ describe('LedgerBridgeKeyring', function () {
     it('stores account details for bip44 accounts', function () {
       keyring.setHdPath(`m/44'/60'/0'/0/0`)
       keyring.setAccountToUnlock(1)
-      sandbox.restore(keyring, 'unlock')
       sandbox.on(keyring, 'unlock', (_) => Promise.resolve(fakeAccounts[1]))
       return keyring.addAccounts(1)
         .then((accounts) => {
-          assert.deepEqual(keyring.accountDetails[accounts[1]], {
+          assert.deepEqual(keyring.accountDetails[accounts[0]], {
             bip44: true,
             hdPath: `m/44'/60'/1'/0/0`,
           })
@@ -263,7 +265,7 @@ describe('LedgerBridgeKeyring', function () {
       keyring.setAccountToUnlock(2)
       return keyring.addAccounts(1)
         .then((accounts) => {
-          assert.deepEqual(keyring.accountDetails[accounts[1]], {
+          assert.deepEqual(keyring.accountDetails[accounts[0]], {
             bip44: false,
             hdPath: `m/44'/60'/0'/2`,
           })
@@ -430,6 +432,7 @@ describe('LedgerBridgeKeyring', function () {
 
   describe('signTransaction', function () {
     it('should pass serialized transaction to ledger and return signed tx', async function () {
+      await basicSetupToUnlockOneAccount()
       sandbox.on(keyring, '_sendMessage', (msg, cb) => {
         fakeTx.v = ethUtil.bufferToHex(fakeTx.getChainId())
         fakeTx.r = '0x00'
@@ -454,6 +457,7 @@ describe('LedgerBridgeKeyring', function () {
 
   describe('signPersonalMessage', function () {
     it('should call create a listener waiting for the iframe response', async function () {
+      await basicSetupToUnlockOneAccount()
       sandbox.on(keyring, '_sendMessage', (msg, cb) => {
         assert.deepStrictEqual(msg.params, {
           hdPath: "m/44'/60'/0'/0",
@@ -469,21 +473,22 @@ describe('LedgerBridgeKeyring', function () {
   })
 
   describe('unlockAccountByAddress', function () {
-    it('should unlock the given account if found on device', function () {
-      return keyring.unlockAccountByAddress(fakeAccounts[0])
+    it('should unlock the given account if found on device', async function () {
+      await basicSetupToUnlockOneAccount()
+      keyring.unlockAccountByAddress(fakeAccounts[0])
         .then((hdPath) => {
           assert.equal(hdPath, 'm/44\'/60\'/0\'/0')
         })
     })
 
-    it('should reject if the account is not found on device', function () {
-
+    it('should reject if the account is not found on device', async function () {
       const requestedAccount = fakeAccounts[0]
       const incorrectAccount = fakeAccounts[1]
-      sandbox.restore(keyring, 'unlock')
+      keyring.setAccountToUnlock(0)
+      await keyring.addAccounts()
       sandbox.on(keyring, 'unlock', (_) => Promise.resolve(incorrectAccount))
 
-      return assert.rejects(() => keyring.unlockAccountByAddress(requestedAccount), new Error(`Ledger: Account ${fakeAccounts[0]} does not belong to the connected device`))
+      assert.rejects(() => keyring.unlockAccountByAddress(requestedAccount), new Error(`Ledger: Account ${fakeAccounts[0]} does not belong to the connected device`))
     })
   })
 })
