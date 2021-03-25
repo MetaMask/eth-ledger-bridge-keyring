@@ -7,6 +7,8 @@ const spies = require('chai-spies')
 const EthereumTx = require('ethereumjs-tx')
 const HDKey = require('hdkey')
 const ethUtil = require('ethereumjs-util')
+const sigUtil = require('eth-sig-util')
+
 const LedgerBridgeKeyring = require('..')
 
 const { expect } = chai
@@ -47,10 +49,22 @@ chai.use(spies)
 describe('LedgerBridgeKeyring', function () {
 
   let keyring
+  let sandbox
+
+  async function basicSetupToUnlockOneAccount () {
+    keyring.setAccountToUnlock(0)
+    await keyring.addAccounts()
+    sandbox.on(keyring, 'unlock', (_) => Promise.resolve(fakeAccounts[0]))
+  }
 
   beforeEach(function () {
+    sandbox = chai.spy.sandbox()
     keyring = new LedgerBridgeKeyring()
     keyring.hdk = fakeHdKey
+  })
+
+  afterEach(function () {
+    sandbox.restore()
   })
 
   describe('Keyring.type', function () {
@@ -236,10 +250,7 @@ describe('LedgerBridgeKeyring', function () {
     it('stores account details for bip44 accounts', function () {
       keyring.setHdPath(`m/44'/60'/0'/0/0`)
       keyring.setAccountToUnlock(1)
-      chai.spy.on(keyring, 'unlock', (_) => Promise.resolve(fakeAccounts[1]))
-      after(function () {
-        chai.spy.restore(keyring, 'unlock')
-      })
+      sandbox.on(keyring, 'unlock', (_) => Promise.resolve(fakeAccounts[1]))
       return keyring.addAccounts(1)
         .then((accounts) => {
           assert.deepEqual(keyring.accountDetails[accounts[0]], {
@@ -385,19 +396,6 @@ describe('LedgerBridgeKeyring', function () {
     })
   })
 
-  describe('signMessage', function () {
-    it('should call create a listener waiting for the iframe response', function (done) {
-
-      chai.spy.on(window, 'addEventListener')
-      setTimeout((_) => {
-        keyring.signPersonalMessage(fakeAccounts[0], '0x123')
-        expect(window.addEventListener).to.have.been.calledWith('message')
-      }, 1800)
-      chai.spy.restore(window, 'addEventListener')
-      done()
-    })
-  })
-
   describe('signTypedData', function () {
     it('should throw an error because it is not supported', function () {
       expect((_) => {
@@ -431,60 +429,81 @@ describe('LedgerBridgeKeyring', function () {
   })
 
   describe('signTransaction', function () {
-    it('should call should call create a listener waiting for the iframe response', function (done) {
+    it('should pass serialized transaction to ledger and return signed tx', async function () {
+      await basicSetupToUnlockOneAccount()
+      sandbox.on(keyring, '_sendMessage', (msg, cb) => {
+        fakeTx.v = ethUtil.bufferToHex(fakeTx.getChainId())
+        fakeTx.r = '0x00'
+        fakeTx.s = '0x00'
+        assert.deepStrictEqual(msg.params, {
+          hdPath: "m/44'/60'/0'/0",
+          to: ethUtil.bufferToHex(fakeTx.to),
+          tx: fakeTx.serialize().toString('hex'),
+        })
+        cb({ success: true, payload: { v: '0x1', r: '0x0', s: '0x0' } })
+      })
 
-      chai.spy.on(window, 'addEventListener')
-      setTimeout((_) => {
-        keyring.signTransaction(fakeAccounts[0], fakeTx)
-        expect(window.addEventListener).to.have.been.calledWith('message')
-      }, 1800)
-      chai.spy.restore(window, 'addEventListener')
-      done()
+      sandbox.on(fakeTx, 'verifySignature', () => true)
 
+      const returnedTx = await keyring.signTransaction(fakeAccounts[0], fakeTx)
+      expect(keyring._sendMessage).to.have.been.called()
+      expect(returnedTx).to.have.property('v')
+      expect(returnedTx).to.have.property('r')
+      expect(returnedTx).to.have.property('s')
     })
   })
 
   describe('signPersonalMessage', function () {
-    it('should call create a listener waiting for the iframe response', function (done) {
+    it('should call create a listener waiting for the iframe response', async function () {
+      await basicSetupToUnlockOneAccount()
+      sandbox.on(keyring, '_sendMessage', (msg, cb) => {
+        assert.deepStrictEqual(msg.params, {
+          hdPath: "m/44'/60'/0'/0",
+          message: 'some msg',
+        })
+        cb({ success: true, payload: { v: '0x1', r: '0x0', s: '0x0' } })
+      })
 
-      chai.spy.on(window, 'addEventListener')
-      setTimeout((_) => {
-        keyring.signPersonalMessage(fakeAccounts[0], 'some msg')
-        expect(window.addEventListener).to.have.been.calledWith('message')
-      }, 1800)
-      chai.spy.restore(window, 'addEventListener')
-      done()
+      sandbox.on(sigUtil, 'recoverPersonalSignature', () => fakeAccounts[0])
+      await keyring.signPersonalMessage(fakeAccounts[0], 'some msg')
+      expect(keyring._sendMessage).to.have.been.called()
+    })
+  })
+
+  describe('signMessage', function () {
+    it('should call create a listener waiting for the iframe response', async function () {
+      await basicSetupToUnlockOneAccount()
+      sandbox.on(keyring, '_sendMessage', (msg, cb) => {
+        assert.deepStrictEqual(msg.params, {
+          hdPath: "m/44'/60'/0'/0",
+          message: 'some msg',
+        })
+        cb({ success: true, payload: { v: '0x1', r: '0x0', s: '0x0' } })
+      })
+
+      sandbox.on(sigUtil, 'recoverPersonalSignature', () => fakeAccounts[0])
+      await keyring.signMessage(fakeAccounts[0], 'some msg')
+      expect(keyring._sendMessage).to.have.been.called()
     })
   })
 
   describe('unlockAccountByAddress', function () {
-
-    beforeEach(async function () {
-      keyring.setAccountToUnlock(0)
-      await keyring.addAccounts()
-    })
-
-    afterEach(function () {
-      chai.spy.restore(keyring, 'unlock')
-    })
-
-    it('should unlock the given account if found on device', function () {
-      chai.spy.on(keyring, 'unlock', (_) => Promise.resolve(fakeAccounts[0]))
-
-      return keyring.unlockAccountByAddress(fakeAccounts[0])
+    it('should unlock the given account if found on device', async function () {
+      await basicSetupToUnlockOneAccount()
+      await keyring.unlockAccountByAddress(fakeAccounts[0])
         .then((hdPath) => {
           assert.equal(hdPath, 'm/44\'/60\'/0\'/0')
         })
     })
 
-    it('should reject if the account is not found on device', function () {
-
+    it('should reject if the account is not found on device', async function () {
       const requestedAccount = fakeAccounts[0]
       const incorrectAccount = fakeAccounts[1]
+      keyring.setAccountToUnlock(0)
+      await keyring.addAccounts()
+      sandbox.on(keyring, 'unlock', (_) => Promise.resolve(incorrectAccount))
 
-      chai.spy.on(keyring, 'unlock', (_) => Promise.resolve(incorrectAccount))
-
-      return assert.rejects(() => keyring.unlockAccountByAddress(requestedAccount), new Error(`Ledger: Account ${fakeAccounts[0]} does not belong to the connected device`))
+      assert.rejects(() => keyring.unlockAccountByAddress(requestedAccount), new Error(`Ledger: Account ${fakeAccounts[0]} does not belong to the connected device`))
     })
   })
 })
