@@ -380,8 +380,6 @@ describe('LedgerBridgeKeyring', function () {
     const accountIndex = 5
     let accounts = []
     beforeEach(async function () {
-      keyring = new LedgerBridgeKeyring()
-      keyring.hdk = fakeHdKey
       keyring.setAccountToUnlock(accountIndex)
       await keyring.addAccounts()
       accounts = await keyring.getAccounts()
@@ -472,10 +470,27 @@ describe('LedgerBridgeKeyring', function () {
     })
   })
 
+  describe('signMessage', function () {
+    it('should call create a listener waiting for the iframe response', async function () {
+      await basicSetupToUnlockOneAccount()
+      sandbox.on(keyring, '_sendMessage', (msg, cb) => {
+        assert.deepStrictEqual(msg.params, {
+          hdPath: "m/44'/60'/0'/0",
+          message: 'some msg',
+        })
+        cb({ success: true, payload: { v: '0x1', r: '0x0', s: '0x0' } })
+      })
+
+      sandbox.on(sigUtil, 'recoverPersonalSignature', () => fakeAccounts[0])
+      await keyring.signMessage(fakeAccounts[0], 'some msg')
+      expect(keyring._sendMessage).to.have.been.called()
+    })
+  })
+
   describe('unlockAccountByAddress', function () {
     it('should unlock the given account if found on device', async function () {
       await basicSetupToUnlockOneAccount()
-      keyring.unlockAccountByAddress(fakeAccounts[0])
+      await keyring.unlockAccountByAddress(fakeAccounts[0])
         .then((hdPath) => {
           assert.equal(hdPath, 'm/44\'/60\'/0\'/0')
         })
