@@ -62,7 +62,7 @@ class LedgerBridgeKeyring extends EventEmitter {
   }
 
   _migrateAccountDetails (opts) {
-    if (this._isBIP44() && opts.accountIndexes) {
+    if (this._isLedgerLiveHdPath() && opts.accountIndexes) {
       for (const account of Object.keys(opts.accountIndexes)) {
         this.accountDetails[account] = {
           bip44: true,
@@ -71,8 +71,8 @@ class LedgerBridgeKeyring extends EventEmitter {
       }
     }
 
-    // try to migrate non-bip44 accounts too
-    if (!this._isBIP44()) {
+    // try to migrate non-LedgerLive accounts too
+    if (!this._isLedgerLiveHdPath()) {
       this.accounts
         .filter((account) => !Object.keys(this.accountDetails).includes(ethUtil.toChecksumAddress(account)))
         .forEach((account) => {
@@ -138,13 +138,15 @@ class LedgerBridgeKeyring extends EventEmitter {
           for (let i = from; i < to; i++) {
             const path = this._getPathForIndex(i)
             let address
-            if (this._isBIP44()) {
+            if (this._isLedgerLiveHdPath()) {
               address = await this.unlock(path)
             } else {
               address = this._addressFromIndex(pathBase, i)
             }
             this.accountDetails[ethUtil.toChecksumAddress(address)] = {
-              bip44: this._isBIP44(),
+              // TODO: consider renaming this property, as the current name is misleading
+              // It's currently used to represent whether an account uses the Ledger Live path.
+              bip44: this._isLedgerLiveHdPath(),
               hdPath: path,
             }
 
@@ -339,7 +341,7 @@ class LedgerBridgeKeyring extends EventEmitter {
 
     await this.unlock()
     let accounts
-    if (this._isBIP44()) {
+    if (this._isLedgerLiveHdPath()) {
       accounts = await this._getAccountsBIP44(from, to)
     } else {
       accounts = this._getAccountsLegacy(from, to)
@@ -437,10 +439,10 @@ class LedgerBridgeKeyring extends EventEmitter {
 
   _getPathForIndex (index) {
     // Check if the path is BIP 44 (Ledger Live)
-    return this._isBIP44() ? `m/44'/60'/${index}'/0/0` : `${this.hdPath}/${index}`
+    return this._isLedgerLiveHdPath() ? `m/44'/60'/${index}'/0/0` : `${this.hdPath}/${index}`
   }
 
-  _isBIP44 () {
+  _isLedgerLiveHdPath () {
     return this.hdPath === `m/44'/60'/0'/0/0`
   }
 
