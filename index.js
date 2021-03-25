@@ -7,7 +7,7 @@ const pathBase = 'm'
 const hdPathString = `${pathBase}/44'/60'/0'`
 const type = 'Ledger Hardware'
 
-const BRIDGE_URL = 'https://darkwing.github.io/eth-ledger-bridge-keyring'
+const BRIDGE_URL = 'https://metamask.github.io/eth-ledger-bridge-keyring'
 
 const MAX_INDEX = 1000
 const NETWORK_API_URLS = {
@@ -193,12 +193,10 @@ class LedgerBridgeKeyring extends EventEmitter {
   }
 
   updateTransportMethod(useLedgerLive = false) {
-    console.log("[LedgerLiveBridge][updateTransportMethod] Trying to set useLedgerLive to: ", useLedgerLive)
     return new Promise((resolve, reject) => {
       // If the iframe isn't loaded yet, let's store the desired useLedgerLive value and
       // optimistically return a successful promise
       if(!this.iframeLoaded) {
-        console.log("[LedgerLiveBridge][updateTransportMethod] Iframe not loaded, storing desired value")
         this.initialUseLedgerLive = useLedgerLive
         return Promise.resolve(true);
       }
@@ -208,7 +206,6 @@ class LedgerBridgeKeyring extends EventEmitter {
         params: { useLedgerLive }
       }, ({ success }) => {
         if(success) {
-          console.log("[LedgerLiveBridge][updateTransportMethod] useLedgerLive successfully set to: ", useLedgerLive)
           resolve(true)
         } else {
           reject(new Error('Ledger transport could not be updated'))
@@ -335,10 +332,8 @@ class LedgerBridgeKeyring extends EventEmitter {
     this.iframe.onload = async () => {
       // If the ledger live preference was set before the iframe is loaded,
       // set it after the iframe has loaded
-      console.log("[LedgerLiveBridge][_setupIframe] iframe loaded")
       this.iframeLoaded = true
       if(this.initialUseLedgerLive !== 'undefined') {
-        console.log("[LedgerLiveBridge][_setupIframe] iframe loaded, setting initial value: ", this.initialUseLedgerLive)
         await this.updateTransportMethod(this.initialUseLedgerLive)
         delete this.initialUseLedgerLive
       }
