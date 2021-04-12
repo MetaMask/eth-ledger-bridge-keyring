@@ -118,6 +118,7 @@ export default class LedgerBridge {
             })
         } catch (err) {
             const e = this.ledgerErrToMessage(err)
+            console.log("[LedgerBridgeIframe][unlock] error is: ", e, err)
             this.sendMessageToExtension({
                 action: replyAction,
                 success: false,
@@ -185,6 +186,7 @@ export default class LedgerBridge {
     }
 
     ledgerErrToMessage (err) {
+        console.log("ledgerErrToMessage: ", err);
         const isU2FError = (err) => !!err && !!(err).metaData
         const isStringError = (err) => typeof err === 'string'
         const isErrorWithId = (err) => err.hasOwnProperty('id') && err.hasOwnProperty('message')

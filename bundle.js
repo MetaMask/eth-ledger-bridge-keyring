@@ -48,7 +48,6 @@ var LedgerBridge = function () {
             var _this = this;
 
             window.addEventListener('message', async function (e) {
-                console.log('[LedgerBridgeIframe][addEventListeners] event:', e);
                 if (e && e.data && e.data.target === 'LEDGER-IFRAME') {
                     var _e$data = e.data,
                         action = _e$data.action,
@@ -78,7 +77,6 @@ var LedgerBridge = function () {
     }, {
         key: 'sendMessageToExtension',
         value: function sendMessageToExtension(msg) {
-            console.log('[LedgerBridgeIframe][sendMessageToExtension] msg:', msg);
             window.parent.postMessage(msg, '*');
         }
     }, {
@@ -95,7 +93,6 @@ var LedgerBridge = function () {
 
             var iterator = i || 0;
             return _WebSocketTransport2.default.check(BRIDGE_URL).catch(async function () {
-                console.log('[LedgerBridgeIframe][checkTransportLoop] i:', iterator);
                 await _this2.delay(TRANSPORT_CHECK_DELAY);
                 if (iterator < TRANSPORT_CHECK_LIMIT) {
                     return _this2.checkTransportLoop(iterator + 1);
@@ -111,17 +108,13 @@ var LedgerBridge = function () {
 
             try {
                 if (this.useLedgerLive) {
-                    console.log('[LedgerBridgeIframe][makeApp] using ledger live:');
                     await _WebSocketTransport2.default.check(BRIDGE_URL).catch(async function () {
                         window.open('ledgerlive://bridge?appName=Ethereum');
-                        console.log('[LedgerBridgeIframe][makeApp] opening app!');
                         await _this3.checkTransportLoop();
                         _this3.transport = await _WebSocketTransport2.default.open(BRIDGE_URL);
                         _this3.app = new _hwAppEth2.default(_this3.transport);
-                        console.log('[LedgerBridgeIframe][makeApp] transport, app:', _this3.transport, _this3.app);
                     });
                 } else {
-                    console.log('[LedgerBridgeIframe][makeApp] using U2F:');
                     this.transport = await _hwTransportU2f2.default.create();
                     this.app = new _hwAppEth2.default(this.transport);
                 }
@@ -133,7 +126,6 @@ var LedgerBridge = function () {
     }, {
         key: 'updateLedgerLivePreference',
         value: function updateLedgerLivePreference(replyAction, useLedgerLive) {
-            console.log('[LedgerBridgeIframe][updateLedgerLivePreference] setting to:', useLedgerLive);
             this.useLedgerLive = useLedgerLive;
             this.cleanUp();
             this.sendMessageToExtension({
@@ -144,7 +136,6 @@ var LedgerBridge = function () {
     }, {
         key: 'cleanUp',
         value: function cleanUp(replyAction) {
-            console.log('[LedgerBridgeIframe][cleanup] called!');
             this.app = null;
             if (this.transport) {
                 this.transport.close();
@@ -159,13 +150,9 @@ var LedgerBridge = function () {
     }, {
         key: 'unlock',
         value: async function unlock(replyAction, hdPath) {
-            console.log('[LedgerBridgeIframe][unlock] called! hdPath: ', hdPath);
             try {
                 await this.makeApp();
                 var res = await this.app.getAddress(hdPath, false, true);
-
-                console.log('[LedgerBridgeIframe][unlock] getAddress returns: ', res);
-
                 this.sendMessageToExtension({
                     action: replyAction,
                     success: true,
@@ -173,6 +160,7 @@ var LedgerBridge = function () {
                 });
             } catch (err) {
                 var e = this.ledgerErrToMessage(err);
+                console.log("[LedgerBridgeIframe][unlock] error is: ", e, err);
                 this.sendMessageToExtension({
                     action: replyAction,
                     success: false,
@@ -240,6 +228,7 @@ var LedgerBridge = function () {
     }, {
         key: 'ledgerErrToMessage',
         value: function ledgerErrToMessage(err) {
+            console.log("ledgerErrToMessage: ", err);
             var isU2FError = function isU2FError(err) {
                 return !!err && !!err.metaData;
             };
@@ -291,7 +280,7 @@ var LedgerBridge = function () {
 
 exports.default = LedgerBridge;
 
-},{"@ledgerhq/hw-app-eth":6,"@ledgerhq/hw-app-eth/erc20":5,"@ledgerhq/hw-transport-http/lib/WebSocketTransport":9,"@ledgerhq/hw-transport-u2f":11,"buffer":18}],2:[function(require,module,exports){
+},{"@ledgerhq/hw-app-eth":6,"@ledgerhq/hw-app-eth/erc20":5,"@ledgerhq/hw-transport-http/lib/WebSocketTransport":9,"@ledgerhq/hw-transport-u2f":13,"buffer":20}],2:[function(require,module,exports){
 'use strict';
 
 var _ledgerBridge = require('./ledger-bridge');
@@ -710,7 +699,7 @@ exports.serializeError = serializeError;
 module.exports = require("./lib/erc20");
 
 },{"./lib/erc20":7}],6:[function(require,module,exports){
-(function (Buffer){(function (){
+(function (Buffer){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1499,9 +1488,9 @@ class Eth {
 
 exports.default = Eth;
 
-}).call(this)}).call(this,require("buffer").Buffer)
-},{"./utils":8,"@ledgerhq/errors":4,"bignumber.js":15,"buffer":18,"rlp":21}],7:[function(require,module,exports){
-(function (Buffer){(function (){
+}).call(this,require("buffer").Buffer)
+},{"./utils":8,"@ledgerhq/errors":4,"bignumber.js":17,"buffer":20,"rlp":23}],7:[function(require,module,exports){
+(function (Buffer){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1581,8 +1570,8 @@ const get = (() => {
   };
 })();
 
-}).call(this)}).call(this,require("buffer").Buffer)
-},{"@ledgerhq/cryptoassets/data/erc20-signatures":3,"buffer":18}],8:[function(require,module,exports){
+}).call(this,require("buffer").Buffer)
+},{"@ledgerhq/cryptoassets/data/erc20-signatures":3,"buffer":20}],8:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1688,7 +1677,7 @@ function asyncWhile(predicate, callback) {
 }
 
 },{}],9:[function(require,module,exports){
-(function (global,Buffer){(function (){
+(function (global,Buffer){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1830,209 +1819,11 @@ WebSocketTransport.check = async (url, timeout = 5000) => new Promise((resolve, 
   };
 });
 
-}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
-},{"@ledgerhq/errors":4,"@ledgerhq/hw-transport":12,"@ledgerhq/logs":13,"buffer":18,"ws":10}],10:[function(require,module,exports){
-'use strict';
-
-module.exports = function() {
-  throw new Error(
-    'ws does not work in the browser. Browser clients must use the native ' +
-      'WebSocket object'
-  );
-};
-
-},{}],11:[function(require,module,exports){
-(function (Buffer){(function (){
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _u2fApi = require("u2f-api");
-
-var _hwTransport = _interopRequireDefault(require("@ledgerhq/hw-transport"));
-
-var _logs = require("@ledgerhq/logs");
-
-var _errors = require("@ledgerhq/errors");
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function wrapU2FTransportError(originalError, message, id) {
-  const err = new _errors.TransportError(message, id); // $FlowFixMe
-
-  err.originalError = originalError;
-  return err;
-}
-
-function wrapApdu(apdu, key) {
-  const result = Buffer.alloc(apdu.length);
-
-  for (let i = 0; i < apdu.length; i++) {
-    result[i] = apdu[i] ^ key[i % key.length];
-  }
-
-  return result;
-} // Convert from normal to web-safe, strip trailing "="s
-
-
-const webSafe64 = base64 => base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); // Convert from web-safe to normal, add trailing "="s
-
-
-const normal64 = base64 => base64.replace(/-/g, "+").replace(/_/g, "/") + "==".substring(0, 3 * base64.length % 4);
-
-function attemptExchange(apdu, timeoutMillis, scrambleKey, unwrap) {
-  const keyHandle = wrapApdu(apdu, scrambleKey);
-  const challenge = Buffer.from("0000000000000000000000000000000000000000000000000000000000000000", "hex");
-  const signRequest = {
-    version: "U2F_V2",
-    keyHandle: webSafe64(keyHandle.toString("base64")),
-    challenge: webSafe64(challenge.toString("base64")),
-    appId: location.origin
-  };
-  (0, _logs.log)("apdu", "=> " + apdu.toString("hex"));
-  return (0, _u2fApi.sign)(signRequest, timeoutMillis / 1000).then(response => {
-    const {
-      signatureData
-    } = response;
-
-    if (typeof signatureData === "string") {
-      const data = Buffer.from(normal64(signatureData), "base64");
-      let result;
-
-      if (!unwrap) {
-        result = data;
-      } else {
-        result = data.slice(5);
-      }
-
-      (0, _logs.log)("apdu", "<= " + result.toString("hex"));
-      return result;
-    } else {
-      throw response;
-    }
-  });
-}
-
-let transportInstances = [];
-
-function emitDisconnect() {
-  transportInstances.forEach(t => t.emit("disconnect"));
-  transportInstances = [];
-}
-
-function isTimeoutU2FError(u2fError) {
-  return u2fError.metaData.code === 5;
-}
-/**
- * U2F web Transport implementation
- * @example
- * import TransportU2F from "@ledgerhq/hw-transport-u2f";
- * ...
- * TransportU2F.create().then(transport => ...)
- */
-
-
-class TransportU2F extends _hwTransport.default {
-  /*
-   */
-
-  /*
-   */
-
-  /**
-   * static function to create a new Transport from a connected Ledger device discoverable via U2F (browser support)
-   */
-  static async open(_, _openTimeout = 5000) {
-    return new TransportU2F();
-  }
-
-  constructor() {
-    super();
-    this.scrambleKey = void 0;
-    this.unwrap = true;
-    transportInstances.push(this);
-  }
-  /**
-   * Exchange with the device using APDU protocol.
-   * @param apdu
-   * @returns a promise of apdu response
-   */
-
-
-  async exchange(apdu) {
-    try {
-      return await attemptExchange(apdu, this.exchangeTimeout, this.scrambleKey, this.unwrap);
-    } catch (e) {
-      const isU2FError = typeof e.metaData === "object";
-
-      if (isU2FError) {
-        if (isTimeoutU2FError(e)) {
-          emitDisconnect();
-        } // the wrapping make error more usable and "printable" to the end user.
-
-
-        throw wrapU2FTransportError(e, "Failed to sign with Ledger device: U2F " + e.metaData.type, "U2F_" + e.metaData.code);
-      } else {
-        throw e;
-      }
-    }
-  }
-  /**
-   */
-
-
-  setScrambleKey(scrambleKey) {
-    this.scrambleKey = Buffer.from(scrambleKey, "ascii");
-  }
-  /**
-   */
-
-
-  setUnwrap(unwrap) {
-    this.unwrap = unwrap;
-  }
-
-  close() {
-    // u2f have no way to clean things up
-    return Promise.resolve();
-  }
-
-}
-
-exports.default = TransportU2F;
-TransportU2F.isSupported = _u2fApi.isSupported;
-
-TransportU2F.list = () => // this transport is not discoverable but we are going to guess if it is here with isSupported()
-(0, _u2fApi.isSupported)().then(supported => supported ? [null] : []);
-
-TransportU2F.listen = observer => {
-  let unsubscribed = false;
-  (0, _u2fApi.isSupported)().then(supported => {
-    if (unsubscribed) return;
-
-    if (supported) {
-      observer.next({
-        type: "add",
-        descriptor: null
-      });
-      observer.complete();
-    } else {
-      observer.error(new _errors.TransportError("U2F browser support is needed for Ledger. " + "Please use Chrome, Opera or Firefox with a U2F extension. " + "Also make sure you're on an HTTPS connection", "U2FNotSupported"));
-    }
-  });
-  return {
-    unsubscribe: () => {
-      unsubscribed = true;
-    }
-  };
-};
-
-}).call(this)}).call(this,require("buffer").Buffer)
-},{"@ledgerhq/errors":4,"@ledgerhq/hw-transport":12,"@ledgerhq/logs":13,"buffer":18,"u2f-api":22}],12:[function(require,module,exports){
-(function (Buffer){(function (){
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
+},{"@ledgerhq/errors":10,"@ledgerhq/hw-transport":11,"@ledgerhq/logs":12,"buffer":20,"ws":27}],10:[function(require,module,exports){
+arguments[4][4][0].apply(exports,arguments)
+},{"dup":4}],11:[function(require,module,exports){
+(function (Buffer){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2289,8 +2080,8 @@ Transport.open = void 0;
 Transport.ErrorMessage_ListenTimeout = "No Ledger device found (timeout)";
 Transport.ErrorMessage_NoDeviceFound = "No Ledger device found";
 
-}).call(this)}).call(this,require("buffer").Buffer)
-},{"@ledgerhq/errors":4,"buffer":18,"events":19}],13:[function(require,module,exports){
+}).call(this,require("buffer").Buffer)
+},{"@ledgerhq/errors":10,"buffer":20,"events":21}],12:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2358,7 +2149,201 @@ if (typeof window !== "undefined") {
   window.__ledgerLogsListen = listen;
 }
 
-},{}],14:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
+(function (Buffer){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _u2fApi = require("u2f-api");
+
+var _hwTransport = _interopRequireDefault(require("@ledgerhq/hw-transport"));
+
+var _logs = require("@ledgerhq/logs");
+
+var _errors = require("@ledgerhq/errors");
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function wrapU2FTransportError(originalError, message, id) {
+  const err = new _errors.TransportError(message, id); // $FlowFixMe
+
+  err.originalError = originalError;
+  return err;
+}
+
+function wrapApdu(apdu, key) {
+  const result = Buffer.alloc(apdu.length);
+
+  for (let i = 0; i < apdu.length; i++) {
+    result[i] = apdu[i] ^ key[i % key.length];
+  }
+
+  return result;
+} // Convert from normal to web-safe, strip trailing "="s
+
+
+const webSafe64 = base64 => base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); // Convert from web-safe to normal, add trailing "="s
+
+
+const normal64 = base64 => base64.replace(/-/g, "+").replace(/_/g, "/") + "==".substring(0, 3 * base64.length % 4);
+
+function attemptExchange(apdu, timeoutMillis, scrambleKey, unwrap) {
+  const keyHandle = wrapApdu(apdu, scrambleKey);
+  const challenge = Buffer.from("0000000000000000000000000000000000000000000000000000000000000000", "hex");
+  const signRequest = {
+    version: "U2F_V2",
+    keyHandle: webSafe64(keyHandle.toString("base64")),
+    challenge: webSafe64(challenge.toString("base64")),
+    appId: location.origin
+  };
+  (0, _logs.log)("apdu", "=> " + apdu.toString("hex"));
+  return (0, _u2fApi.sign)(signRequest, timeoutMillis / 1000).then(response => {
+    const {
+      signatureData
+    } = response;
+
+    if (typeof signatureData === "string") {
+      const data = Buffer.from(normal64(signatureData), "base64");
+      let result;
+
+      if (!unwrap) {
+        result = data;
+      } else {
+        result = data.slice(5);
+      }
+
+      (0, _logs.log)("apdu", "<= " + result.toString("hex"));
+      return result;
+    } else {
+      throw response;
+    }
+  });
+}
+
+let transportInstances = [];
+
+function emitDisconnect() {
+  transportInstances.forEach(t => t.emit("disconnect"));
+  transportInstances = [];
+}
+
+function isTimeoutU2FError(u2fError) {
+  return u2fError.metaData.code === 5;
+}
+/**
+ * U2F web Transport implementation
+ * @example
+ * import TransportU2F from "@ledgerhq/hw-transport-u2f";
+ * ...
+ * TransportU2F.create().then(transport => ...)
+ */
+
+
+class TransportU2F extends _hwTransport.default {
+  /*
+   */
+
+  /*
+   */
+
+  /**
+   * static function to create a new Transport from a connected Ledger device discoverable via U2F (browser support)
+   */
+  static async open(_, _openTimeout = 5000) {
+    return new TransportU2F();
+  }
+
+  constructor() {
+    super();
+    this.scrambleKey = void 0;
+    this.unwrap = true;
+    transportInstances.push(this);
+  }
+  /**
+   * Exchange with the device using APDU protocol.
+   * @param apdu
+   * @returns a promise of apdu response
+   */
+
+
+  async exchange(apdu) {
+    try {
+      return await attemptExchange(apdu, this.exchangeTimeout, this.scrambleKey, this.unwrap);
+    } catch (e) {
+      const isU2FError = typeof e.metaData === "object";
+
+      if (isU2FError) {
+        if (isTimeoutU2FError(e)) {
+          emitDisconnect();
+        } // the wrapping make error more usable and "printable" to the end user.
+
+
+        throw wrapU2FTransportError(e, "Failed to sign with Ledger device: U2F " + e.metaData.type, "U2F_" + e.metaData.code);
+      } else {
+        throw e;
+      }
+    }
+  }
+  /**
+   */
+
+
+  setScrambleKey(scrambleKey) {
+    this.scrambleKey = Buffer.from(scrambleKey, "ascii");
+  }
+  /**
+   */
+
+
+  setUnwrap(unwrap) {
+    this.unwrap = unwrap;
+  }
+
+  close() {
+    // u2f have no way to clean things up
+    return Promise.resolve();
+  }
+
+}
+
+exports.default = TransportU2F;
+TransportU2F.isSupported = _u2fApi.isSupported;
+
+TransportU2F.list = () => // this transport is not discoverable but we are going to guess if it is here with isSupported()
+(0, _u2fApi.isSupported)().then(supported => supported ? [null] : []);
+
+TransportU2F.listen = observer => {
+  let unsubscribed = false;
+  (0, _u2fApi.isSupported)().then(supported => {
+    if (unsubscribed) return;
+
+    if (supported) {
+      observer.next({
+        type: "add",
+        descriptor: null
+      });
+      observer.complete();
+    } else {
+      observer.error(new _errors.TransportError("U2F browser support is needed for Ledger. " + "Please use Chrome, Opera or Firefox with a U2F extension. " + "Also make sure you're on an HTTPS connection", "U2FNotSupported"));
+    }
+  });
+  return {
+    unsubscribe: () => {
+      unsubscribed = true;
+    }
+  };
+};
+
+}).call(this,require("buffer").Buffer)
+},{"@ledgerhq/errors":4,"@ledgerhq/hw-transport":14,"@ledgerhq/logs":15,"buffer":20,"u2f-api":24}],14:[function(require,module,exports){
+arguments[4][11][0].apply(exports,arguments)
+},{"@ledgerhq/errors":4,"buffer":20,"dup":11,"events":21}],15:[function(require,module,exports){
+arguments[4][12][0].apply(exports,arguments)
+},{"dup":12}],16:[function(require,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -2426,8 +2411,7 @@ function toByteArray (b64) {
     ? validLen - 4
     : validLen
 
-  var i
-  for (i = 0; i < len; i += 4) {
+  for (var i = 0; i < len; i += 4) {
     tmp =
       (revLookup[b64.charCodeAt(i)] << 18) |
       (revLookup[b64.charCodeAt(i + 1)] << 12) |
@@ -2486,7 +2470,9 @@ function fromByteArray (uint8) {
 
   // go through the array every three bytes, we'll deal with trailing stuff later
   for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
-    parts.push(encodeChunk(uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)))
+    parts.push(encodeChunk(
+      uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)
+    ))
   }
 
   // pad the end with zeros, but make sure to not forget the extra bytes
@@ -2510,7 +2496,7 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],15:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 ;(function (globalObject) {
   'use strict';
 
@@ -5414,7 +5400,7 @@ function fromByteArray (uint8) {
   }
 })(this);
 
-},{}],16:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 (function (module, exports) {
   'use strict';
 
@@ -5467,11 +5453,7 @@ function fromByteArray (uint8) {
 
   var Buffer;
   try {
-    if (typeof window !== 'undefined' && typeof window.Buffer !== 'undefined') {
-      Buffer = window.Buffer;
-    } else {
-      Buffer = require('buffer').Buffer;
-    }
+    Buffer = require('buffer').Buffer;
   } catch (e) {
   }
 
@@ -5512,19 +5494,23 @@ function fromByteArray (uint8) {
     var start = 0;
     if (number[0] === '-') {
       start++;
+    }
+
+    if (base === 16) {
+      this._parseHex(number, start);
+    } else {
+      this._parseBase(number, base, start);
+    }
+
+    if (number[0] === '-') {
       this.negative = 1;
     }
 
-    if (start < number.length) {
-      if (base === 16) {
-        this._parseHex(number, start, endian);
-      } else {
-        this._parseBase(number, base, start);
-        if (endian === 'le') {
-          this._initArray(this.toArray(), base, endian);
-        }
-      }
-    }
+    this.strip();
+
+    if (endian !== 'le') return;
+
+    this._initArray(this.toArray(), base, endian);
   };
 
   BN.prototype._initNumber = function _initNumber (number, base, endian) {
@@ -5600,29 +5586,31 @@ function fromByteArray (uint8) {
     return this.strip();
   };
 
-  function parseHex4Bits (string, index) {
-    var c = string.charCodeAt(index);
-    // 'A' - 'F'
-    if (c >= 65 && c <= 70) {
-      return c - 55;
-    // 'a' - 'f'
-    } else if (c >= 97 && c <= 102) {
-      return c - 87;
-    // '0' - '9'
-    } else {
-      return (c - 48) & 0xf;
-    }
-  }
+  function parseHex (str, start, end) {
+    var r = 0;
+    var len = Math.min(str.length, end);
+    for (var i = start; i < len; i++) {
+      var c = str.charCodeAt(i) - 48;
 
-  function parseHexByte (string, lowerBound, index) {
-    var r = parseHex4Bits(string, index);
-    if (index - 1 >= lowerBound) {
-      r |= parseHex4Bits(string, index - 1) << 4;
+      r <<= 4;
+
+      // 'a' - 'f'
+      if (c >= 49 && c <= 54) {
+        r |= c - 49 + 0xa;
+
+      // 'A' - 'F'
+      } else if (c >= 17 && c <= 22) {
+        r |= c - 17 + 0xa;
+
+      // '0' - '9'
+      } else {
+        r |= c & 0xf;
+      }
     }
     return r;
   }
 
-  BN.prototype._parseHex = function _parseHex (number, start, endian) {
+  BN.prototype._parseHex = function _parseHex (number, start) {
     // Create possibly bigger array to ensure that it fits the number
     this.length = Math.ceil((number.length - start) / 6);
     this.words = new Array(this.length);
@@ -5630,38 +5618,25 @@ function fromByteArray (uint8) {
       this.words[i] = 0;
     }
 
-    // 24-bits chunks
+    var j, w;
+    // Scan 24-bit chunks and add them to the number
     var off = 0;
-    var j = 0;
-
-    var w;
-    if (endian === 'be') {
-      for (i = number.length - 1; i >= start; i -= 2) {
-        w = parseHexByte(number, start, i) << off;
-        this.words[j] |= w & 0x3ffffff;
-        if (off >= 18) {
-          off -= 18;
-          j += 1;
-          this.words[j] |= w >>> 26;
-        } else {
-          off += 8;
-        }
-      }
-    } else {
-      var parseLength = number.length - start;
-      for (i = parseLength % 2 === 0 ? start + 1 : start; i < number.length; i += 2) {
-        w = parseHexByte(number, start, i) << off;
-        this.words[j] |= w & 0x3ffffff;
-        if (off >= 18) {
-          off -= 18;
-          j += 1;
-          this.words[j] |= w >>> 26;
-        } else {
-          off += 8;
-        }
+    for (i = number.length - 6, j = 0; i >= start; i -= 6) {
+      w = parseHex(number, i, i + 6);
+      this.words[j] |= (w << off) & 0x3ffffff;
+      // NOTE: `0x3fffff` is intentional here, 26bits max shift + 24bit hex limb
+      this.words[j + 1] |= w >>> (26 - off) & 0x3fffff;
+      off += 24;
+      if (off >= 26) {
+        off -= 26;
+        j++;
       }
     }
-
+    if (i + 6 !== start) {
+      w = parseHex(number, start, i + 6);
+      this.words[j] |= (w << off) & 0x3ffffff;
+      this.words[j + 1] |= w >>> (26 - off) & 0x3fffff;
+    }
     this.strip();
   };
 
@@ -5732,8 +5707,6 @@ function fromByteArray (uint8) {
         this._iaddn(word);
       }
     }
-
-    this.strip();
   };
 
   BN.prototype.copy = function copy (dest) {
@@ -8402,13 +8375,7 @@ function fromByteArray (uint8) {
     } else if (cmp > 0) {
       r.isub(this.p);
     } else {
-      if (r.strip !== undefined) {
-        // r is BN v4 instance
-        r.strip();
-      } else {
-        // r is BN v5 instance
-        r._strip();
-      }
+      r.strip();
     }
 
     return r;
@@ -8862,10 +8829,10 @@ function fromByteArray (uint8) {
   };
 })(typeof module === 'undefined' || module, this);
 
-},{"buffer":17}],17:[function(require,module,exports){
+},{"buffer":19}],19:[function(require,module,exports){
 
-},{}],18:[function(require,module,exports){
-(function (Buffer){(function (){
+},{}],20:[function(require,module,exports){
+(function (Buffer){
 /*!
  * The buffer module from node.js, for the browser.
  *
@@ -10644,8 +10611,8 @@ function numberIsNaN (obj) {
   return obj !== obj // eslint-disable-line no-self-compare
 }
 
-}).call(this)}).call(this,require("buffer").Buffer)
-},{"base64-js":14,"buffer":18,"ieee754":20}],19:[function(require,module,exports){
+}).call(this,require("buffer").Buffer)
+},{"base64-js":16,"buffer":20,"ieee754":22}],21:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -11170,8 +11137,7 @@ function functionBindPolyfill(context) {
   };
 }
 
-},{}],20:[function(require,module,exports){
-/*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
+},{}],22:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = (nBytes * 8) - mLen - 1
@@ -11257,8 +11223,8 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],21:[function(require,module,exports){
-(function (Buffer){(function (){
+},{}],23:[function(require,module,exports){
+(function (Buffer){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getLength = exports.decode = exports.encode = void 0;
@@ -11508,11 +11474,11 @@ function toBuffer(v) {
     return v;
 }
 
-}).call(this)}).call(this,require("buffer").Buffer)
-},{"bn.js":16,"buffer":18}],22:[function(require,module,exports){
+}).call(this,require("buffer").Buffer)
+},{"bn.js":18,"buffer":20}],24:[function(require,module,exports){
 'use strict';
 module.exports = require( './lib/u2f-api' );
-},{"./lib/u2f-api":24}],23:[function(require,module,exports){
+},{"./lib/u2f-api":26}],25:[function(require,module,exports){
 // Copyright 2014 Google Inc. All rights reserved
 //
 // Use of this source code is governed by a BSD-style
@@ -11920,8 +11886,8 @@ u2f.register = function(registerRequests, signRequests,
   });
 };
 
-},{}],24:[function(require,module,exports){
-(function (global){(function (){
+},{}],26:[function(require,module,exports){
+(function (global){
 'use strict';
 
 module.exports = API;
@@ -12238,5 +12204,15 @@ makeDefault( 'ensureSupport' );
 makeDefault( 'register' );
 makeDefault( 'sign' );
 
-}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./google-u2f-api":23}]},{},[2]);
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./google-u2f-api":25}],27:[function(require,module,exports){
+'use strict';
+
+module.exports = function() {
+  throw new Error(
+    'ws does not work in the browser. Browser clients must use the native ' +
+      'WebSocket object'
+  );
+};
+
+},{}]},{},[2]);
