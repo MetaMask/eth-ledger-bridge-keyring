@@ -31,7 +31,7 @@ require('buffer');
 var BRIDGE_URL = 'ws://localhost:8435';
 
 // Number of seconds to poll for Ledger Live and Ethereum app opening
-var TRANSPORT_CHECK_LIMIT = 30;
+var TRANSPORT_CHECK_LIMIT = 180;
 var TRANSPORT_CHECK_DELAY = 1000;
 
 var LedgerBridge = function () {
@@ -160,7 +160,6 @@ var LedgerBridge = function () {
                 });
             } catch (err) {
                 var e = this.ledgerErrToMessage(err);
-                console.log("[LedgerBridgeIframe][unlock] error is: ", e, err);
                 this.sendMessageToExtension({
                     action: replyAction,
                     success: false,
@@ -228,7 +227,6 @@ var LedgerBridge = function () {
     }, {
         key: 'ledgerErrToMessage',
         value: function ledgerErrToMessage(err) {
-            console.log("ledgerErrToMessage: ", err);
             var isU2FError = function isU2FError(err) {
                 return !!err && !!err.metaData;
             };

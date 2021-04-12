@@ -10,7 +10,7 @@ import WebSocketTransport from '@ledgerhq/hw-transport-http/lib/WebSocketTranspo
 const BRIDGE_URL = 'ws://localhost:8435'
 
 // Number of seconds to poll for Ledger Live and Ethereum app opening
-const TRANSPORT_CHECK_LIMIT = 30
+const TRANSPORT_CHECK_LIMIT = 180
 const TRANSPORT_CHECK_DELAY = 1000
 
 export default class LedgerBridge {
@@ -118,7 +118,6 @@ export default class LedgerBridge {
             })
         } catch (err) {
             const e = this.ledgerErrToMessage(err)
-            console.log("[LedgerBridgeIframe][unlock] error is: ", e, err)
             this.sendMessageToExtension({
                 action: replyAction,
                 success: false,
@@ -186,7 +185,6 @@ export default class LedgerBridge {
     }
 
     ledgerErrToMessage (err) {
-        console.log("ledgerErrToMessage: ", err);
         const isU2FError = (err) => !!err && !!(err).metaData
         const isStringError = (err) => typeof err === 'string'
         const isErrorWithId = (err) => err.hasOwnProperty('id') && err.hasOwnProperty('message')
