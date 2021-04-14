@@ -197,8 +197,13 @@ class LedgerBridgeKeyring extends EventEmitter {
       // If the iframe isn't loaded yet, let's store the desired useLedgerLive value and
       // optimistically return a successful promise
       if(!this.iframeLoaded) {
-        this.initialUseLedgerLive = useLedgerLive
-        return Promise.resolve(true);
+        return new Promise((delayedResolve, delayedReject) => {
+          this.delayedPromise = {
+            resolve: delayedResolve,
+            reject: delayedReject,
+            useLedgerLive,
+          };
+        });
       }
 
       this._sendMessage({
@@ -333,9 +338,16 @@ class LedgerBridgeKeyring extends EventEmitter {
       // If the ledger live preference was set before the iframe is loaded,
       // set it after the iframe has loaded
       this.iframeLoaded = true
-      if(this.initialUseLedgerLive !== 'undefined') {
-        await this.updateTransportMethod(this.initialUseLedgerLive)
-        delete this.initialUseLedgerLive
+      if(this.delayedPromise) {
+        try {
+          const result = await this.updateTransportMethod(
+            this.delayedPromise.useLedgerLive
+          )
+          this.delayedPromise.resolve(result)
+        }
+        catch (e) {
+          this.delayedPromise.reject(e)
+        }
       }
     }
     document.head.appendChild(this.iframe)
