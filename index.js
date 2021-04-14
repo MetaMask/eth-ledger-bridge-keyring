@@ -401,7 +401,7 @@ class LedgerBridgeKeyring extends EventEmitter {
     const address = ethUtil
       .publicToAddress(dkey.publicKey, true)
       .toString('hex')
-    return ethUtil.toChecksumAddress(address)
+    return ethUtil.toChecksumAddress(`0x${address}`)
   }
 
   _pathFromAddress (address) {
