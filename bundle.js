@@ -237,7 +237,7 @@ var LedgerBridge = function () {
                 return err.hasOwnProperty('id') && err.hasOwnProperty('message');
             };
             var isWrongAppError = function isWrongAppError(err) {
-                return err.message && err.message.includes('6804');
+                return String(err.message || err).includes('6804');
             };
             var isLedgerLockedError = function isLedgerLockedError(err) {
                 return err.message && err.message.includes('OpenFailed');
@@ -245,15 +245,13 @@ var LedgerBridge = function () {
 
             // https://developers.yubico.com/U2F/Libraries/Client_error_codes.html
             if (isU2FError(err)) {
-                // Timeout
                 if (err.metaData.code === 5) {
                     return 'LEDGER_TIMEOUT';
                 }
-
                 return err.metaData.type;
             }
 
-            if (isWrongAppError(err) || isStringError(err) && err.includes('6804')) {
+            if (isWrongAppError(err)) {
                 return 'LEDGER_WRONG_APP';
             }
 

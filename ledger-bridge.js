@@ -188,20 +188,18 @@ export default class LedgerBridge {
         const isU2FError = (err) => !!err && !!(err).metaData
         const isStringError = (err) => typeof err === 'string'
         const isErrorWithId = (err) => err.hasOwnProperty('id') && err.hasOwnProperty('message')
-        const isWrongAppError = (err) => err.message && err.message.includes('6804')
+        const isWrongAppError = (err) => String(err.message || err).includes('6804')
         const isLedgerLockedError = (err) => err.message && err.message.includes('OpenFailed')
 
         // https://developers.yubico.com/U2F/Libraries/Client_error_codes.html
         if (isU2FError(err)) {
-          // Timeout
           if (err.metaData.code === 5) {
             return 'LEDGER_TIMEOUT'
           }
-
           return err.metaData.type
         }
 
-        if (isWrongAppError(err) || (isStringError(err) && err.includes('6804'))) {
+        if (isWrongAppError(err)) {
             return 'LEDGER_WRONG_APP'
         }
 
