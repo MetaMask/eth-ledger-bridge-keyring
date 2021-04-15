@@ -161,9 +161,7 @@ class LedgerBridgeKeyring extends EventEmitter {
           }
           resolve(this.accounts)
         })
-        .catch((e) => {
-          reject(e)
-        })
+        .catch(reject)
     })
   }
 
@@ -197,13 +195,12 @@ class LedgerBridgeKeyring extends EventEmitter {
       // If the iframe isn't loaded yet, let's store the desired useLedgerLive value and
       // optimistically return a successful promise
       if(!this.iframeLoaded) {
-        return new Promise((delayedResolve, delayedReject) => {
-          this.delayedPromise = {
-            resolve: delayedResolve,
-            reject: delayedReject,
-            useLedgerLive,
-          };
-        });
+        this.delayedPromise = {
+          resolve,
+          reject,
+          useLedgerLive,
+        };
+        return;
       }
 
       this._sendMessage({
@@ -347,6 +344,9 @@ class LedgerBridgeKeyring extends EventEmitter {
         }
         catch (e) {
           this.delayedPromise.reject(e)
+        }
+        finally {
+          delete this.delayedPromise
         }
       }
     }
