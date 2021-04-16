@@ -2,6 +2,7 @@ const { EventEmitter } = require('events')
 const HDKey = require('hdkey')
 const ethUtil = require('ethereumjs-util')
 const sigUtil = require('eth-sig-util')
+const { TransactionFactory } = require('@ethereumjs/tx')
 
 const pathBase = 'm'
 const hdPathString = `${pathBase}/44'/60'/0'`
@@ -218,31 +219,71 @@ class LedgerBridgeKeyring extends EventEmitter {
 
   // tx is an instance of the ethereumjs-transaction class.
   signTransaction (address, tx) {
+    // transactions built with older versions of ethereumjs-tx have a
+    // getChainId method that newer versions do not. Older versions are mutable
+    // while newer versions default to being immutable. Expected shape and type
+    // of data for v, r and s differ (Buffer (old) vs BN (new))
+    if (typeof tx.getChainId === 'function') {
+      // In this version of ethereumjs-tx we must add the chainId in hex format
+      // to the initial v value. The chainId must be included in the serialized
+      // transaction which is only communicated to ethereumjs-tx in this
+      // value. In newer versions the chainId is communicated via the 'Common'
+      // object.
+      tx.v = ethUtil.bufferToHex(tx.getChainId())
+      tx.r = '0x00'
+      tx.s = '0x00'
+      return this._signTransaction(address, tx, tx.to, (payload) => {
+        tx.v = Buffer.from(payload.v, 'hex')
+        tx.r = Buffer.from(payload.r, 'hex')
+        tx.s = Buffer.from(payload.s, 'hex')
+        return tx
+      })
+    }
+    // For transactions created by newer versions of @ethereumjs/tx
+    // Note: https://github.com/ethereumjs/ethereumjs-monorepo/issues/1188
+    // It is not strictly necessary to do this additional setting of the v
+    // value. We should be able to get the correct v value in serialization
+    // if the above issue is resolved. Until then this must be set before
+    // calling .serialize(). Note we are creating a temporarily mutable object
+    // forfeiting the benefit of immutability until this happens. We do still
+    // return a Transaction that is frozen if the originally provided
+    // transaction was also frozen.
+    const unfrozenTx = TransactionFactory.fromTxData(tx.toJSON(), { common: tx.common, freeze: false })
+    unfrozenTx.v = new ethUtil.BN(ethUtil.addHexPrefix(tx.common.chainId()), 'hex')
+    return this._signTransaction(address, unfrozenTx, tx.to.buf, (payload) => {
+      // Because tx will be immutable, first get a plain javascript object that
+      // represents the transaction. Using txData here as it aligns with the
+      // nomenclature of ethereumjs/tx.
+      const txData = tx.toJSON()
+      // The fromTxData utility expects v,r and s to be hex prefixed
+      txData.v = ethUtil.addHexPrefix(payload.v)
+      txData.r = ethUtil.addHexPrefix(payload.r)
+      txData.s = ethUtil.addHexPrefix(payload.s)
+      // Adopt the 'common' option from the original transaction and set the
+      // returned object to be frozen if the original is frozen.
+      return TransactionFactory.fromTxData(txData, { common: tx.common, freeze: Object.isFrozen(tx) })
+    })
+  }
+
+  _signTransaction (address, tx, toAddress, handleSigning) {
     return new Promise((resolve, reject) => {
       this.unlockAccountByAddress(address)
         .then((hdPath) => {
-          tx.v = ethUtil.bufferToHex(tx.getChainId())
-          tx.r = '0x00'
-          tx.s = '0x00'
-
           this._sendMessage({
             action: 'ledger-sign-transaction',
             params: {
               tx: tx.serialize().toString('hex'),
               hdPath,
-              to: ethUtil.bufferToHex(tx.to).toLowerCase(),
+              to: ethUtil.bufferToHex(toAddress).toLowerCase(),
             },
           },
           ({ success, payload }) => {
             if (success) {
 
-              tx.v = Buffer.from(payload.v, 'hex')
-              tx.r = Buffer.from(payload.r, 'hex')
-              tx.s = Buffer.from(payload.s, 'hex')
-
-              const valid = tx.verifySignature()
+              const newOrMutatedTx = handleSigning(payload)
+              const valid = newOrMutatedTx.verifySignature()
               if (valid) {
-                resolve(tx)
+                resolve(newOrMutatedTx)
               } else {
                 reject(new Error('Ledger: The transaction signature is not valid'))
               }

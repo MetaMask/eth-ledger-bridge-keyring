@@ -7,6 +7,8 @@ const spies = require('chai-spies')
 const EthereumTx = require('ethereumjs-tx')
 const HDKey = require('hdkey')
 const ethUtil = require('ethereumjs-util')
+const { TransactionFactory } = require('@ethereumjs/tx')
+const Common = require('@ethereumjs/common').default
 const sigUtil = require('eth-sig-util')
 
 const LedgerBridgeKeyring = require('..')
@@ -44,6 +46,16 @@ const fakeTx = new EthereumTx({
   // EIP 155 chainId - mainnet: 1, ropsten: 3
   chainId: 1,
 })
+
+const common = new Common({ chain: 'mainnet' })
+const newFakeTx = TransactionFactory.fromTxData({
+  nonce: '0x00',
+  gasPrice: '0x09184e72a000',
+  gasLimit: '0x2710',
+  to: '0x0000000000000000000000000000000000000000',
+  value: '0x00',
+  data: '0x7f7465737432000000000000000000000000000000000000000000000000000000600057',
+}, { common, freeze: false })
 
 chai.use(spies)
 
@@ -422,27 +434,55 @@ describe('LedgerBridgeKeyring', function () {
   })
 
   describe('signTransaction', function () {
-    it('should pass serialized transaction to ledger and return signed tx', async function () {
-      await basicSetupToUnlockOneAccount()
-      sandbox.on(keyring, '_sendMessage', (msg, cb) => {
-        fakeTx.v = ethUtil.bufferToHex(fakeTx.getChainId())
-        fakeTx.r = '0x00'
-        fakeTx.s = '0x00'
-        assert.deepStrictEqual(msg.params, {
-          hdPath: "m/44'/60'/0'/0",
-          to: ethUtil.bufferToHex(fakeTx.to),
-          tx: fakeTx.serialize().toString('hex'),
+    describe('using old versions of ethereumjs/tx', function () {
+      it('should pass serialized transaction to ledger and return signed tx', async function () {
+        await basicSetupToUnlockOneAccount()
+        sandbox.on(keyring, '_sendMessage', (msg, cb) => {
+          assert.deepStrictEqual(msg.params, {
+            hdPath: "m/44'/60'/0'/0",
+            to: ethUtil.bufferToHex(fakeTx.to),
+            tx: fakeTx.serialize().toString('hex'),
+          })
+          cb({ success: true, payload: { v: '0x1', r: '0x0', s: '0x0' } })
         })
-        cb({ success: true, payload: { v: '0x1', r: '0x0', s: '0x0' } })
+
+        sandbox.on(fakeTx, 'verifySignature', () => true)
+
+        const returnedTx = await keyring.signTransaction(fakeAccounts[0], fakeTx)
+        expect(keyring._sendMessage).to.have.been.called()
+        expect(returnedTx).to.have.property('v')
+        expect(returnedTx).to.have.property('r')
+        expect(returnedTx).to.have.property('s')
       })
+    })
 
-      sandbox.on(fakeTx, 'verifySignature', () => true)
+    describe('using new versions of ethereumjs/tx', function () {
+      it('should pass serialized transaction to ledger and return signed tx', async function () {
+        await basicSetupToUnlockOneAccount()
+        // Signature will be invalid due to not having private key / public key
+        // pair for testing.
+        sandbox.on(newFakeTx, 'verifySignature', () => true)
+        sandbox.on(TransactionFactory, 'fromTxData', () => {
+          // without having a private key/public key pair in this test, we have
+          // mock out this method and return the original tx because we can't
+          // replicate r and s values without the private key.
+          return newFakeTx
+        })
+        sandbox.on(keyring, '_sendMessage', (msg, cb) => {
+          assert.deepStrictEqual(msg.params, {
+            hdPath: "m/44'/60'/0'/0",
+            to: ethUtil.bufferToHex(newFakeTx.to.buf),
+            tx: newFakeTx.serialize().toString('hex'),
+          })
+          cb({ success: true, payload: { v: '0x25', r: '0x0', s: '0x0' } })
+        })
 
-      const returnedTx = await keyring.signTransaction(fakeAccounts[0], fakeTx)
-      expect(keyring._sendMessage).to.have.been.called()
-      expect(returnedTx).to.have.property('v')
-      expect(returnedTx).to.have.property('r')
-      expect(returnedTx).to.have.property('s')
+        const returnedTx = await keyring.signTransaction(fakeAccounts[0], newFakeTx, common)
+        expect(keyring._sendMessage).to.have.been.called()
+        expect(returnedTx).to.have.property('v')
+        expect(returnedTx).to.have.property('r')
+        expect(returnedTx).to.have.property('s')
+      })
     })
   })
 
