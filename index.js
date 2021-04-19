@@ -33,7 +33,7 @@ class LedgerBridgeKeyring extends EventEmitter {
     this.implementFullBIP44 = false
     this.deserialize(opts)
 
-    this.iframeLoaded = false;
+    this.iframeLoaded = false
     this._setupIframe()
   }
 
@@ -190,24 +190,24 @@ class LedgerBridgeKeyring extends EventEmitter {
     delete this.accountDetails[ethUtil.toChecksumAddress(address)]
   }
 
-  updateTransportMethod(useLedgerLive = false) {
+  updateTransportMethod (useLedgerLive = false) {
     return new Promise((resolve, reject) => {
       // If the iframe isn't loaded yet, let's store the desired useLedgerLive value and
       // optimistically return a successful promise
-      if(!this.iframeLoaded) {
+      if (!this.iframeLoaded) {
         this.delayedPromise = {
           resolve,
           reject,
           useLedgerLive,
-        };
-        return;
+        }
+        return
       }
 
       this._sendMessage({
         action: 'ledger-update-transport',
-        params: { useLedgerLive }
+        params: { useLedgerLive },
       }, ({ success }) => {
-        if(success) {
+        if (success) {
           resolve(true)
         } else {
           reject(new Error('Ledger transport could not be updated'))
@@ -335,17 +335,15 @@ class LedgerBridgeKeyring extends EventEmitter {
       // If the ledger live preference was set before the iframe is loaded,
       // set it after the iframe has loaded
       this.iframeLoaded = true
-      if(this.delayedPromise) {
+      if (this.delayedPromise) {
         try {
           const result = await this.updateTransportMethod(
-            this.delayedPromise.useLedgerLive
+            this.delayedPromise.useLedgerLive,
           )
           this.delayedPromise.resolve(result)
-        }
-        catch (e) {
+        } catch (e) {
           this.delayedPromise.reject(e)
-        }
-        finally {
+        } finally {
           delete this.delayedPromise
         }
       }
