@@ -3,10 +3,12 @@ const HDKey = require('hdkey')
 const ethUtil = require('ethereumjs-util')
 const sigUtil = require('eth-sig-util')
 
-const hdPathString = `m/44'/60'/0'`
-const type = 'Ledger Hardware'
-const BRIDGE_URL = 'https://metamask.github.io/eth-ledger-bridge-keyring'
 const pathBase = 'm'
+const hdPathString = `${pathBase}/44'/60'/0'`
+const type = 'Ledger Hardware'
+
+const BRIDGE_URL = 'https://metamask.github.io/eth-ledger-bridge-keyring'
+
 const MAX_INDEX = 1000
 const NETWORK_API_URLS = {
   ropsten: 'http://api-ropsten.etherscan.io',
@@ -30,6 +32,8 @@ class LedgerBridgeKeyring extends EventEmitter {
     this.network = 'mainnet'
     this.implementFullBIP44 = false
     this.deserialize(opts)
+
+    this.iframeLoaded = false
     this._setupIframe()
   }
 
@@ -157,9 +161,7 @@ class LedgerBridgeKeyring extends EventEmitter {
           }
           resolve(this.accounts)
         })
-        .catch((e) => {
-          reject(e)
-        })
+        .catch(reject)
     })
   }
 
@@ -186,6 +188,32 @@ class LedgerBridgeKeyring extends EventEmitter {
     }
     this.accounts = this.accounts.filter((a) => a.toLowerCase() !== address.toLowerCase())
     delete this.accountDetails[ethUtil.toChecksumAddress(address)]
+  }
+
+  updateTransportMethod (useLedgerLive = false) {
+    return new Promise((resolve, reject) => {
+      // If the iframe isn't loaded yet, let's store the desired useLedgerLive value and
+      // optimistically return a successful promise
+      if (!this.iframeLoaded) {
+        this.delayedPromise = {
+          resolve,
+          reject,
+          useLedgerLive,
+        }
+        return
+      }
+
+      this._sendMessage({
+        action: 'ledger-update-transport',
+        params: { useLedgerLive },
+      }, ({ success }) => {
+        if (success) {
+          resolve(true)
+        } else {
+          reject(new Error('Ledger transport could not be updated'))
+        }
+      })
+    })
   }
 
   // tx is an instance of the ethereumjs-transaction class.
@@ -303,6 +331,23 @@ class LedgerBridgeKeyring extends EventEmitter {
   _setupIframe () {
     this.iframe = document.createElement('iframe')
     this.iframe.src = this.bridgeUrl
+    this.iframe.onload = async () => {
+      // If the ledger live preference was set before the iframe is loaded,
+      // set it after the iframe has loaded
+      this.iframeLoaded = true
+      if (this.delayedPromise) {
+        try {
+          const result = await this.updateTransportMethod(
+            this.delayedPromise.useLedgerLive,
+          )
+          this.delayedPromise.resolve(result)
+        } catch (e) {
+          this.delayedPromise.reject(e)
+        } finally {
+          delete this.delayedPromise
+        }
+      }
+    }
     document.head.appendChild(this.iframe)
   }
 
@@ -319,10 +364,12 @@ class LedgerBridgeKeyring extends EventEmitter {
       if (origin !== this._getOrigin()) {
         return false
       }
-      if (data && data.action && data.action === `${msg.action}-reply`) {
+
+      if (data && data.action && data.action === `${msg.action}-reply` && cb) {
         cb(data)
         return undefined
       }
+
       window.removeEventListener('message', eventListener)
       return undefined
     }
@@ -461,7 +508,7 @@ class LedgerBridgeKeyring extends EventEmitter {
   }
 
   _getApiUrl () {
-    return NETWORK_API_URLS[this.network] ? NETWORK_API_URLS[this.network] : NETWORK_API_URLS.mainnet
+    return NETWORK_API_URLS[this.network] || NETWORK_API_URLS.mainnet
   }
 
 }
