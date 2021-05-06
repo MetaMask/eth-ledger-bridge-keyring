@@ -285,7 +285,7 @@ class LedgerBridgeKeyring extends EventEmitter {
               }
               resolve(signature)
             } else {
-              reject(new Error(payload.error || 'Ledger: Uknown error while signing message'))
+              reject(new Error(payload.error || 'Ledger: Unknown error while signing message'))
             }
           })
         })
@@ -309,8 +309,51 @@ class LedgerBridgeKeyring extends EventEmitter {
     return hdPath
   }
 
-  signTypedData () {
-    throw new Error('Not supported on this device')
+  signTypedData (withAccount, data, options) {
+    const isV4 = options.version === 'V4'
+    const {
+      domain,
+      types,
+      primaryType,
+      message,
+    } = sigUtil.TypedDataUtils.sanitizeData(data)
+    const domainSeparatorHex = sigUtil.TypedDataUtils.hashStruct('EIP712Domain', domain, types, isV4).toString('hex')
+    const hashStructMessageHex = sigUtil.TypedDataUtils.hashStruct(primaryType, message, types, isV4).toString('hex')
+
+    return new Promise((resolve, reject) => {
+      this.unlockAccountByAddress(withAccount)
+        .then((hdPath) => {
+          this._sendMessage({
+            action: 'ledger-sign-typed-data',
+            params: {
+              hdPath,
+              domainSeparatorHex,
+              hashStructMessageHex,
+            },
+          },
+          ({ success, payload }) => {
+            if (success) {
+              let v = payload.v - 27
+              v = v.toString(16)
+              if (v.length < 2) {
+                v = `0${v}`
+              }
+              const signature = `0x${payload.r}${payload.s}${v}`
+              const addressSignedWith = sigUtil.recoverTypedSignature_v4({
+                data,
+                sig: signature,
+              })
+              if (ethUtil.toChecksumAddress(addressSignedWith) !== ethUtil.toChecksumAddress(withAccount)) {
+                reject(new Error('Ledger: The signature doesnt match the right address'))
+              }
+              resolve(signature)
+            } else {
+              reject(new Error(payload.error || 'Ledger: Unknown error while signing message'))
+            }
+          })
+        })
+        .catch(reject)
+    })
   }
 
   exportAccount () {
