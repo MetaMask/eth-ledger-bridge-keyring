@@ -311,6 +311,10 @@ class LedgerBridgeKeyring extends EventEmitter {
 
   async signTypedData (withAccount, data, options = {}) {
     const isV4 = options.version === 'V4'
+    if (!isV4) {
+      throw new Error('Ledger: Only version 4 of typed data signing is supported')
+    }
+
     const {
       domain,
       types,
