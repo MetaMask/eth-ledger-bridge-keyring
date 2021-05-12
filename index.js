@@ -285,7 +285,7 @@ class LedgerBridgeKeyring extends EventEmitter {
               }
               resolve(signature)
             } else {
-              reject(new Error(payload.error || 'Ledger: Uknown error while signing message'))
+              reject(new Error(payload.error || 'Ledger: Unknown error while signing message'))
             }
           })
         })
@@ -309,8 +309,52 @@ class LedgerBridgeKeyring extends EventEmitter {
     return hdPath
   }
 
-  signTypedData () {
-    throw new Error('Not supported on this device')
+  async signTypedData (withAccount, data, options = {}) {
+    const isV4 = options.version === 'V4'
+    if (!isV4) {
+      throw new Error('Ledger: Only version 4 of typed data signing is supported')
+    }
+
+    const {
+      domain,
+      types,
+      primaryType,
+      message,
+    } = sigUtil.TypedDataUtils.sanitizeData(data)
+    const domainSeparatorHex = sigUtil.TypedDataUtils.hashStruct('EIP712Domain', domain, types, isV4).toString('hex')
+    const hashStructMessageHex = sigUtil.TypedDataUtils.hashStruct(primaryType, message, types, isV4).toString('hex')
+
+    const hdPath = await this.unlockAccountByAddress(withAccount)
+    const { success, payload } = await new Promise((resolve) => {
+      this._sendMessage({
+        action: 'ledger-sign-typed-data',
+        params: {
+          hdPath,
+          domainSeparatorHex,
+          hashStructMessageHex,
+        },
+      },
+      (result) => resolve(result))
+    })
+
+    if (success) {
+      let v = payload.v - 27
+      v = v.toString(16)
+      if (v.length < 2) {
+        v = `0${v}`
+      }
+      const signature = `0x${payload.r}${payload.s}${v}`
+      const addressSignedWith = sigUtil.recoverTypedSignature_v4({
+        data,
+        sig: signature,
+      })
+      if (ethUtil.toChecksumAddress(addressSignedWith) !== ethUtil.toChecksumAddress(withAccount)) {
+        throw new Error('Ledger: The signature doesnt match the right address')
+      }
+      return signature
+    }
+    throw new Error(payload.error || 'Ledger: Unknown error while signing message')
+
   }
 
   exportAccount () {

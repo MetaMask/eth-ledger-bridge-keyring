@@ -29,6 +29,7 @@ const fakeAccounts = [
   '0xd4F1686961642340a80334b5171d85Bbd390c691',
   '0x6772C4B1E841b295960Bb4662dceD9bb71726357',
   '0x41bEAD6585eCA6c79B553Ca136f0DFA78A006899',
+  '0xf37559520757223264ee707d4e3fdfaa118db9bd',
 ]
 
 const fakeXPubKey = 'xpub6FnCn6nSzZAw5Tw7cgR9bi15UV96gLZhjDstkXXxvCLsUXBGXPdSnLFbdpq8p9HmGsApME5hQTZ3emM2rnY5agb9rXpVGyy3bdW6EEgAtqt'
@@ -51,10 +52,10 @@ describe('LedgerBridgeKeyring', function () {
   let keyring
   let sandbox
 
-  async function basicSetupToUnlockOneAccount () {
-    keyring.setAccountToUnlock(0)
+  async function basicSetupToUnlockOneAccount (accountIndex = 0) {
+    keyring.setAccountToUnlock(accountIndex)
     await keyring.addAccounts()
-    sandbox.on(keyring, 'unlock', (_) => Promise.resolve(fakeAccounts[0]))
+    sandbox.on(keyring, 'unlock', (_) => Promise.resolve(fakeAccounts[accountIndex]))
   }
 
   beforeEach(function () {
@@ -396,14 +397,6 @@ describe('LedgerBridgeKeyring', function () {
     })
   })
 
-  describe('signTypedData', function () {
-    it('should throw an error because it is not supported', function () {
-      expect((_) => {
-        keyring.signTypedData()
-      }).to.throw('Not supported on this device')
-    })
-  })
-
   describe('exportAccount', function () {
     it('should throw an error because it is not supported', function () {
       expect((_) => {
@@ -504,6 +497,84 @@ describe('LedgerBridgeKeyring', function () {
       sandbox.on(keyring, 'unlock', (_) => Promise.resolve(incorrectAccount))
 
       assert.rejects(() => keyring.unlockAccountByAddress(requestedAccount), new Error(`Ledger: Account ${fakeAccounts[0]} does not belong to the connected device`))
+    })
+  })
+
+  describe('signTypedData', function () {
+    // This data matches demo data is MetaMask's test dapp
+    const fixtureData = {
+      'domain': {
+        'chainId': 1,
+        'name': 'Ether Mail',
+        'verifyingContract': '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC',
+        'version': '1',
+      },
+      'message': {
+        'contents': 'Hello, Bob!',
+        'from': {
+          'name': 'Cow',
+          'wallets': [
+            '0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826',
+            '0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF',
+          ],
+        },
+        'to': [
+          {
+            'name': 'Bob',
+            'wallets': [
+              '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB',
+              '0xB0BdaBea57B0BDABeA57b0bdABEA57b0BDabEa57',
+              '0xB0B0b0b0b0b0B000000000000000000000000000',
+            ],
+          },
+        ],
+      },
+      'primaryType': 'Mail',
+      'types': {
+        'EIP712Domain': [
+          { 'name': 'name', 'type': 'string' },
+          { 'name': 'version', 'type': 'string' },
+          { 'name': 'chainId', 'type': 'uint256' },
+          { 'name': 'verifyingContract', 'type': 'address' },
+        ],
+        'Group': [
+          { 'name': 'name', 'type': 'string' },
+          { 'name': 'members', 'type': 'Person[]' },
+        ],
+        'Mail': [
+          { 'name': 'from', 'type': 'Person' },
+          { 'name': 'to', 'type': 'Person[]' },
+          { 'name': 'contents', 'type': 'string' },
+        ],
+        'Person': [
+          { 'name': 'name', 'type': 'string' },
+          { 'name': 'wallets', 'type': 'address[]' },
+        ],
+      },
+    }
+    const options = { version: 'V4' }
+
+    beforeEach(async function () {
+      sandbox.on(keyring, 'unlockAccountByAddress', (_) => Promise.resolve(`m/44'/60'/15'`))
+      await basicSetupToUnlockOneAccount(15)
+    })
+
+    it('should resolve properly when called', async function () {
+      sandbox.on(keyring, '_sendMessage', (_, cb) => {
+        cb({ success: true, payload: { v: '27', r: '72d4e38a0e582e09a620fd38e236fe687a1ec782206b56d576f579c026a7e5b9', s: '46759735981cd0c3efb02d36df28bb2feedfec3d90e408efc93f45b894946e32' } })
+      })
+
+      const result = await keyring.signTypedData(fakeAccounts[15], fixtureData, options)
+      assert.strictEqual(result, '0x72d4e38a0e582e09a620fd38e236fe687a1ec782206b56d576f579c026a7e5b946759735981cd0c3efb02d36df28bb2feedfec3d90e408efc93f45b894946e3200')
+    })
+
+    it('should error when address does not match', async function () {
+      sandbox.on(keyring, '_sendMessage', (_, cb) => {
+        // Changing v to 28 should cause a validation error
+        cb({ success: true, payload: { v: '28', r: '72d4e38a0e582e09a620fd38e236fe687a1ec782206b56d576f579c026a7e5b9', s: '46759735981cd0c3efb02d36df28bb2feedfec3d90e408efc93f45b894946e32' } })
+      })
+
+      assert.rejects(keyring.signTypedData(fakeAccounts[15], fixtureData, options), new Error('Ledger: The signature doesnt match the right address'))
     })
   })
 })
