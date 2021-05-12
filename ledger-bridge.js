@@ -4,10 +4,19 @@ require('buffer')
 import TransportU2F from '@ledgerhq/hw-transport-u2f'
 import LedgerEth from '@ledgerhq/hw-app-eth'
 import { byContractAddress } from '@ledgerhq/hw-app-eth/erc20'
+import WebSocketTransport from '@ledgerhq/hw-transport-http/lib/WebSocketTransport'
+
+// URL which triggers Ledger Live app to open and handle communication
+const BRIDGE_URL = 'ws://localhost:8435'
+
+// Number of seconds to poll for Ledger Live and Ethereum app opening
+const TRANSPORT_CHECK_LIMIT = 180
+const TRANSPORT_CHECK_DELAY = 1000
 
 export default class LedgerBridge {
     constructor () {
         this.addEventListeners()
+        this.useLedgerLive = false
     }
 
     addEventListeners () {
@@ -18,14 +27,20 @@ export default class LedgerBridge {
                 switch (action) {
                     case 'ledger-unlock':
                         this.unlock(replyAction, params.hdPath)
-                    break
+                        break
                     case 'ledger-sign-transaction':
                         this.signTransaction(replyAction, params.hdPath, params.tx, params.to)
-                    break
+                        break
                     case 'ledger-sign-personal-message':
                         this.signPersonalMessage(replyAction, params.hdPath, params.message)
-                    break
-                    }
+                        break
+                    case 'ledger-close-bridge':
+                        this.cleanUp(replyAction)
+                        break
+                    case 'ledger-update-transport':
+                        this.updateLedgerLivePreference(replyAction, params.useLedgerLive)
+                        break
+                }
             }
         }, false)
     }
@@ -34,42 +49,84 @@ export default class LedgerBridge {
         window.parent.postMessage(msg, '*')
     }
 
+    delay (ms) {
+        return new Promise((success) => setTimeout(success, ms))
+    }
+
+    checkTransportLoop (i) {
+        const iterator = i || 0
+        return WebSocketTransport.check(BRIDGE_URL).catch(async () => {
+            await this.delay(TRANSPORT_CHECK_DELAY)
+            if (iterator < TRANSPORT_CHECK_LIMIT) {
+                return this.checkTransportLoop(iterator + 1)
+            } else {
+                throw new Error('Ledger transport check timeout')
+            }
+        })
+    }
+
     async makeApp () {
         try {
-            this.transport = await TransportU2F.create()
-            this.app = new LedgerEth(this.transport)
+            if (this.useLedgerLive) {
+                await WebSocketTransport.check(BRIDGE_URL).catch(async () => {
+                    window.open('ledgerlive://bridge?appName=Ethereum')
+                    await this.checkTransportLoop()
+                    this.transport = await WebSocketTransport.open(BRIDGE_URL)
+                    this.app = new LedgerEth(this.transport)
+                })
+            }
+            else {
+                this.transport = await TransportU2F.create()
+                this.app = new LedgerEth(this.transport)
+            }
         } catch (e) {
             console.log('LEDGER:::CREATE APP ERROR', e)
+            throw e
         }
     }
 
-    cleanUp () {
+    updateLedgerLivePreference (replyAction, useLedgerLive) {
+        this.useLedgerLive = useLedgerLive
+        this.cleanUp()
+        this.sendMessageToExtension({
+            action: replyAction,
+            success: true,
+        })
+    }
+
+    cleanUp (replyAction) {
         this.app = null
-        this.transport.close()
+        if (this.transport) {
+            this.transport.close()
+        }
+        if (replyAction) {
+            this.sendMessageToExtension({
+                action: replyAction,
+                success: true,
+            })
+        }
     }
 
     async unlock (replyAction, hdPath) {
         try {
             await this.makeApp()
             const res = await this.app.getAddress(hdPath, false, true)
-
             this.sendMessageToExtension({
                 action: replyAction,
                 success: true,
                 payload: res,
             })
-
         } catch (err) {
             const e = this.ledgerErrToMessage(err)
-
             this.sendMessageToExtension({
                 action: replyAction,
                 success: false,
                 payload: { error: e.toString() },
             })
-
         } finally {
-            this.cleanUp()
+            if (!this.useLedgerLive) { 
+                this.cleanUp()
+            }
         }
     }
 
@@ -96,15 +153,17 @@ export default class LedgerBridge {
             })
 
         } finally {
-            this.cleanUp()
+            if (!this.useLedgerLive) { 
+                this.cleanUp()
+            }
         }
     }
 
     async signPersonalMessage (replyAction, hdPath, message) {
         try {
             await this.makeApp()
-            const res = await this.app.signPersonalMessage(hdPath, message)
 
+            const res = await this.app.signPersonalMessage(hdPath, message)
             this.sendMessageToExtension({
                 action: replyAction,
                 success: true,
@@ -119,7 +178,9 @@ export default class LedgerBridge {
             })
 
         } finally {
-            this.cleanUp()
+            if (!this.useLedgerLive) { 
+                this.cleanUp()
+            }
         }
     }
 
@@ -127,28 +188,23 @@ export default class LedgerBridge {
         const isU2FError = (err) => !!err && !!(err).metaData
         const isStringError = (err) => typeof err === 'string'
         const isErrorWithId = (err) => err.hasOwnProperty('id') && err.hasOwnProperty('message')
+        const isWrongAppError = (err) => String(err.message || err).includes('6804')
+        const isLedgerLockedError = (err) => err.message && err.message.includes('OpenFailed')
 
         // https://developers.yubico.com/U2F/Libraries/Client_error_codes.html
         if (isU2FError(err)) {
-          // Timeout
           if (err.metaData.code === 5) {
             return 'LEDGER_TIMEOUT'
           }
-
           return err.metaData.type
         }
 
-        if (isStringError(err)) {
-          // Wrong app logged into
-          if (err.includes('6804')) {
+        if (isWrongAppError(err)) {
             return 'LEDGER_WRONG_APP'
-          }
-          // Ledger locked
-          if (err.includes('6801')) {
-            return 'LEDGER_LOCKED'
-          }
+        }
 
-          return err
+        if (isLedgerLockedError(err) || (isStringError(err) && err.includes('6801'))) {
+            return 'LEDGER_LOCKED'
         }
 
         if (isErrorWithId(err)) {
@@ -161,6 +217,4 @@ export default class LedgerBridge {
         // Other
         return err.toString()
     }
-
 }
-
