@@ -100,16 +100,20 @@ var LedgerBridge = function () {
     }, {
         key: 'makeApp',
         value: async function makeApp() {
-            var _this3 = this;
-
             try {
                 if (this.useLedgerLive) {
-                    await _WebSocketTransport2.default.check(BRIDGE_URL, TRANSPORT_CHECK_DELAY).catch(async function () {
+                    var reestablish = false;
+                    try {
+                        await _WebSocketTransport2.default.check(BRIDGE_URL, TRANSPORT_CHECK_DELAY);
+                    } catch (_err) {
                         window.open('ledgerlive://bridge?appName=Ethereum');
-                        await _this3.checkTransportLoop();
-                        _this3.transport = await _WebSocketTransport2.default.open(BRIDGE_URL);
-                        _this3.app = new _hwAppEth2.default(_this3.transport);
-                    });
+                        await this.checkTransportLoop();
+                        reestablish = true;
+                    }
+                    if (!this.app || reestablish) {
+                        this.transport = await _WebSocketTransport2.default.open(BRIDGE_URL);
+                        this.app = new _hwAppEth2.default(this.transport);
+                    }
                 } else {
                     this.transport = await _hwTransportU2f2.default.create();
                     this.app = new _hwAppEth2.default(this.transport);

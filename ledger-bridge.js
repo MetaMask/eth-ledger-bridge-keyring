@@ -67,12 +67,18 @@ export default class LedgerBridge {
     async makeApp () {
         try {
             if (this.useLedgerLive) {
-                await WebSocketTransport.check(BRIDGE_URL, TRANSPORT_CHECK_DELAY).catch(async () => {
+                let reestablish = false;
+                try {
+                    await WebSocketTransport.check(BRIDGE_URL, TRANSPORT_CHECK_DELAY)
+                } catch (_err) {
                     window.open('ledgerlive://bridge?appName=Ethereum')
                     await this.checkTransportLoop()
+                    reestablish = true;
+                }
+                if (!this.app || reestablish) {
                     this.transport = await WebSocketTransport.open(BRIDGE_URL)
                     this.app = new LedgerEth(this.transport)
-                })
+                }
             }
             else {
                 this.transport = await TransportU2F.create()
