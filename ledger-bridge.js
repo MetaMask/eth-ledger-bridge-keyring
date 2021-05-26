@@ -53,14 +53,9 @@ export default class LedgerBridge {
         window.parent.postMessage(msg, '*')
     }
 
-    delay (ms) {
-        return new Promise((success) => setTimeout(success, ms))
-    }
-
     checkTransportLoop (i) {
         const iterator = i || 0
-        return WebSocketTransport.check(BRIDGE_URL).catch(async () => {
-            await this.delay(TRANSPORT_CHECK_DELAY)
+        return WebSocketTransport.check(BRIDGE_URL, TRANSPORT_CHECK_DELAY).catch(async () => {
             if (iterator < TRANSPORT_CHECK_LIMIT) {
                 return this.checkTransportLoop(iterator + 1)
             } else {
@@ -72,7 +67,7 @@ export default class LedgerBridge {
     async makeApp () {
         try {
             if (this.useLedgerLive) {
-                await WebSocketTransport.check(BRIDGE_URL).catch(async () => {
+                await WebSocketTransport.check(BRIDGE_URL, TRANSPORT_CHECK_DELAY).catch(async () => {
                     window.open('ledgerlive://bridge?appName=Ethereum')
                     await this.checkTransportLoop()
                     this.transport = await WebSocketTransport.open(BRIDGE_URL)

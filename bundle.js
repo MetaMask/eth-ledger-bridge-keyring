@@ -84,20 +84,12 @@ var LedgerBridge = function () {
             window.parent.postMessage(msg, '*');
         }
     }, {
-        key: 'delay',
-        value: function delay(ms) {
-            return new Promise(function (success) {
-                return setTimeout(success, ms);
-            });
-        }
-    }, {
         key: 'checkTransportLoop',
         value: function checkTransportLoop(i) {
             var _this2 = this;
 
             var iterator = i || 0;
-            return _WebSocketTransport2.default.check(BRIDGE_URL).catch(async function () {
-                await _this2.delay(TRANSPORT_CHECK_DELAY);
+            return _WebSocketTransport2.default.check(BRIDGE_URL, TRANSPORT_CHECK_DELAY).catch(async function () {
                 if (iterator < TRANSPORT_CHECK_LIMIT) {
                     return _this2.checkTransportLoop(iterator + 1);
                 } else {
@@ -112,7 +104,7 @@ var LedgerBridge = function () {
 
             try {
                 if (this.useLedgerLive) {
-                    await _WebSocketTransport2.default.check(BRIDGE_URL).catch(async function () {
+                    await _WebSocketTransport2.default.check(BRIDGE_URL, TRANSPORT_CHECK_DELAY).catch(async function () {
                         window.open('ledgerlive://bridge?appName=Ethereum');
                         await _this3.checkTransportLoop();
                         _this3.transport = await _WebSocketTransport2.default.open(BRIDGE_URL);
