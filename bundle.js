@@ -31,8 +31,8 @@ require('buffer');
 var BRIDGE_URL = 'ws://localhost:8435';
 
 // Number of seconds to poll for Ledger Live and Ethereum app opening
-var TRANSPORT_CHECK_LIMIT = 180;
 var TRANSPORT_CHECK_DELAY = 1000;
+var TRANSPORT_CHECK_LIMIT = 120;
 
 var LedgerBridge = function () {
     function LedgerBridge() {
@@ -84,12 +84,20 @@ var LedgerBridge = function () {
             window.parent.postMessage(msg, '*');
         }
     }, {
+        key: 'delay',
+        value: function delay(ms) {
+            return new Promise(function (success) {
+                return setTimeout(success, ms);
+            });
+        }
+    }, {
         key: 'checkTransportLoop',
         value: function checkTransportLoop(i) {
             var _this2 = this;
 
             var iterator = i || 0;
-            return _WebSocketTransport2.default.check(BRIDGE_URL, TRANSPORT_CHECK_DELAY).catch(async function () {
+            return _WebSocketTransport2.default.check(BRIDGE_URL).catch(async function () {
+                await _this2.delay(TRANSPORT_CHECK_DELAY);
                 if (iterator < TRANSPORT_CHECK_LIMIT) {
                     return _this2.checkTransportLoop(iterator + 1);
                 } else {
@@ -104,7 +112,7 @@ var LedgerBridge = function () {
                 if (this.useLedgerLive) {
                     var reestablish = false;
                     try {
-                        await _WebSocketTransport2.default.check(BRIDGE_URL, TRANSPORT_CHECK_DELAY);
+                        await _WebSocketTransport2.default.check(BRIDGE_URL);
                     } catch (_err) {
                         window.open('ledgerlive://bridge?appName=Ethereum');
                         await this.checkTransportLoop();
