@@ -10,8 +10,8 @@ import WebSocketTransport from '@ledgerhq/hw-transport-http/lib/WebSocketTranspo
 const BRIDGE_URL = 'ws://localhost:8435'
 
 // Number of seconds to poll for Ledger Live and Ethereum app opening
-const TRANSPORT_CHECK_LIMIT = 180
 const TRANSPORT_CHECK_DELAY = 1000
+const TRANSPORT_CHECK_LIMIT = 120
 
 export default class LedgerBridge {
     constructor () {
@@ -53,9 +53,14 @@ export default class LedgerBridge {
         window.parent.postMessage(msg, '*')
     }
 
+    delay (ms) {
+        return new Promise((success) => setTimeout(success, ms))
+    }
+
     checkTransportLoop (i) {
         const iterator = i || 0
-        return WebSocketTransport.check(BRIDGE_URL, TRANSPORT_CHECK_DELAY).catch(async () => {
+        return WebSocketTransport.check(BRIDGE_URL).catch(async () => {
+            await this.delay(TRANSPORT_CHECK_DELAY)
             if (iterator < TRANSPORT_CHECK_LIMIT) {
                 return this.checkTransportLoop(iterator + 1)
             } else {
@@ -69,7 +74,7 @@ export default class LedgerBridge {
             if (this.useLedgerLive) {
                 let reestablish = false;
                 try {
-                    await WebSocketTransport.check(BRIDGE_URL, TRANSPORT_CHECK_DELAY)
+                    await WebSocketTransport.check(BRIDGE_URL)
                 } catch (_err) {
                     window.open('ledgerlive://bridge?appName=Ethereum')
                     await this.checkTransportLoop()
