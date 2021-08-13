@@ -239,18 +239,8 @@ class LedgerBridgeKeyring extends EventEmitter {
         return tx
       })
     }
-    // For transactions created by newer versions of @ethereumjs/tx
-    // Note: https://github.com/ethereumjs/ethereumjs-monorepo/issues/1188
-    // It is not strictly necessary to do this additional setting of the v
-    // value. We should be able to get the correct v value in serialization
-    // if the above issue is resolved. Until then this must be set before
-    // calling .serialize(). Note we are creating a temporarily mutable object
-    // forfeiting the benefit of immutability until this happens. We do still
-    // return a Transaction that is frozen if the originally provided
-    // transaction was also frozen.
-    const unfrozenTx = TransactionFactory.fromTxData(tx.toJSON(), { common: tx.common, freeze: false })
-    unfrozenTx.v = new ethUtil.BN(ethUtil.addHexPrefix(tx.common.chainId()), 'hex')
-    return this._signTransaction(address, unfrozenTx, tx.to.buf, (payload) => {
+    
+    return this._signTransaction(address, tx, tx.to.buf, (payload) => {
       // Because tx will be immutable, first get a plain javascript object that
       // represents the transaction. Using txData here as it aligns with the
       // nomenclature of ethereumjs/tx.
