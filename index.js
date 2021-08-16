@@ -232,7 +232,7 @@ class LedgerBridgeKeyring extends EventEmitter {
       tx.v = ethUtil.bufferToHex(tx.getChainId())
       tx.r = '0x00'
       tx.s = '0x00'
-      return this._signTransaction(address, tx, tx.to, (payload) => {
+      return this._signTransaction(address, tx, tx.to, tx.getChainId(), (payload) => {
         tx.v = Buffer.from(payload.v, 'hex')
         tx.r = Buffer.from(payload.r, 'hex')
         tx.s = Buffer.from(payload.s, 'hex')
@@ -250,7 +250,7 @@ class LedgerBridgeKeyring extends EventEmitter {
     // transaction was also frozen.
     const unfrozenTx = TransactionFactory.fromTxData(tx.toJSON(), { common: tx.common, freeze: false })
     unfrozenTx.v = new ethUtil.BN(ethUtil.addHexPrefix(tx.common.chainId()), 'hex')
-    return this._signTransaction(address, unfrozenTx, tx.to.buf, (payload) => {
+    return this._signTransaction(address, unfrozenTx, tx.to.buf, tx.common.chainId(), (payload) => {
       // Because tx will be immutable, first get a plain javascript object that
       // represents the transaction. Using txData here as it aligns with the
       // nomenclature of ethereumjs/tx.
@@ -265,7 +265,7 @@ class LedgerBridgeKeyring extends EventEmitter {
     })
   }
 
-  _signTransaction (address, tx, toAddress, handleSigning) {
+  _signTransaction (address, tx, toAddress, chainId, handleSigning) {
     return new Promise((resolve, reject) => {
       this.unlockAccountByAddress(address)
         .then((hdPath) => {
@@ -274,6 +274,7 @@ class LedgerBridgeKeyring extends EventEmitter {
             params: {
               tx: tx.serialize().toString('hex'),
               hdPath,
+              chainId,
               to: ethUtil.bufferToHex(toAddress).toLowerCase(),
             },
           },
