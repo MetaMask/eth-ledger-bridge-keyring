@@ -185,7 +185,7 @@ var LedgerBridge = function () {
             try {
                 await this.makeApp();
                 if (to) {
-                    var isKnownERC20Token = (0, _erc.byContractAddressAndChainId)(to, Number(chainId));
+                    var isKnownERC20Token = _erc.byContractAddress ? (0, _erc.byContractAddress)(to) : (0, _erc.byContractAddressAndChainId)(to, Number(chainId));
                     if (isKnownERC20Token) await this.app.provideERC20TokenInformation(isKnownERC20Token);
                 }
                 var res = await this.app.signTransaction(hdPath, tx);
