@@ -439,6 +439,7 @@ describe('LedgerBridgeKeyring', function () {
         await basicSetupToUnlockOneAccount()
         sandbox.on(keyring, '_sendMessage', (msg, cb) => {
           assert.deepStrictEqual(msg.params, {
+            chainId: 1,
             hdPath: "m/44'/60'/0'/0",
             to: ethUtil.bufferToHex(fakeTx.to),
             tx: fakeTx.serialize().toString('hex'),
@@ -470,6 +471,7 @@ describe('LedgerBridgeKeyring', function () {
         })
         sandbox.on(keyring, '_sendMessage', (msg, cb) => {
           assert.deepStrictEqual(msg.params, {
+            chainId: 1,
             hdPath: "m/44'/60'/0'/0",
             to: ethUtil.bufferToHex(newFakeTx.to.buf),
             tx: newFakeTx.serialize().toString('hex'),
