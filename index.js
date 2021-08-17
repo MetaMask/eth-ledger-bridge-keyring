@@ -239,7 +239,7 @@ class LedgerBridgeKeyring extends EventEmitter {
         return tx
       })
     }
-    
+
     return this._signTransaction(address, tx, tx.to.buf, (payload) => {
       // Because tx will be immutable, first get a plain javascript object that
       // represents the transaction. Using txData here as it aligns with the
