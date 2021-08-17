@@ -3,7 +3,7 @@ require('buffer')
 
 import TransportU2F from '@ledgerhq/hw-transport-u2f'
 import LedgerEth from '@ledgerhq/hw-app-eth'
-import { byContractAddressAndChainId } from '@ledgerhq/hw-app-eth/erc20'
+import { byContractAddress } from '@ledgerhq/hw-app-eth/erc20'
 import WebSocketTransport from '@ledgerhq/hw-transport-http/lib/WebSocketTransport'
 
 // URL which triggers Ledger Live app to open and handle communication
@@ -30,7 +30,7 @@ export default class LedgerBridge {
                         this.unlock(replyAction, params.hdPath)
                         break
                     case 'ledger-sign-transaction':
-                        this.signTransaction(replyAction, params.hdPath, params.tx, params.to, params.chainId)
+                        this.signTransaction(replyAction, params.hdPath, params.tx, params.to)
                         break
                     case 'ledger-sign-personal-message':
                         this.signPersonalMessage(replyAction, params.hdPath, params.message)
@@ -140,11 +140,11 @@ export default class LedgerBridge {
         }
     }
 
-    async signTransaction (replyAction, hdPath, tx, to, chainId) {
+    async signTransaction (replyAction, hdPath, tx, to) {
         try {
             await this.makeApp()
-            if (to && chainId) {
-                const isKnownERC20Token = byContractAddressAndChainId(to, chainId)
+            if (to) {
+                const isKnownERC20Token = byContractAddress(to)
                 if (isKnownERC20Token) await this.app.provideERC20TokenInformation(isKnownERC20Token)
             }
             const res = await this.app.signTransaction(hdPath, tx)

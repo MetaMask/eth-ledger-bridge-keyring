@@ -60,7 +60,7 @@ var LedgerBridge = function () {
                             _this.unlock(replyAction, params.hdPath);
                             break;
                         case 'ledger-sign-transaction':
-                            _this.signTransaction(replyAction, params.hdPath, params.tx, params.to, params.chainId);
+                            _this.signTransaction(replyAction, params.hdPath, params.tx, params.to);
                             break;
                         case 'ledger-sign-personal-message':
                             _this.signPersonalMessage(replyAction, params.hdPath, params.message);
@@ -181,11 +181,11 @@ var LedgerBridge = function () {
         }
     }, {
         key: 'signTransaction',
-        value: async function signTransaction(replyAction, hdPath, tx, to, chainId) {
+        value: async function signTransaction(replyAction, hdPath, tx, to) {
             try {
                 await this.makeApp();
-                if (to && chainId) {
-                    var isKnownERC20Token = (0, _erc.byContractAddressAndChainId)(to, chainId);
+                if (to) {
+                    var isKnownERC20Token = (0, _erc.byContractAddress)(to);
                     if (isKnownERC20Token) await this.app.provideERC20TokenInformation(isKnownERC20Token);
                 }
                 var res = await this.app.signTransaction(hdPath, tx);
@@ -18121,8 +18121,8 @@ var Eth = /** @class */ (function () {
      * @param {*} info: a blob from "erc20.js" utilities that contains all token information.
      *
      * @example
-     * import { byContractAddressAndChainId } from "@ledgerhq/hw-app-eth/erc20"
-     * const zrxInfo = byContractAddressAndChainId("0xe41d2489571d322189246dafa5ebde1f4699f498", chainId)
+     * import { byContractAddress } from "@ledgerhq/hw-app-eth/erc20"
+     * const zrxInfo = byContractAddress("0xe41d2489571d322189246dafa5ebde1f4699f498")
      * if (zrxInfo) await appEth.provideERC20TokenInformation(zrxInfo)
      * const signed = await appEth.signTransaction(path, rawTxHex)
      */
@@ -18137,7 +18137,7 @@ var Eth = /** @class */ (function () {
      */
     Eth.prototype.signTransaction = function (path, rawTxHex) {
         return __awaiter(this, void 0, void 0, function () {
-            var paths, offset, rawTx, VALID_TYPES, txType, rlpData, toSend, response, rlpTx, vrsOffset, chainId, chainIdTruncated, rlpVrs, sizeOfListLen, chainIdSrc, chainIdTruncatedBuf, _loop_1, decodedTx, provideForContract, selector, infos, plugin, payload, signature, erc20OfInterest, abi, contract, args, erc20OfInterest_1, erc20OfInterest_1_1, address, e_1_1;
+            var paths, offset, rawTx, VALID_TYPES, txType, rlpData, toSend, response, rlpTx, rlpOffset, chainId, chainIdTruncated, rlpVrs, sizeOfListLen, chainIdSrc, chainIdTruncatedBuf, _loop_1, decodedTx, provideForContract, selector, infos, plugin, payload, signature, erc20OfInterest, abi, contract, args, erc20OfInterest_1, erc20OfInterest_1_1, address, e_1_1;
             var e_1, _a;
             var _this = this;
             return __generator(this, function (_b) {
@@ -18153,19 +18153,19 @@ var Eth = /** @class */ (function () {
                         rlpTx = ethers_1.ethers.utils.RLP.decode(rlpData).map(function (hex) {
                             return Buffer.from(hex.slice(2), "hex");
                         });
-                        vrsOffset = 0;
+                        rlpOffset = 0;
                         chainId = new bignumber_js_1.BigNumber(0);
                         chainIdTruncated = 0;
                         if (txType === null && rlpTx.length > 6) {
                             rlpVrs = Buffer.from(ethers_1.ethers.utils.RLP.encode(rlpTx.slice(-3)).slice(2), "hex");
-                            vrsOffset = rawTx.length - (rlpVrs.length - 1);
+                            rlpOffset = rawTx.length - (rlpVrs.length - 1);
                             // First byte > 0xf7 means the length of the list length doesn't fit in a single byte.
                             if (rlpVrs[0] > 0xf7) {
-                                // Increment vrsOffset to account for that extra byte.
-                                vrsOffset++;
+                                // Increment rlpOffset to account for that extra byte.
+                                rlpOffset++;
                                 sizeOfListLen = rlpVrs[0] - 0xf7;
                                 // Increase rlpOffset by the size of the list length.
-                                vrsOffset += sizeOfListLen - 1;
+                                rlpOffset += sizeOfListLen - 1;
                             }
                             // Using BigNumber because chainID could be any uint256.
                             chainId = new bignumber_js_1.BigNumber(rlpTx[6].toString("hex"), 16);
@@ -18184,9 +18184,9 @@ var Eth = /** @class */ (function () {
                             var chunkSize = offset + maxChunkSize > rawTx.length
                                 ? rawTx.length - offset
                                 : maxChunkSize;
-                            if (vrsOffset != 0 && offset + chunkSize >= vrsOffset) {
+                            if (rlpOffset != 0 && offset + chunkSize == rlpOffset) {
                                 // Make sure that the chunk doesn't end right on the EIP 155 marker if set
-                                chunkSize = rawTx.length - offset;
+                                chunkSize--;
                             }
                             var buffer = Buffer.alloc(offset === 0 ? 1 + paths.length * 4 + chunkSize : chunkSize);
                             if (offset === 0) {
@@ -18232,7 +18232,7 @@ var Eth = /** @class */ (function () {
                             return __generator(this, function (_a) {
                                 switch (_a.label) {
                                     case 0:
-                                        erc20Info = erc20_1.byContractAddressAndChainId(address, chainIdTruncated);
+                                        erc20Info = erc20_1.byContractAddress(address);
                                         if (!erc20Info) return [3 /*break*/, 2];
                                         logs_1.log("ethereum", "loading erc20token info for " +
                                             erc20Info.contractAddress +
@@ -19046,15 +19046,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 exports.__esModule = true;
-exports.list = exports.byContractAddressAndChainId = void 0;
+exports.list = exports.byContractAddress = void 0;
 var erc20_signatures_1 = __importDefault(require("@ledgerhq/cryptoassets/data/erc20-signatures"));
 /**
  * Retrieve the token information by a given contract address if any
  */
-var byContractAddressAndChainId = function (contract, chainId) {
-    return get().byContractAndChainId(asContractAddress(contract), chainId);
+var byContractAddress = function (contract) {
+    return get().byContract(asContractAddress(contract));
 };
-exports.byContractAddressAndChainId = byContractAddressAndChainId;
+exports.byContractAddress = byContractAddress;
 /**
  * list all the ERC20 tokens informations
  */
@@ -19071,7 +19071,7 @@ var get = (function () {
         if (cache)
             return cache;
         var buf = Buffer.from(erc20_signatures_1["default"], "base64");
-        var map = {};
+        var byContract = {};
         var entries = [];
         var i = 0;
         while (i < buf.length) {
@@ -19099,14 +19099,12 @@ var get = (function () {
                 data: item
             };
             entries.push(entry);
-            map[String(chainId) + ":" + contractAddress] = entry;
+            byContract[contractAddress] = entry;
             i += length_1;
         }
         var api = {
             list: function () { return entries; },
-            byContractAndChainId: function (contractAddress, chainId) {
-                return map[String(chainId) + ":" + contractAddress];
-            }
+            byContract: function (contractAddress) { return byContract[contractAddress]; }
         };
         cache = api;
         return api;
