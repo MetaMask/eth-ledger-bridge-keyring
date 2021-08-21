@@ -257,13 +257,19 @@ class LedgerBridgeKeyring extends EventEmitter {
   }
 
   _signTransaction (address, tx, toAddress, handleSigning) {
+
     return new Promise((resolve, reject) => {
       this.unlockAccountByAddress(address)
         .then((hdPath) => {
+          const rawTx = tx.raw()
+          const rawTxVRSRemoved = rawTx.slice(0, rawTx.length - 3)
+          const serializedUntypedTx = ethUtil.rlp.encode(rawTxVRSRemoved)
+          const serializedUntypedTxString = serializedUntypedTx.toString('hex')
+          const serializedTypedTx = '02' + serializedUntypedTxString
           this._sendMessage({
             action: 'ledger-sign-transaction',
             params: {
-              tx: tx.serialize().toString('hex'),
+              tx: serializedTypedTx,
               hdPath,
               to: ethUtil.bufferToHex(toAddress).toLowerCase(),
             },
