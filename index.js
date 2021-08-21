@@ -245,6 +245,7 @@ class LedgerBridgeKeyring extends EventEmitter {
       // represents the transaction. Using txData here as it aligns with the
       // nomenclature of ethereumjs/tx.
       const txData = tx.toJSON()
+      txData.type = tx.type;
       // The fromTxData utility expects v,r and s to be hex prefixed
       txData.v = ethUtil.addHexPrefix(payload.v)
       txData.r = ethUtil.addHexPrefix(payload.r)
