@@ -3,7 +3,6 @@ require('buffer')
 
 import TransportU2F from '@ledgerhq/hw-transport-u2f'
 import LedgerEth from '@ledgerhq/hw-app-eth'
-import { byContractAddressAndChainId } from '@ledgerhq/hw-app-eth/erc20'
 import WebSocketTransport from '@ledgerhq/hw-transport-http/lib/WebSocketTransport'
 
 // URL which triggers Ledger Live app to open and handle communication
