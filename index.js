@@ -219,6 +219,7 @@ class LedgerBridgeKeyring extends EventEmitter {
 
   // tx is an instance of the ethereumjs-transaction class.
   signTransaction (address, tx) {
+    let rawTxHex
     // transactions built with older versions of ethereumjs-tx have a
     // getChainId method that newer versions do not. Older versions are mutable
     // while newer versions default to being immutable. Expected shape and type
@@ -232,7 +233,10 @@ class LedgerBridgeKeyring extends EventEmitter {
       tx.v = ethUtil.bufferToHex(tx.getChainId())
       tx.r = '0x00'
       tx.s = '0x00'
-      return this._signTransaction(address, tx, tx.to, (payload) => {
+
+      rawTxHex = tx.serialize().toString('hex')
+
+      return this._signTransaction(address, rawTxHex, tx.to, (payload) => {
         tx.v = Buffer.from(payload.v, 'hex')
         tx.r = Buffer.from(payload.r, 'hex')
         tx.s = Buffer.from(payload.s, 'hex')
@@ -240,11 +244,22 @@ class LedgerBridgeKeyring extends EventEmitter {
       })
     }
 
-    return this._signTransaction(address, tx, tx.to.buf, (payload) => {
+    // Note the below `encode`` call is only necessary for legacy transactions, as `getMessageToSign`
+    // returns a serialized value. However, calling rlp.encode on such a value will return an identical
+    // value. As such, the below call handles both legacy and non-legacy transactions from ethereumjs-tx
+
+    // Note also that `getMessageToSign` will return valid RLP for all transaction types, whereas the
+    // `serialize` method will not for any transaction type except legacy. This is because serialize includes
+    // empty r, s and v values in the encoded rlp.
+    rawTxHex = ethUtil.rlp.encode(tx.getMessageToSign(false)).toString('hex')
+
+    return this._signTransaction(address, rawTxHex, tx.to.buf, (payload) => {
       // Because tx will be immutable, first get a plain javascript object that
       // represents the transaction. Using txData here as it aligns with the
       // nomenclature of ethereumjs/tx.
       const txData = tx.toJSON()
+      // The fromTxData utility expects a type to support transactions with a type other than 0
+      txData.type = tx.type
       // The fromTxData utility expects v,r and s to be hex prefixed
       txData.v = ethUtil.addHexPrefix(payload.v)
       txData.r = ethUtil.addHexPrefix(payload.r)
@@ -255,14 +270,15 @@ class LedgerBridgeKeyring extends EventEmitter {
     })
   }
 
-  _signTransaction (address, tx, toAddress, handleSigning) {
+  _signTransaction (address, rawTxHex, toAddress, handleSigning) {
+
     return new Promise((resolve, reject) => {
       this.unlockAccountByAddress(address)
         .then((hdPath) => {
           this._sendMessage({
             action: 'ledger-sign-transaction',
             params: {
-              tx: tx.serialize().toString('hex'),
+              tx: rawTxHex,
               hdPath,
               to: ethUtil.bufferToHex(toAddress).toLowerCase(),
             },
