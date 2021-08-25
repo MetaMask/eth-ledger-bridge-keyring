@@ -244,7 +244,7 @@ class LedgerBridgeKeyring extends EventEmitter {
       })
     }
 
-    // Note the below `encode`` call is only necessary for legacy transactions, as `getMessageToSign`
+    // Note the below `encode` call is only necessary for legacy transactions, as `getMessageToSign`
     // returns a serialized value. However, calling rlp.encode on such a value will return an identical
     // value. As such, the below call handles both legacy and non-legacy transactions from ethereumjs-tx
 
