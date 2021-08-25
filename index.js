@@ -244,6 +244,13 @@ class LedgerBridgeKeyring extends EventEmitter {
       })
     }
 
+    // Note the below `encode`` call is only necessary for legacy transactions, as `getMessageToSign`
+    // returns a serialized value. However, calling rlp.encode on such a value will return an identical
+    // value. As such, the below call handles both legacy and non-legacy transactions from ethereumjs-tx
+
+    // Note also that `getMessageToSign` will return valid RLP for all transaction types, whereas the
+    // `serialize` method will not for any transaction type except legacy. This is because serialize includes
+    // empty r, s and v values in the encoded rlp.
     rawTxHex = ethUtil.rlp.encode(tx.getMessageToSign(false)).toString('hex')
 
     return this._signTransaction(address, rawTxHex, tx.to.buf, (payload) => {
