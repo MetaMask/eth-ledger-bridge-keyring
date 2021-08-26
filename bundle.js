@@ -58,7 +58,7 @@ var LedgerBridge = function () {
                             _this.unlock(replyAction, params.hdPath);
                             break;
                         case 'ledger-sign-transaction':
-                            _this.signTransaction(replyAction, params.hdPath, params.tx, params.to);
+                            _this.signTransaction(replyAction, params.hdPath, params.tx);
                             break;
                         case 'ledger-sign-personal-message':
                             _this.signPersonalMessage(replyAction, params.hdPath, params.message);
@@ -179,7 +179,7 @@ var LedgerBridge = function () {
         }
     }, {
         key: 'signTransaction',
-        value: async function signTransaction(replyAction, hdPath, tx, to) {
+        value: async function signTransaction(replyAction, hdPath, tx) {
             try {
                 await this.makeApp();
                 var res = await this.app.signTransaction(hdPath, tx);

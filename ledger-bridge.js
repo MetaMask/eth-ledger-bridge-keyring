@@ -29,7 +29,7 @@ export default class LedgerBridge {
                         this.unlock(replyAction, params.hdPath)
                         break
                     case 'ledger-sign-transaction':
-                        this.signTransaction(replyAction, params.hdPath, params.tx, params.to)
+                        this.signTransaction(replyAction, params.hdPath, params.tx)
                         break
                     case 'ledger-sign-personal-message':
                         this.signPersonalMessage(replyAction, params.hdPath, params.message)
@@ -139,7 +139,7 @@ export default class LedgerBridge {
         }
     }
 
-    async signTransaction (replyAction, hdPath, tx, to) {
+    async signTransaction (replyAction, hdPath, tx) {
         try {
             await this.makeApp()
             const res = await this.app.signTransaction(hdPath, tx)
