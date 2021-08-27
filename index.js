@@ -255,7 +255,8 @@ class LedgerBridgeKeyring extends EventEmitter {
     rawTxHex = tx.type === 0 || !tx.type
       ? ethUtil.rlp.encode(tx.getMessageToSign(false)).toString('hex')
       : tx.getMessageToSign(false).toString('hex')
-    return this._signTransaction(address, rawTxHex, tx.to && tx.to.buf, (payload) => {
+
+    return this._signTransaction(address, rawTxHex, tx.to.buf, (payload) => {
       // Because tx will be immutable, first get a plain javascript object that
       // represents the transaction. Using txData here as it aligns with the
       // nomenclature of ethereumjs/tx.

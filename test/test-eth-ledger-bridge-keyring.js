@@ -57,14 +57,6 @@ const newFakeTx = TransactionFactory.fromTxData({
   data: '0x7f7465737432000000000000000000000000000000000000000000000000000000600057',
 }, { common, freeze: false })
 
-const newFakeTxWithoutTo = TransactionFactory.fromTxData({
-  nonce: '0x00',
-  gasPrice: '0x09184e72a000',
-  gasLimit: '0x2710',
-  value: '0x00',
-  data: '0x7f7465737432000000000000000000000000000000000000000000000000000000600057',
-}, { common, freeze: false })
-
 chai.use(spies)
 
 describe('LedgerBridgeKeyring', function () {
@@ -486,33 +478,6 @@ describe('LedgerBridgeKeyring', function () {
         })
 
         const returnedTx = await keyring.signTransaction(fakeAccounts[0], newFakeTx, common)
-        expect(keyring._sendMessage).to.have.been.called()
-        expect(returnedTx).to.have.property('v')
-        expect(returnedTx).to.have.property('r')
-        expect(returnedTx).to.have.property('s')
-      })
-
-      it('should support transactions with undefined to fields', async function () {
-        await basicSetupToUnlockOneAccount()
-        // Signature will be invalid due to not having private key / public key
-        // pair for testing.
-        sandbox.on(newFakeTxWithoutTo, 'verifySignature', () => true)
-        sandbox.on(TransactionFactory, 'fromTxData', () => {
-          // without having a private key/public key pair in this test, we have
-          // mock out this method and return the original tx because we can't
-          // replicate r and s values without the private key.
-          return newFakeTxWithoutTo
-        })
-        sandbox.on(keyring, '_sendMessage', (msg, cb) => {
-          assert.deepStrictEqual(msg.params, {
-            hdPath: "m/44'/60'/0'/0",
-            to: ethUtil.bufferToHex(undefined),
-            tx: ethUtil.rlp.encode(newFakeTxWithoutTo.getMessageToSign(false)).toString('hex'),
-          })
-          cb({ success: true, payload: { v: '0x25', r: '0x0', s: '0x0' } })
-        })
-
-        const returnedTx = await keyring.signTransaction(fakeAccounts[0], newFakeTxWithoutTo, common)
         expect(keyring._sendMessage).to.have.been.called()
         expect(returnedTx).to.have.property('v')
         expect(returnedTx).to.have.property('r')
