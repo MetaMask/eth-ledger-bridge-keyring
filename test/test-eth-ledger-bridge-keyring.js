@@ -440,7 +440,6 @@ describe('LedgerBridgeKeyring', function () {
         sandbox.on(keyring, '_sendMessage', (msg, cb) => {
           assert.deepStrictEqual(msg.params, {
             hdPath: "m/44'/60'/0'/0",
-            to: ethUtil.bufferToHex(fakeTx.to),
             tx: fakeTx.serialize().toString('hex'),
           })
           cb({ success: true, payload: { v: '0x1', r: '0x0', s: '0x0' } })
@@ -471,7 +470,6 @@ describe('LedgerBridgeKeyring', function () {
         sandbox.on(keyring, '_sendMessage', (msg, cb) => {
           assert.deepStrictEqual(msg.params, {
             hdPath: "m/44'/60'/0'/0",
-            to: ethUtil.bufferToHex(newFakeTx.to.buf),
             tx: ethUtil.rlp.encode(newFakeTx.getMessageToSign(false)).toString('hex'),
           })
           cb({ success: true, payload: { v: '0x25', r: '0x0', s: '0x0' } })
