@@ -472,7 +472,7 @@ describe('LedgerBridgeKeyring', function () {
           assert.deepStrictEqual(msg.params, {
             hdPath: "m/44'/60'/0'/0",
             to: ethUtil.bufferToHex(newFakeTx.to.buf),
-            tx: newFakeTx.serialize().toString('hex'),
+            tx: ethUtil.rlp.encode(newFakeTx.getMessageToSign(false)).toString('hex'),
           })
           cb({ success: true, payload: { v: '0x25', r: '0x0', s: '0x0' } })
         })
