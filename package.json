@@ -12,20 +12,23 @@
   "license": "BSD-2-Clause",
   "devDependencies": {
     "babel-core": "^6.26.3",
-    "babel-register": "^6.26.0",
     "babel-preset-es2015": "^6.24.1",
+    "babel-register": "^6.26.0",
     "browser-sync": "^2.26.3",
     "gulp": "^4.0.0",
     "source": "0.0.3",
     "vinyl-source-stream": "^2.0.0"
   },
   "dependencies": {
-    "@ledgerhq/hw-app-eth": "^5.45.0",
-    "@ledgerhq/hw-transport-u2f": "^5.36.0-deprecated",
+    "@ledgerhq/hw-app-eth": "^6.5.0",
     "@ledgerhq/hw-transport-http": "^5.45.0",
+    "@ledgerhq/hw-transport-u2f": "^5.36.0-deprecated",
     "babel-runtime": "^6.26.0",
     "babelify": "^8.0.0",
     "browserify": "^16.2.2",
     "buffer": "^5.2.0"
+  },
+  "engines": {
+    "npm": "^7.6.0"
   }
 }
