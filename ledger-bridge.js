@@ -130,10 +130,10 @@ export default class LedgerBridge {
             this.sendMessageToExtension({
                 action: replyAction,
                 success: false,
-                payload: { error: e.toString() },
+                payload: { error: e },
             })
         } finally {
-            if (!this.useLedgerLive) { 
+            if (!this.useLedgerLive) {
                 this.cleanUp()
             }
         }
@@ -154,11 +154,11 @@ export default class LedgerBridge {
             this.sendMessageToExtension({
                 action: replyAction,
                 success: false,
-                payload: { error: e.toString() },
+                payload: { error: e },
             })
 
         } finally {
-            if (!this.useLedgerLive) { 
+            if (!this.useLedgerLive) {
                 this.cleanUp()
             }
         }
@@ -179,11 +179,11 @@ export default class LedgerBridge {
             this.sendMessageToExtension({
                 action: replyAction,
                 success: false,
-                payload: { error: e.toString() },
+                payload: { error: e },
             })
 
         } finally {
-            if (!this.useLedgerLive) { 
+            if (!this.useLedgerLive) {
                 this.cleanUp()
             }
         }
@@ -193,7 +193,7 @@ export default class LedgerBridge {
         try {
             await this.makeApp()
             const res = await this.app.signEIP712HashedMessage(hdPath, domainSeparatorHex, hashStructMessageHex)
-            
+
             this.sendMessageToExtension({
                 action: replyAction,
                 success: true,
@@ -204,7 +204,7 @@ export default class LedgerBridge {
             this.sendMessageToExtension({
                 action: replyAction,
                 success: false,
-                payload: { error: e.toString() },
+                payload: { error: e },
             })
 
         } finally {
@@ -222,27 +222,27 @@ export default class LedgerBridge {
         // https://developers.yubico.com/U2F/Libraries/Client_error_codes.html
         if (isU2FError(err)) {
           if (err.metaData.code === 5) {
-            return 'LEDGER_TIMEOUT'
+            return new Error('LEDGER_TIMEOUT')
           }
           return err.metaData.type
         }
 
         if (isWrongAppError(err)) {
-            return 'LEDGER_WRONG_APP'
+            return new Error('LEDGER_WRONG_APP')
         }
 
         if (isLedgerLockedError(err) || (isStringError(err) && err.includes('6801'))) {
-            return 'LEDGER_LOCKED'
+            return new Error('LEDGER_LOCKED')
         }
 
         if (isErrorWithId(err)) {
           // Browser doesn't support U2F
           if (err.message.includes('U2F not supported')) {
-            return 'U2F_NOT_SUPPORTED'
+            return new Error('U2F_NOT_SUPPORTED')
           }
         }
 
         // Other
-        return err.toString()
+        return err
     }
 }
