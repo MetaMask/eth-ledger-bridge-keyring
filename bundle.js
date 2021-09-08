@@ -169,7 +169,7 @@ var LedgerBridge = function () {
                 this.sendMessageToExtension({
                     action: replyAction,
                     success: false,
-                    payload: { error: e.toString() }
+                    payload: { error: e }
                 });
             } finally {
                 if (!this.useLedgerLive) {
@@ -193,7 +193,7 @@ var LedgerBridge = function () {
                 this.sendMessageToExtension({
                     action: replyAction,
                     success: false,
-                    payload: { error: e.toString() }
+                    payload: { error: e }
                 });
             } finally {
                 if (!this.useLedgerLive) {
@@ -218,7 +218,7 @@ var LedgerBridge = function () {
                 this.sendMessageToExtension({
                     action: replyAction,
                     success: false,
-                    payload: { error: e.toString() }
+                    payload: { error: e }
                 });
             } finally {
                 if (!this.useLedgerLive) {
@@ -243,7 +243,7 @@ var LedgerBridge = function () {
                 this.sendMessageToExtension({
                     action: replyAction,
                     success: false,
-                    payload: { error: e.toString() }
+                    payload: { error: e }
                 });
             } finally {
                 this.cleanUp();
@@ -271,28 +271,28 @@ var LedgerBridge = function () {
             // https://developers.yubico.com/U2F/Libraries/Client_error_codes.html
             if (isU2FError(err)) {
                 if (err.metaData.code === 5) {
-                    return 'LEDGER_TIMEOUT';
+                    return new Error('LEDGER_TIMEOUT');
                 }
                 return err.metaData.type;
             }
 
             if (isWrongAppError(err)) {
-                return 'LEDGER_WRONG_APP';
+                return new Error('LEDGER_WRONG_APP');
             }
 
             if (isLedgerLockedError(err) || isStringError(err) && err.includes('6801')) {
-                return 'LEDGER_LOCKED';
+                return new Error('LEDGER_LOCKED');
             }
 
             if (isErrorWithId(err)) {
                 // Browser doesn't support U2F
                 if (err.message.includes('U2F not supported')) {
-                    return 'U2F_NOT_SUPPORTED';
+                    return new Error('U2F_NOT_SUPPORTED');
                 }
             }
 
             // Other
-            return err.toString();
+            return err;
         }
     }]);
 
@@ -35098,36 +35098,53 @@ if (typeof Object.create === 'function') {
 
 },{}],189:[function(require,module,exports){
 module.exports={
-  "name": "elliptic",
-  "version": "6.5.4",
-  "description": "EC cryptography",
-  "main": "lib/elliptic.js",
-  "files": [
-    "lib"
+  "_args": [
+    [
+      "elliptic@6.5.4",
+      "/home/pc/Desktop/workspace/eth-ledger-bridge-keyring"
+    ]
   ],
-  "scripts": {
-    "lint": "eslint lib test",
-    "lint:fix": "npm run lint -- --fix",
-    "unit": "istanbul test _mocha --reporter=spec test/index.js",
-    "test": "npm run lint && npm run unit",
-    "version": "grunt dist && git add dist/"
+  "_from": "elliptic@6.5.4",
+  "_id": "elliptic@6.5.4",
+  "_inBundle": false,
+  "_integrity": "sha512-iLhC6ULemrljPZb+QutR5TQGB+pdW6KGD5RSegS+8sorOZT+rdQFbsQFJgvN3eRqNALqJer4oQ16YvJHlU8hzQ==",
+  "_location": "/elliptic",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "version",
+    "registry": true,
+    "raw": "elliptic@6.5.4",
+    "name": "elliptic",
+    "escapedName": "elliptic",
+    "rawSpec": "6.5.4",
+    "saveSpec": null,
+    "fetchSpec": "6.5.4"
   },
-  "repository": {
-    "type": "git",
-    "url": "git@github.com:indutny/elliptic"
-  },
-  "keywords": [
-    "EC",
-    "Elliptic",
-    "curve",
-    "Cryptography"
+  "_requiredBy": [
+    "/@ethersproject/signing-key",
+    "/browserify-sign",
+    "/create-ecdh"
   ],
-  "author": "Fedor Indutny <fedor@indutny.com>",
-  "license": "MIT",
+  "_resolved": "https://registry.npmjs.org/elliptic/-/elliptic-6.5.4.tgz",
+  "_spec": "6.5.4",
+  "_where": "/home/pc/Desktop/workspace/eth-ledger-bridge-keyring",
+  "author": {
+    "name": "Fedor Indutny",
+    "email": "fedor@indutny.com"
+  },
   "bugs": {
     "url": "https://github.com/indutny/elliptic/issues"
   },
-  "homepage": "https://github.com/indutny/elliptic",
+  "dependencies": {
+    "bn.js": "^4.11.9",
+    "brorand": "^1.1.0",
+    "hash.js": "^1.0.0",
+    "hmac-drbg": "^1.0.1",
+    "inherits": "^2.0.4",
+    "minimalistic-assert": "^1.0.1",
+    "minimalistic-crypto-utils": "^1.0.1"
+  },
+  "description": "EC cryptography",
   "devDependencies": {
     "brfs": "^2.0.2",
     "coveralls": "^3.1.0",
@@ -35143,15 +35160,31 @@ module.exports={
     "istanbul": "^0.4.5",
     "mocha": "^8.0.1"
   },
-  "dependencies": {
-    "bn.js": "^4.11.9",
-    "brorand": "^1.1.0",
-    "hash.js": "^1.0.0",
-    "hmac-drbg": "^1.0.1",
-    "inherits": "^2.0.4",
-    "minimalistic-assert": "^1.0.1",
-    "minimalistic-crypto-utils": "^1.0.1"
-  }
+  "files": [
+    "lib"
+  ],
+  "homepage": "https://github.com/indutny/elliptic",
+  "keywords": [
+    "EC",
+    "Elliptic",
+    "curve",
+    "Cryptography"
+  ],
+  "license": "MIT",
+  "main": "lib/elliptic.js",
+  "name": "elliptic",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/indutny/elliptic.git"
+  },
+  "scripts": {
+    "lint": "eslint lib test",
+    "lint:fix": "npm run lint -- --fix",
+    "test": "npm run lint && npm run unit",
+    "unit": "istanbul test _mocha --reporter=spec test/index.js",
+    "version": "grunt dist && git add dist/"
+  },
+  "version": "6.5.4"
 }
 
 },{}],190:[function(require,module,exports){
