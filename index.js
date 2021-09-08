@@ -127,7 +127,7 @@ class LedgerBridgeKeyring extends EventEmitter {
           this.hdk.chainCode = Buffer.from(payload.chainCode, 'hex')
           resolve(payload.address)
         } else {
-          reject(new Error(payload.error || 'Unknown error'))
+          reject(payload.error || new Error('Unknown error'))
         }
       })
     })
@@ -297,7 +297,7 @@ class LedgerBridgeKeyring extends EventEmitter {
                 reject(new Error('Ledger: The transaction signature is not valid'))
               }
             } else {
-              reject(new Error(payload.error || 'Ledger: Unknown error while signing transaction'))
+              reject(payload.error || new Error('Ledger: Unknown error while signing transaction'))
             }
           })
         })
@@ -335,7 +335,7 @@ class LedgerBridgeKeyring extends EventEmitter {
               }
               resolve(signature)
             } else {
-              reject(new Error(payload.error || 'Ledger: Unknown error while signing message'))
+              reject(payload.error || new Error('Ledger: Unknown error while signing message'))
             }
           })
         })
