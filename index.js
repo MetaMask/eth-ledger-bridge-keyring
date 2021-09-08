@@ -403,8 +403,7 @@ class LedgerBridgeKeyring extends EventEmitter {
       }
       return signature
     }
-    throw new Error(payload.error || 'Ledger: Unknown error while signing message')
-
+    throw payload.error || new Error('Ledger: Unknown error while signing message')
   }
 
   exportAccount () {
