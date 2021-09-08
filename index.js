@@ -127,7 +127,7 @@ class LedgerBridgeKeyring extends EventEmitter {
           this.hdk.chainCode = Buffer.from(payload.chainCode, 'hex')
           resolve(payload.address)
         } else {
-          reject(payload.error || 'Unknown error')
+          reject(new Error(payload.error || 'Unknown error'))
         }
       })
     })
