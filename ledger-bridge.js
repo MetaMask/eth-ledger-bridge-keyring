@@ -2,6 +2,7 @@
 require('buffer')
 
 import TransportU2F from '@ledgerhq/hw-transport-u2f'
+import TransportWebHID from '@ledgerhq/hw-transport-webhid'
 import LedgerEth from '@ledgerhq/hw-app-eth'
 import WebSocketTransport from '@ledgerhq/hw-transport-http/lib/WebSocketTransport'
 
@@ -84,7 +85,10 @@ export default class LedgerBridge {
                     this.app = new LedgerEth(this.transport)
                 }
             }
-            else {
+            else if ('hid' in navigator) {
+                this.transport = await TransportWebHID.create()
+                this.app = new LedgerEth(await TransportWebHID.create())
+            } else {
                 this.transport = await TransportU2F.create()
                 this.app = new LedgerEth(this.transport)
             }
