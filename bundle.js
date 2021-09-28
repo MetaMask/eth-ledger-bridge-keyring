@@ -125,6 +125,7 @@ var LedgerBridge = function () {
                         this.app = new _hwAppEth2.default(this.transport);
                     }
                 } else if ('hid' in navigator) {
+                    await navigator.hid.requestDevice({ filters: [{ vendorId: '0x2c97' }] });
                     this.transport = await _hwTransportWebhid2.default.create();
                     this.app = new _hwAppEth2.default((await _hwTransportWebhid2.default.create()));
                 } else {
