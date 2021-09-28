@@ -86,9 +86,8 @@ export default class LedgerBridge {
                 }
             }
             else if ('hid' in navigator) {
-                await navigator.hid.requestDevice({ filters: [{ vendorId: '0x2c97' }] })
                 this.transport = await TransportWebHID.create()
-                this.app = new LedgerEth(await TransportWebHID.create())
+                this.app = new LedgerEth(this.transport)
             } else {
                 this.transport = await TransportU2F.create()
                 this.app = new LedgerEth(this.transport)
