@@ -124,13 +124,17 @@ var LedgerBridge = function () {
                         this.transport = await _WebSocketTransport2.default.open(BRIDGE_URL);
                         this.app = new _hwAppEth2.default(this.transport);
                     }
-                } else if ('hid' in navigator) {
-                    this.transport = await _hwTransportWebhid2.default.create();
-                    this.app = new _hwAppEth2.default(this.transport);
-                } else {
-                    this.transport = await _hwTransportU2f2.default.create();
-                    this.app = new _hwAppEth2.default(this.transport);
                 }
+                // This is the approach used to check for u2f support in the library that the ledger transport relies on https://github.com/grantila/u2f-api/blob/master/lib/u2f-api.ts#L76
+                else if (typeof window.u2f !== 'undefined') {
+                        this.transport = await _hwTransportU2f2.default.create();
+                        this.app = new _hwAppEth2.default(this.transport);
+                    } else if ('hid' in navigator) {
+                        this.transport = await _hwTransportWebhid2.default.create();
+                        this.app = new _hwAppEth2.default(this.transport);
+                    } else {
+                        throw new Error('No transport types are supported.');
+                    }
             } catch (e) {
                 console.log('LEDGER:::CREATE APP ERROR', e);
                 throw e;
