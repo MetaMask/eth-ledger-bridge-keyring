@@ -90,7 +90,7 @@ export default class LedgerBridge {
                 this.transport = await TransportU2F.create()
                 this.app = new LedgerEth(this.transport)
             }
-            else if ('hid' in navigator) {
+            else if (navigator.hid !== undefined) {
                 this.transport = await TransportWebHID.create()
                 this.app = new LedgerEth(this.transport)
             } else {
