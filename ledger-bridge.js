@@ -2,6 +2,7 @@
 require('buffer')
 
 import TransportU2F from '@ledgerhq/hw-transport-u2f'
+import TransportWebHID from '@ledgerhq/hw-transport-webhid'
 import LedgerEth from '@ledgerhq/hw-app-eth'
 import WebSocketTransport from '@ledgerhq/hw-transport-http/lib/WebSocketTransport'
 
@@ -84,9 +85,16 @@ export default class LedgerBridge {
                     this.app = new LedgerEth(this.transport)
                 }
             }
-            else {
+            // This is the approach used to check for u2f support in the library that the ledger transport relies on https://github.com/grantila/u2f-api/blob/master/lib/u2f-api.ts#L76
+            else if (typeof window.u2f !== 'undefined') {
                 this.transport = await TransportU2F.create()
                 this.app = new LedgerEth(this.transport)
+            }
+            else if (navigator.hid !== undefined) {
+                this.transport = await TransportWebHID.create()
+                this.app = new LedgerEth(this.transport)
+            } else {
+                throw new Error('No transport types are supported.');
             }
         } catch (e) {
             console.log('LEDGER:::CREATE APP ERROR', e)
