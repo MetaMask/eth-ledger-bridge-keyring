@@ -11,10 +11,6 @@ var _hwTransportU2f = require('@ledgerhq/hw-transport-u2f');
 
 var _hwTransportU2f2 = _interopRequireDefault(_hwTransportU2f);
 
-var _hwTransportWebhid = require('@ledgerhq/hw-transport-webhid');
-
-var _hwTransportWebhid2 = _interopRequireDefault(_hwTransportWebhid);
-
 var _hwAppEth = require('@ledgerhq/hw-app-eth');
 
 var _hwAppEth2 = _interopRequireDefault(_hwAppEth);
@@ -124,17 +120,10 @@ var LedgerBridge = function () {
                         this.transport = await _WebSocketTransport2.default.open(BRIDGE_URL);
                         this.app = new _hwAppEth2.default(this.transport);
                     }
+                } else {
+                    this.transport = await _hwTransportU2f2.default.create();
+                    this.app = new _hwAppEth2.default(this.transport);
                 }
-                // This is the approach used to check for u2f support in the library that the ledger transport relies on https://github.com/grantila/u2f-api/blob/master/lib/u2f-api.ts#L76
-                else if (typeof window.u2f !== 'undefined') {
-                        this.transport = await _hwTransportU2f2.default.create();
-                        this.app = new _hwAppEth2.default(this.transport);
-                    } else if ('hid' in navigator) {
-                        this.transport = await _hwTransportWebhid2.default.create();
-                        this.app = new _hwAppEth2.default(this.transport);
-                    } else {
-                        throw new Error('No transport types are supported.');
-                    }
             } catch (e) {
                 console.log('LEDGER:::CREATE APP ERROR', e);
                 throw e;
@@ -312,7 +301,7 @@ var LedgerBridge = function () {
 
 exports.default = LedgerBridge;
 
-},{"@ledgerhq/hw-app-eth":124,"@ledgerhq/hw-transport-http/lib/WebSocketTransport":158,"@ledgerhq/hw-transport-u2f":162,"@ledgerhq/hw-transport-webhid":163,"buffer":223}],2:[function(require,module,exports){
+},{"@ledgerhq/hw-app-eth":124,"@ledgerhq/hw-transport-http/lib/WebSocketTransport":158,"@ledgerhq/hw-transport-u2f":162,"buffer":172}],2:[function(require,module,exports){
 'use strict';
 
 var _ledgerBridge = require('./ledger-bridge');
@@ -4141,7 +4130,7 @@ function _base16To36(value) {
 }
 exports._base16To36 = _base16To36;
 
-},{"./_version":28,"@ethersproject/bytes":33,"@ethersproject/logger":57,"bn.js":220}],30:[function(require,module,exports){
+},{"./_version":28,"@ethersproject/bytes":33,"@ethersproject/logger":57,"bn.js":169}],30:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FixedNumber = exports.FixedFormat = exports.parseFixed = exports.formatFixed = void 0;
@@ -7216,7 +7205,7 @@ function decrypt(json, password) {
 }
 exports.decrypt = decrypt;
 
-},{"./_version":49,"./utils":54,"@ethersproject/address":24,"@ethersproject/bytes":33,"@ethersproject/keccak256":55,"@ethersproject/logger":57,"@ethersproject/pbkdf2":61,"@ethersproject/properties":63,"@ethersproject/strings":99,"aes-js":216}],51:[function(require,module,exports){
+},{"./_version":49,"./utils":54,"@ethersproject/address":24,"@ethersproject/bytes":33,"@ethersproject/keccak256":55,"@ethersproject/logger":57,"@ethersproject/pbkdf2":61,"@ethersproject/properties":63,"@ethersproject/strings":99,"aes-js":165}],51:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.decryptJsonWalletSync = exports.decryptJsonWallet = exports.getJsonWalletAddress = exports.isKeystoreWallet = exports.isCrowdsaleWallet = exports.encryptKeystore = exports.decryptKeystoreSync = exports.decryptKeystore = exports.decryptCrowdsale = void 0;
@@ -7694,7 +7683,7 @@ function encrypt(account, password, options, progressCallback) {
 }
 exports.encrypt = encrypt;
 
-},{"./_version":49,"./utils":54,"@ethersproject/address":24,"@ethersproject/bytes":33,"@ethersproject/hdnode":48,"@ethersproject/keccak256":55,"@ethersproject/logger":57,"@ethersproject/pbkdf2":61,"@ethersproject/properties":63,"@ethersproject/random":84,"@ethersproject/transactions":102,"aes-js":216,"scrypt-js":266}],54:[function(require,module,exports){
+},{"./_version":49,"./utils":54,"@ethersproject/address":24,"@ethersproject/bytes":33,"@ethersproject/hdnode":48,"@ethersproject/keccak256":55,"@ethersproject/logger":57,"@ethersproject/pbkdf2":61,"@ethersproject/properties":63,"@ethersproject/random":84,"@ethersproject/transactions":102,"aes-js":165,"scrypt-js":214}],54:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.uuidV4 = exports.searchPath = exports.getPassword = exports.zpad = exports.looseArrayify = void 0;
@@ -7779,7 +7768,7 @@ function keccak256(data) {
 }
 exports.keccak256 = keccak256;
 
-},{"@ethersproject/bytes":33,"js-sha3":261}],56:[function(require,module,exports){
+},{"@ethersproject/bytes":33,"js-sha3":210}],56:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.version = void 0;
@@ -10765,7 +10754,7 @@ var BaseProvider = /** @class */ (function (_super) {
 }(abstract_provider_1.Provider));
 exports.BaseProvider = BaseProvider;
 
-},{"./_version":64,"./formatter":72,"@ethersproject/abstract-provider":20,"@ethersproject/basex":27,"@ethersproject/bignumber":31,"@ethersproject/bytes":33,"@ethersproject/constants":37,"@ethersproject/hash":43,"@ethersproject/logger":57,"@ethersproject/networks":59,"@ethersproject/properties":63,"@ethersproject/sha2":90,"@ethersproject/strings":99,"@ethersproject/web":109,"bech32":218}],67:[function(require,module,exports){
+},{"./_version":64,"./formatter":72,"@ethersproject/abstract-provider":20,"@ethersproject/basex":27,"@ethersproject/bignumber":31,"@ethersproject/bytes":33,"@ethersproject/constants":37,"@ethersproject/hash":43,"@ethersproject/logger":57,"@ethersproject/networks":59,"@ethersproject/properties":63,"@ethersproject/sha2":90,"@ethersproject/strings":99,"@ethersproject/web":109,"bech32":167}],67:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.IpcProvider = void 0;
@@ -14778,7 +14767,7 @@ function computeHmac(algorithm, key, data) {
 }
 exports.computeHmac = computeHmac;
 
-},{"./_version":88,"./types":91,"@ethersproject/bytes":33,"@ethersproject/logger":57,"hash.js":246}],90:[function(require,module,exports){
+},{"./_version":88,"./types":91,"@ethersproject/bytes":33,"@ethersproject/logger":57,"hash.js":195}],90:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SupportedAlgorithm = exports.sha512 = exports.sha256 = exports.ripemd160 = exports.computeHmac = void 0;
@@ -14818,7 +14807,7 @@ var elliptic_1 = __importDefault(require("elliptic"));
 var EC = elliptic_1.default.ec;
 exports.EC = EC;
 
-},{"elliptic":224}],94:[function(require,module,exports){
+},{"elliptic":173}],94:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.computePublicKey = exports.recoverPublicKey = exports.SigningKey = void 0;
@@ -18958,7 +18947,7 @@ function setExternalPlugin(transport, payload, signature) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"./contracts":125,"./erc20":126,"./utils":127,"@ledgerhq/errors":129,"@ledgerhq/logs":130,"bignumber.js":219,"buffer":223,"ethers":243}],125:[function(require,module,exports){
+},{"./contracts":125,"./erc20":126,"./utils":127,"@ledgerhq/errors":129,"@ledgerhq/logs":130,"bignumber.js":168,"buffer":172,"ethers":192}],125:[function(require,module,exports){
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -19116,7 +19105,7 @@ var get = (function () {
 })();
 
 }).call(this,require("buffer").Buffer)
-},{"@ledgerhq/cryptoassets/data/erc20-signatures":122,"buffer":223}],127:[function(require,module,exports){
+},{"@ledgerhq/cryptoassets/data/erc20-signatures":122,"buffer":172}],127:[function(require,module,exports){
 "use strict";
 exports.__esModule = true;
 exports.asyncWhile = exports.doIf = exports.foreach = exports.eachSeries = exports.splitPath = exports.defer = void 0;
@@ -20470,7 +20459,7 @@ utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
 module.exports = defaults;
 
 }).call(this,require('_process'))
-},{"./adapters/http":132,"./adapters/xhr":132,"./helpers/normalizeHeaderName":154,"./utils":157,"_process":265}],147:[function(require,module,exports){
+},{"./adapters/http":132,"./adapters/xhr":132,"./helpers/normalizeHeaderName":154,"./utils":157,"_process":213}],147:[function(require,module,exports){
 'use strict';
 
 module.exports = function bind(fn, thisArg) {
@@ -21320,7 +21309,7 @@ WebSocketTransport.check = async (url, timeout = 5000) => new Promise((resolve, 
 });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
-},{"@ledgerhq/errors":159,"@ledgerhq/hw-transport":160,"@ledgerhq/logs":161,"buffer":223,"ws":271}],159:[function(require,module,exports){
+},{"@ledgerhq/errors":159,"@ledgerhq/hw-transport":160,"@ledgerhq/logs":161,"buffer":172,"ws":219}],159:[function(require,module,exports){
 arguments[4][123][0].apply(exports,arguments)
 },{"dup":123}],160:[function(require,module,exports){
 (function (Buffer){
@@ -21581,7 +21570,7 @@ Transport.ErrorMessage_ListenTimeout = "No Ledger device found (timeout)";
 Transport.ErrorMessage_NoDeviceFound = "No Ledger device found";
 
 }).call(this,require("buffer").Buffer)
-},{"@ledgerhq/errors":159,"buffer":223,"events":245}],161:[function(require,module,exports){
+},{"@ledgerhq/errors":159,"buffer":172,"events":194}],161:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -21839,3030 +21828,11 @@ TransportU2F.listen = observer => {
 };
 
 }).call(this,require("buffer").Buffer)
-},{"@ledgerhq/errors":123,"@ledgerhq/hw-transport":214,"@ledgerhq/logs":215,"buffer":223,"u2f-api":268}],163:[function(require,module,exports){
-(function (Buffer){
-"use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
-    return function (d, b) {
-        if (typeof b !== "function" && b !== null)
-            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
-    function verb(n) { return function (v) { return step([n, v]); }; }
-    function step(op) {
-        if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
-            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [op[0] & 2, t.value];
-            switch (op[0]) {
-                case 0: case 1: t = op; break;
-                case 4: _.label++; return { value: op[1], done: false };
-                case 5: _.label++; y = op[1]; op = [0]; continue;
-                case 7: op = _.ops.pop(); _.trys.pop(); continue;
-                default:
-                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
-                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
-                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
-                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop();
-                    _.trys.pop(); continue;
-            }
-            op = body.call(thisArg, _);
-        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
-        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
-    }
-};
-var __read = (this && this.__read) || function (o, n) {
-    var m = typeof Symbol === "function" && o[Symbol.iterator];
-    if (!m) return o;
-    var i = m.call(o), r, ar = [], e;
-    try {
-        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
-    }
-    catch (error) { e = { error: error }; }
-    finally {
-        try {
-            if (r && !r.done && (m = i["return"])) m.call(i);
-        }
-        finally { if (e) throw e.error; }
-    }
-    return ar;
-};
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-exports.__esModule = true;
-var hw_transport_1 = __importDefault(require("@ledgerhq/hw-transport"));
-var hid_framing_1 = __importDefault(require("@ledgerhq/devices/lib/hid-framing"));
-var devices_1 = require("@ledgerhq/devices");
-var logs_1 = require("@ledgerhq/logs");
-var errors_1 = require("@ledgerhq/errors");
-var ledgerDevices = [
-    {
-        vendorId: devices_1.ledgerUSBVendorId
-    },
-];
-var isSupported = function () {
-    return Promise.resolve(!!(window.navigator && window.navigator.hid));
-};
-var getHID = function () {
-    // $FlowFixMe
-    var hid = navigator.hid;
-    if (!hid)
-        throw new errors_1.TransportError("navigator.hid is not supported", "HIDNotSupported");
-    return hid;
-};
-function requestLedgerDevices() {
-    return __awaiter(this, void 0, void 0, function () {
-        var device;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0: return [4 /*yield*/, getHID().requestDevice({
-                        filters: ledgerDevices
-                    })];
-                case 1:
-                    device = _a.sent();
-                    if (Array.isArray(device))
-                        return [2 /*return*/, device];
-                    return [2 /*return*/, [device]];
-            }
-        });
-    });
-}
-function getLedgerDevices() {
-    return __awaiter(this, void 0, void 0, function () {
-        var devices;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0: return [4 /*yield*/, getHID().getDevices()];
-                case 1:
-                    devices = _a.sent();
-                    return [2 /*return*/, devices.filter(function (d) { return d.vendorId === devices_1.ledgerUSBVendorId; })];
-            }
-        });
-    });
-}
-function getFirstLedgerDevice() {
-    return __awaiter(this, void 0, void 0, function () {
-        var existingDevices, devices;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0: return [4 /*yield*/, getLedgerDevices()];
-                case 1:
-                    existingDevices = _a.sent();
-                    if (existingDevices.length > 0)
-                        return [2 /*return*/, existingDevices[0]];
-                    return [4 /*yield*/, requestLedgerDevices()];
-                case 2:
-                    devices = _a.sent();
-                    return [2 /*return*/, devices[0]];
-            }
-        });
-    });
-}
-/**
- * WebHID Transport implementation
- * @example
- * import TransportWebHID from "@ledgerhq/hw-transport-webhid";
- * ...
- * TransportWebHID.create().then(transport => ...)
- */
-var TransportWebHID = /** @class */ (function (_super) {
-    __extends(TransportWebHID, _super);
-    function TransportWebHID(device) {
-        var _this = _super.call(this) || this;
-        _this.channel = Math.floor(Math.random() * 0xffff);
-        _this.packetSize = 64;
-        _this.inputs = [];
-        _this.read = function () {
-            if (_this.inputs.length) {
-                return Promise.resolve(_this.inputs.shift());
-            }
-            return new Promise(function (success) {
-                _this.inputCallback = success;
-            });
-        };
-        _this.onInputReport = function (e) {
-            var buffer = Buffer.from(e.data.buffer);
-            if (_this.inputCallback) {
-                _this.inputCallback(buffer);
-                _this.inputCallback = null;
-            }
-            else {
-                _this.inputs.push(buffer);
-            }
-        };
-        _this._disconnectEmitted = false;
-        _this._emitDisconnect = function (e) {
-            if (_this._disconnectEmitted)
-                return;
-            _this._disconnectEmitted = true;
-            _this.emit("disconnect", e);
-        };
-        /**
-         * Exchange with the device using APDU protocol.
-         * @param apdu
-         * @returns a promise of apdu response
-         */
-        _this.exchange = function (apdu) { return __awaiter(_this, void 0, void 0, function () {
-            var b;
-            var _this = this;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, this.exchangeAtomicImpl(function () { return __awaiter(_this, void 0, void 0, function () {
-                            var _a, channel, packetSize, framing, blocks, i, result, acc, buffer;
-                            return __generator(this, function (_b) {
-                                switch (_b.label) {
-                                    case 0:
-                                        _a = this, channel = _a.channel, packetSize = _a.packetSize;
-                                        (0, logs_1.log)("apdu", "=> " + apdu.toString("hex"));
-                                        framing = (0, hid_framing_1["default"])(channel, packetSize);
-                                        blocks = framing.makeBlocks(apdu);
-                                        i = 0;
-                                        _b.label = 1;
-                                    case 1:
-                                        if (!(i < blocks.length)) return [3 /*break*/, 4];
-                                        return [4 /*yield*/, this.device.sendReport(0, blocks[i])];
-                                    case 2:
-                                        _b.sent();
-                                        _b.label = 3;
-                                    case 3:
-                                        i++;
-                                        return [3 /*break*/, 1];
-                                    case 4:
-                                        if (!!(result = framing.getReducedResult(acc))) return [3 /*break*/, 6];
-                                        return [4 /*yield*/, this.read()];
-                                    case 5:
-                                        buffer = _b.sent();
-                                        acc = framing.reduceResponse(acc, buffer);
-                                        return [3 /*break*/, 4];
-                                    case 6:
-                                        (0, logs_1.log)("apdu", "<= " + result.toString("hex"));
-                                        return [2 /*return*/, result];
-                                }
-                            });
-                        }); })["catch"](function (e) {
-                            if (e && e.message && e.message.includes("write")) {
-                                _this._emitDisconnect(e);
-                                throw new errors_1.DisconnectedDeviceDuringOperation(e.message);
-                            }
-                            throw e;
-                        })];
-                    case 1:
-                        b = _a.sent();
-                        return [2 /*return*/, b];
-                }
-            });
-        }); };
-        _this.device = device;
-        _this.deviceModel =
-            typeof device.productId === "number"
-                ? (0, devices_1.identifyUSBProductId)(device.productId)
-                : undefined;
-        device.addEventListener("inputreport", _this.onInputReport);
-        return _this;
-    }
-    /**
-     * Similar to create() except it will always display the device permission (even if some devices are already accepted).
-     */
-    TransportWebHID.request = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            var _a, device;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
-                    case 0: return [4 /*yield*/, requestLedgerDevices()];
-                    case 1:
-                        _a = __read.apply(void 0, [_b.sent(), 1]), device = _a[0];
-                        return [2 /*return*/, TransportWebHID.open(device)];
-                }
-            });
-        });
-    };
-    /**
-     * Similar to create() except it will never display the device permission (it returns a Promise<?Transport>, null if it fails to find a device).
-     */
-    TransportWebHID.openConnected = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            var devices;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, getLedgerDevices()];
-                    case 1:
-                        devices = _a.sent();
-                        if (devices.length === 0)
-                            return [2 /*return*/, null];
-                        return [2 /*return*/, TransportWebHID.open(devices[0])];
-                }
-            });
-        });
-    };
-    /**
-     * Create a Ledger transport with a HIDDevice
-     */
-    TransportWebHID.open = function (device) {
-        return __awaiter(this, void 0, void 0, function () {
-            var transport, onDisconnect;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, device.open()];
-                    case 1:
-                        _a.sent();
-                        transport = new TransportWebHID(device);
-                        onDisconnect = function (e) {
-                            if (device === e.device) {
-                                getHID().removeEventListener("disconnect", onDisconnect);
-                                transport._emitDisconnect(new errors_1.DisconnectedDevice());
-                            }
-                        };
-                        getHID().addEventListener("disconnect", onDisconnect);
-                        return [2 /*return*/, transport];
-                }
-            });
-        });
-    };
-    /**
-     * Release the transport device
-     */
-    TransportWebHID.prototype.close = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, this.exchangeBusyPromise];
-                    case 1:
-                        _a.sent();
-                        this.device.removeEventListener("inputreport", this.onInputReport);
-                        return [4 /*yield*/, this.device.close()];
-                    case 2:
-                        _a.sent();
-                        return [2 /*return*/];
-                }
-            });
-        });
-    };
-    TransportWebHID.prototype.setScrambleKey = function () { };
-    /**
-     * Check if WebUSB transport is supported.
-     */
-    TransportWebHID.isSupported = isSupported;
-    /**
-     * List the WebUSB devices that was previously authorized by the user.
-     */
-    TransportWebHID.list = getLedgerDevices;
-    /**
-     * Actively listen to WebUSB devices and emit ONE device
-     * that was either accepted before, if not it will trigger the native permission UI.
-     *
-     * Important: it must be called in the context of a UI click!
-     */
-    TransportWebHID.listen = function (observer) {
-        var unsubscribed = false;
-        getFirstLedgerDevice().then(function (device) {
-            if (!device) {
-                observer.error(new errors_1.TransportOpenUserCancelled("Access denied to use Ledger device"));
-            }
-            else if (!unsubscribed) {
-                var deviceModel = typeof device.productId === "number"
-                    ? (0, devices_1.identifyUSBProductId)(device.productId)
-                    : undefined;
-                observer.next({
-                    type: "add",
-                    descriptor: device,
-                    deviceModel: deviceModel
-                });
-                observer.complete();
-            }
-        }, function (error) {
-            observer.error(new errors_1.TransportOpenUserCancelled(error.message));
-        });
-        function unsubscribe() {
-            unsubscribed = true;
-        }
-        return {
-            unsubscribe: unsubscribe
-        };
-    };
-    return TransportWebHID;
-}(hw_transport_1["default"]));
-exports["default"] = TransportWebHID;
-
-}).call(this,require("buffer").Buffer)
-},{"@ledgerhq/devices":165,"@ledgerhq/devices/lib/hid-framing":164,"@ledgerhq/errors":167,"@ledgerhq/hw-transport":168,"@ledgerhq/logs":169,"buffer":223}],164:[function(require,module,exports){
-(function (Buffer){
-"use strict";
-exports.__esModule = true;
-var errors_1 = require("@ledgerhq/errors");
-var Tag = 0x05;
-function asUInt16BE(value) {
-    var b = Buffer.alloc(2);
-    b.writeUInt16BE(value, 0);
-    return b;
-}
-var initialAcc = {
-    data: Buffer.alloc(0),
-    dataLength: 0,
-    sequence: 0
-};
-/**
- *
- */
-var createHIDframing = function (channel, packetSize) {
-    return {
-        makeBlocks: function (apdu) {
-            var data = Buffer.concat([asUInt16BE(apdu.length), apdu]);
-            var blockSize = packetSize - 5;
-            var nbBlocks = Math.ceil(data.length / blockSize);
-            data = Buffer.concat([
-                data,
-                Buffer.alloc(nbBlocks * blockSize - data.length + 1).fill(0),
-            ]);
-            var blocks = [];
-            for (var i = 0; i < nbBlocks; i++) {
-                var head = Buffer.alloc(5);
-                head.writeUInt16BE(channel, 0);
-                head.writeUInt8(Tag, 2);
-                head.writeUInt16BE(i, 3);
-                var chunk = data.slice(i * blockSize, (i + 1) * blockSize);
-                blocks.push(Buffer.concat([head, chunk]));
-            }
-            return blocks;
-        },
-        reduceResponse: function (acc, chunk) {
-            var _a = acc || initialAcc, data = _a.data, dataLength = _a.dataLength, sequence = _a.sequence;
-            if (chunk.readUInt16BE(0) !== channel) {
-                throw new errors_1.TransportError("Invalid channel", "InvalidChannel");
-            }
-            if (chunk.readUInt8(2) !== Tag) {
-                throw new errors_1.TransportError("Invalid tag", "InvalidTag");
-            }
-            if (chunk.readUInt16BE(3) !== sequence) {
-                throw new errors_1.TransportError("Invalid sequence", "InvalidSequence");
-            }
-            if (!acc) {
-                dataLength = chunk.readUInt16BE(5);
-            }
-            sequence++;
-            var chunkData = chunk.slice(acc ? 5 : 7);
-            data = Buffer.concat([data, chunkData]);
-            if (data.length > dataLength) {
-                data = data.slice(0, dataLength);
-            }
-            return {
-                data: data,
-                dataLength: dataLength,
-                sequence: sequence
-            };
-        },
-        getReducedResult: function (acc) {
-            if (acc && acc.dataLength === acc.data.length) {
-                return acc.data;
-            }
-        }
-    };
-};
-exports["default"] = createHIDframing;
-
-}).call(this,require("buffer").Buffer)
-},{"@ledgerhq/errors":167,"buffer":223}],165:[function(require,module,exports){
-"use strict";
-var __assign = (this && this.__assign) || function () {
-    __assign = Object.assign || function(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-                t[p] = s[p];
-        }
-        return t;
-    };
-    return __assign.apply(this, arguments);
-};
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-var _a;
-exports.__esModule = true;
-exports.getInfosForServiceUuid = exports.getBluetoothServiceUuids = exports.identifyProductName = exports.identifyUSBProductId = exports.identifyTargetId = exports.getDeviceModel = exports.ledgerUSBVendorId = exports.DeviceModelId = exports.IIWebUSB = exports.IICCID = exports.IIU2F = exports.IIKeyboardHID = exports.IIGenericHID = void 0;
-var semver_1 = __importDefault(require("semver"));
-/**
- * The USB product IDs will be defined as MMII, encoding a model (MM) and an interface bitfield (II)
- *
- ** Model
- * Ledger Nano S : 0x10
- * Ledger Blue : 0x00
- * Ledger Nano X : 0x40
- *
- ** Interface support bitfield
- * Generic HID : 0x01
- * Keyboard HID : 0x02
- * U2F : 0x04
- * CCID : 0x08
- * WebUSB : 0x10
- */
-exports.IIGenericHID = 0x01;
-exports.IIKeyboardHID = 0x02;
-exports.IIU2F = 0x04;
-exports.IICCID = 0x08;
-exports.IIWebUSB = 0x10;
-var DeviceModelId;
-(function (DeviceModelId) {
-    DeviceModelId["blue"] = "blue";
-    DeviceModelId["nanoS"] = "nanoS";
-    DeviceModelId["nanoSP"] = "nanoSP";
-    DeviceModelId["nanoX"] = "nanoX";
-})(DeviceModelId = exports.DeviceModelId || (exports.DeviceModelId = {}));
-var devices = (_a = {},
-    _a[DeviceModelId.blue] = {
-        id: DeviceModelId.blue,
-        productName: "Ledger Blue",
-        productIdMM: 0x00,
-        legacyUsbProductId: 0x0000,
-        usbOnly: true,
-        memorySize: 480 * 1024,
-        masks: [0x31000000, 0x31010000],
-        getBlockSize: function (_firwareVersion) { return 4 * 1024; }
-    },
-    _a[DeviceModelId.nanoS] = {
-        id: DeviceModelId.nanoS,
-        productName: "Ledger Nano S",
-        productIdMM: 0x10,
-        legacyUsbProductId: 0x0001,
-        usbOnly: true,
-        memorySize: 320 * 1024,
-        masks: [0x31100000],
-        getBlockSize: function (firmwareVersion) {
-            var _a;
-            return semver_1["default"].lt((_a = semver_1["default"].coerce(firmwareVersion)) !== null && _a !== void 0 ? _a : "", "2.0.0")
-                ? 4 * 1024
-                : 2 * 1024;
-        }
-    },
-    _a[DeviceModelId.nanoSP] = {
-        id: DeviceModelId.nanoSP,
-        productName: "Ledger Nano SP",
-        productIdMM: 0x50,
-        legacyUsbProductId: 0x0005,
-        usbOnly: true,
-        memorySize: 1533 * 1024,
-        masks: [0x33100000],
-        getBlockSize: function (_firmwareVersion) { return 512; }
-    },
-    _a[DeviceModelId.nanoX] = {
-        id: DeviceModelId.nanoX,
-        productName: "Ledger Nano X",
-        productIdMM: 0x40,
-        legacyUsbProductId: 0x0004,
-        usbOnly: false,
-        memorySize: 2 * 1024 * 1024,
-        masks: [0x33000000],
-        getBlockSize: function (_firwareVersion) { return 4 * 1024; },
-        bluetoothSpec: [
-            {
-                // this is the legacy one (prototype version). we will eventually drop it.
-                serviceUuid: "d973f2e0-b19e-11e2-9e96-0800200c9a66",
-                notifyUuid: "d973f2e1-b19e-11e2-9e96-0800200c9a66",
-                writeUuid: "d973f2e2-b19e-11e2-9e96-0800200c9a66"
-            },
-            {
-                serviceUuid: "13d63400-2c97-0004-0000-4c6564676572",
-                notifyUuid: "13d63400-2c97-0004-0001-4c6564676572",
-                writeUuid: "13d63400-2c97-0004-0002-4c6564676572"
-            },
-        ]
-    },
-    _a);
-var productMap = {
-    Blue: DeviceModelId.blue,
-    "Nano S": DeviceModelId.nanoS,
-    "Nano X": DeviceModelId.nanoX
-};
-var devicesList = Object.values(devices);
-/**
- *
- */
-exports.ledgerUSBVendorId = 0x2c97;
-/**
- *
- */
-var getDeviceModel = function (id) {
-    var info = devices[id];
-    if (!info)
-        throw new Error("device '" + id + "' does not exist");
-    return info;
-};
-exports.getDeviceModel = getDeviceModel;
-/**
- * Given a `targetId`, return the deviceModel associated to it,
- * based on the first two bytes.
- */
-var identifyTargetId = function (targetId) {
-    var deviceModel = devicesList.find(function (_a) {
-        var masks = _a.masks;
-        return masks.find(function (mask) { return (targetId & 0xffff0000) === mask; });
-    });
-    return deviceModel;
-};
-exports.identifyTargetId = identifyTargetId;
-/**
- *
- */
-var identifyUSBProductId = function (usbProductId) {
-    var legacy = devicesList.find(function (d) { return d.legacyUsbProductId === usbProductId; });
-    if (legacy)
-        return legacy;
-    var mm = usbProductId >> 8;
-    var deviceModel = devicesList.find(function (d) { return d.productIdMM === mm; });
-    return deviceModel;
-};
-exports.identifyUSBProductId = identifyUSBProductId;
-var identifyProductName = function (productName) {
-    var productId = productMap[productName];
-    if (!productId && productName.startsWith("Nano S")) {
-        productId = DeviceModelId.nanoSP;
-    }
-    var deviceModel = devicesList.find(function (d) { return d.id === productId; });
-    return deviceModel;
-};
-exports.identifyProductName = identifyProductName;
-var bluetoothServices = [];
-var serviceUuidToInfos = {};
-for (var id in devices) {
-    var deviceModel = devices[id];
-    var bluetoothSpec = deviceModel.bluetoothSpec;
-    if (bluetoothSpec) {
-        for (var i = 0; i < bluetoothSpec.length; i++) {
-            var spec = bluetoothSpec[i];
-            bluetoothServices.push(spec.serviceUuid);
-            serviceUuidToInfos[spec.serviceUuid] = serviceUuidToInfos[spec.serviceUuid.replace(/-/g, "")] = __assign({ deviceModel: deviceModel }, spec);
-        }
-    }
-}
-/**
- *
- */
-var getBluetoothServiceUuids = function () { return bluetoothServices; };
-exports.getBluetoothServiceUuids = getBluetoothServiceUuids;
-/**
- *
- */
-var getInfosForServiceUuid = function (uuid) { return serviceUuidToInfos[uuid.toLowerCase()]; };
-exports.getInfosForServiceUuid = getInfosForServiceUuid;
-
-},{"semver":197}],166:[function(require,module,exports){
-arguments[4][128][0].apply(exports,arguments)
-},{"dup":128}],167:[function(require,module,exports){
-arguments[4][129][0].apply(exports,arguments)
-},{"./helpers":166,"dup":129}],168:[function(require,module,exports){
-(function (Buffer){
-"use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
-    function verb(n) { return function (v) { return step([n, v]); }; }
-    function step(op) {
-        if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
-            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [op[0] & 2, t.value];
-            switch (op[0]) {
-                case 0: case 1: t = op; break;
-                case 4: _.label++; return { value: op[1], done: false };
-                case 5: _.label++; y = op[1]; op = [0]; continue;
-                case 7: op = _.ops.pop(); _.trys.pop(); continue;
-                default:
-                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
-                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
-                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
-                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop();
-                    _.trys.pop(); continue;
-            }
-            op = body.call(thisArg, _);
-        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
-        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
-    }
-};
-var __read = (this && this.__read) || function (o, n) {
-    var m = typeof Symbol === "function" && o[Symbol.iterator];
-    if (!m) return o;
-    var i = m.call(o), r, ar = [], e;
-    try {
-        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
-    }
-    catch (error) { e = { error: error }; }
-    finally {
-        try {
-            if (r && !r.done && (m = i["return"])) m.call(i);
-        }
-        finally { if (e) throw e.error; }
-    }
-    return ar;
-};
-var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
-    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
-        if (ar || !(i in from)) {
-            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
-            ar[i] = from[i];
-        }
-    }
-    return to.concat(ar || Array.prototype.slice.call(from));
-};
-var __values = (this && this.__values) || function(o) {
-    var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
-    if (m) return m.call(o);
-    if (o && typeof o.length === "number") return {
-        next: function () {
-            if (o && i >= o.length) o = void 0;
-            return { value: o && o[i++], done: !o };
-        }
-    };
-    throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
-};
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-exports.__esModule = true;
-exports.getAltStatusMessage = exports.StatusCodes = exports.TransportStatusError = exports.TransportError = void 0;
-var events_1 = __importDefault(require("events"));
-var errors_1 = require("@ledgerhq/errors");
-exports.TransportError = errors_1.TransportError;
-exports.StatusCodes = errors_1.StatusCodes;
-exports.getAltStatusMessage = errors_1.getAltStatusMessage;
-exports.TransportStatusError = errors_1.TransportStatusError;
-/**
- * Transport defines the generic interface to share between node/u2f impl
- * A **Descriptor** is a parametric type that is up to be determined for the implementation.
- * it can be for instance an ID, an file path, a URL,...
- */
-var Transport = /** @class */ (function () {
-    function Transport() {
-        var _this = this;
-        this.exchangeTimeout = 30000;
-        this.unresponsiveTimeout = 15000;
-        this.deviceModel = null;
-        this._events = new events_1["default"]();
-        /**
-         * wrapper on top of exchange to simplify work of the implementation.
-         * @param cla
-         * @param ins
-         * @param p1
-         * @param p2
-         * @param data
-         * @param statusList is a list of accepted status code (shorts). [0x9000] by default
-         * @return a Promise of response buffer
-         */
-        this.send = function (cla, ins, p1, p2, data, statusList) {
-            if (data === void 0) { data = Buffer.alloc(0); }
-            if (statusList === void 0) { statusList = [errors_1.StatusCodes.OK]; }
-            return __awaiter(_this, void 0, void 0, function () {
-                var response, sw;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            if (data.length >= 256) {
-                                throw new errors_1.TransportError("data.length exceed 256 bytes limit. Got: " + data.length, "DataLengthTooBig");
-                            }
-                            return [4 /*yield*/, this.exchange(Buffer.concat([
-                                    Buffer.from([cla, ins, p1, p2]),
-                                    Buffer.from([data.length]),
-                                    data,
-                                ]))];
-                        case 1:
-                            response = _a.sent();
-                            sw = response.readUInt16BE(response.length - 2);
-                            if (!statusList.some(function (s) { return s === sw; })) {
-                                throw new errors_1.TransportStatusError(sw);
-                            }
-                            return [2 /*return*/, response];
-                    }
-                });
-            });
-        };
-        this.exchangeAtomicImpl = function (f) { return __awaiter(_this, void 0, void 0, function () {
-            var resolveBusy, busyPromise, unresponsiveReached, timeout, res;
-            var _this = this;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        if (this.exchangeBusyPromise) {
-                            throw new errors_1.TransportRaceCondition("An action was already pending on the Ledger device. Please deny or reconnect.");
-                        }
-                        busyPromise = new Promise(function (r) {
-                            resolveBusy = r;
-                        });
-                        this.exchangeBusyPromise = busyPromise;
-                        unresponsiveReached = false;
-                        timeout = setTimeout(function () {
-                            unresponsiveReached = true;
-                            _this.emit("unresponsive");
-                        }, this.unresponsiveTimeout);
-                        _a.label = 1;
-                    case 1:
-                        _a.trys.push([1, , 3, 4]);
-                        return [4 /*yield*/, f()];
-                    case 2:
-                        res = _a.sent();
-                        if (unresponsiveReached) {
-                            this.emit("responsive");
-                        }
-                        return [2 /*return*/, res];
-                    case 3:
-                        clearTimeout(timeout);
-                        if (resolveBusy)
-                            resolveBusy();
-                        this.exchangeBusyPromise = null;
-                        return [7 /*endfinally*/];
-                    case 4: return [2 /*return*/];
-                }
-            });
-        }); };
-        this._appAPIlock = null;
-    }
-    /**
-     * low level api to communicate with the device
-     * This method is for implementations to implement but should not be directly called.
-     * Instead, the recommanded way is to use send() method
-     * @param apdu the data to send
-     * @return a Promise of response data
-     */
-    Transport.prototype.exchange = function (_apdu) {
-        throw new Error("exchange not implemented");
-    };
-    /**
-     * set the "scramble key" for the next exchanges with the device.
-     * Each App can have a different scramble key and they internally will set it at instanciation.
-     * @param key the scramble key
-     */
-    Transport.prototype.setScrambleKey = function (_key) { };
-    /**
-     * close the exchange with the device.
-     * @return a Promise that ends when the transport is closed.
-     */
-    Transport.prototype.close = function () {
-        return Promise.resolve();
-    };
-    /**
-     * Listen to an event on an instance of transport.
-     * Transport implementation can have specific events. Here is the common events:
-     * * `"disconnect"` : triggered if Transport is disconnected
-     */
-    Transport.prototype.on = function (eventName, cb) {
-        this._events.on(eventName, cb);
-    };
-    /**
-     * Stop listening to an event on an instance of transport.
-     */
-    Transport.prototype.off = function (eventName, cb) {
-        this._events.removeListener(eventName, cb);
-    };
-    Transport.prototype.emit = function (event) {
-        var _a;
-        var args = [];
-        for (var _i = 1; _i < arguments.length; _i++) {
-            args[_i - 1] = arguments[_i];
-        }
-        (_a = this._events).emit.apply(_a, __spreadArray([event], __read(args), false));
-    };
-    /**
-     * Enable or not logs of the binary exchange
-     */
-    Transport.prototype.setDebugMode = function () {
-        console.warn("setDebugMode is deprecated. use @ledgerhq/logs instead. No logs are emitted in this anymore.");
-    };
-    /**
-     * Set a timeout (in milliseconds) for the exchange call. Only some transport might implement it. (e.g. U2F)
-     */
-    Transport.prototype.setExchangeTimeout = function (exchangeTimeout) {
-        this.exchangeTimeout = exchangeTimeout;
-    };
-    /**
-     * Define the delay before emitting "unresponsive" on an exchange that does not respond
-     */
-    Transport.prototype.setExchangeUnresponsiveTimeout = function (unresponsiveTimeout) {
-        this.unresponsiveTimeout = unresponsiveTimeout;
-    };
-    /**
-     * create() allows to open the first descriptor available or
-     * throw if there is none or if timeout is reached.
-     * This is a light helper, alternative to using listen() and open() (that you may need for any more advanced usecase)
-     * @example
-    TransportFoo.create().then(transport => ...)
-     */
-    Transport.create = function (openTimeout, listenTimeout) {
-        var _this = this;
-        if (openTimeout === void 0) { openTimeout = 3000; }
-        return new Promise(function (resolve, reject) {
-            var found = false;
-            var sub = _this.listen({
-                next: function (e) {
-                    found = true;
-                    if (sub)
-                        sub.unsubscribe();
-                    if (listenTimeoutId)
-                        clearTimeout(listenTimeoutId);
-                    _this.open(e.descriptor, openTimeout).then(resolve, reject);
-                },
-                error: function (e) {
-                    if (listenTimeoutId)
-                        clearTimeout(listenTimeoutId);
-                    reject(e);
-                },
-                complete: function () {
-                    if (listenTimeoutId)
-                        clearTimeout(listenTimeoutId);
-                    if (!found) {
-                        reject(new errors_1.TransportError(_this.ErrorMessage_NoDeviceFound, "NoDeviceFound"));
-                    }
-                }
-            });
-            var listenTimeoutId = listenTimeout
-                ? setTimeout(function () {
-                    sub.unsubscribe();
-                    reject(new errors_1.TransportError(_this.ErrorMessage_ListenTimeout, "ListenTimeout"));
-                }, listenTimeout)
-                : null;
-        });
-    };
-    Transport.prototype.decorateAppAPIMethods = function (self, methods, scrambleKey) {
-        var e_1, _a;
-        try {
-            for (var methods_1 = __values(methods), methods_1_1 = methods_1.next(); !methods_1_1.done; methods_1_1 = methods_1.next()) {
-                var methodName = methods_1_1.value;
-                self[methodName] = this.decorateAppAPIMethod(methodName, self[methodName], self, scrambleKey);
-            }
-        }
-        catch (e_1_1) { e_1 = { error: e_1_1 }; }
-        finally {
-            try {
-                if (methods_1_1 && !methods_1_1.done && (_a = methods_1["return"])) _a.call(methods_1);
-            }
-            finally { if (e_1) throw e_1.error; }
-        }
-    };
-    Transport.prototype.decorateAppAPIMethod = function (methodName, f, ctx, scrambleKey) {
-        var _this = this;
-        return function () {
-            var args = [];
-            for (var _i = 0; _i < arguments.length; _i++) {
-                args[_i] = arguments[_i];
-            }
-            return __awaiter(_this, void 0, void 0, function () {
-                var _appAPIlock;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            _appAPIlock = this._appAPIlock;
-                            if (_appAPIlock) {
-                                return [2 /*return*/, Promise.reject(new errors_1.TransportError("Ledger Device is busy (lock " + _appAPIlock + ")", "TransportLocked"))];
-                            }
-                            _a.label = 1;
-                        case 1:
-                            _a.trys.push([1, , 3, 4]);
-                            this._appAPIlock = methodName;
-                            this.setScrambleKey(scrambleKey);
-                            return [4 /*yield*/, f.apply(ctx, args)];
-                        case 2: return [2 /*return*/, _a.sent()];
-                        case 3:
-                            this._appAPIlock = null;
-                            return [7 /*endfinally*/];
-                        case 4: return [2 /*return*/];
-                    }
-                });
-            });
-        };
-    };
-    Transport.ErrorMessage_ListenTimeout = "No Ledger device found (timeout)";
-    Transport.ErrorMessage_NoDeviceFound = "No Ledger device found";
-    return Transport;
-}());
-exports["default"] = Transport;
-
-}).call(this,require("buffer").Buffer)
-},{"@ledgerhq/errors":167,"buffer":223,"events":245}],169:[function(require,module,exports){
-arguments[4][130][0].apply(exports,arguments)
-},{"dup":130}],170:[function(require,module,exports){
-const ANY = Symbol('SemVer ANY')
-// hoisted class for cyclic dependency
-class Comparator {
-  static get ANY () {
-    return ANY
-  }
-  constructor (comp, options) {
-    options = parseOptions(options)
-
-    if (comp instanceof Comparator) {
-      if (comp.loose === !!options.loose) {
-        return comp
-      } else {
-        comp = comp.value
-      }
-    }
-
-    debug('comparator', comp, options)
-    this.options = options
-    this.loose = !!options.loose
-    this.parse(comp)
-
-    if (this.semver === ANY) {
-      this.value = ''
-    } else {
-      this.value = this.operator + this.semver.version
-    }
-
-    debug('comp', this)
-  }
-
-  parse (comp) {
-    const r = this.options.loose ? re[t.COMPARATORLOOSE] : re[t.COMPARATOR]
-    const m = comp.match(r)
-
-    if (!m) {
-      throw new TypeError(`Invalid comparator: ${comp}`)
-    }
-
-    this.operator = m[1] !== undefined ? m[1] : ''
-    if (this.operator === '=') {
-      this.operator = ''
-    }
-
-    // if it literally is just '>' or '' then allow anything.
-    if (!m[2]) {
-      this.semver = ANY
-    } else {
-      this.semver = new SemVer(m[2], this.options.loose)
-    }
-  }
-
-  toString () {
-    return this.value
-  }
-
-  test (version) {
-    debug('Comparator.test', version, this.options.loose)
-
-    if (this.semver === ANY || version === ANY) {
-      return true
-    }
-
-    if (typeof version === 'string') {
-      try {
-        version = new SemVer(version, this.options)
-      } catch (er) {
-        return false
-      }
-    }
-
-    return cmp(version, this.operator, this.semver, this.options)
-  }
-
-  intersects (comp, options) {
-    if (!(comp instanceof Comparator)) {
-      throw new TypeError('a Comparator is required')
-    }
-
-    if (!options || typeof options !== 'object') {
-      options = {
-        loose: !!options,
-        includePrerelease: false
-      }
-    }
-
-    if (this.operator === '') {
-      if (this.value === '') {
-        return true
-      }
-      return new Range(comp.value, options).test(this.value)
-    } else if (comp.operator === '') {
-      if (comp.value === '') {
-        return true
-      }
-      return new Range(this.value, options).test(comp.semver)
-    }
-
-    const sameDirectionIncreasing =
-      (this.operator === '>=' || this.operator === '>') &&
-      (comp.operator === '>=' || comp.operator === '>')
-    const sameDirectionDecreasing =
-      (this.operator === '<=' || this.operator === '<') &&
-      (comp.operator === '<=' || comp.operator === '<')
-    const sameSemVer = this.semver.version === comp.semver.version
-    const differentDirectionsInclusive =
-      (this.operator === '>=' || this.operator === '<=') &&
-      (comp.operator === '>=' || comp.operator === '<=')
-    const oppositeDirectionsLessThan =
-      cmp(this.semver, '<', comp.semver, options) &&
-      (this.operator === '>=' || this.operator === '>') &&
-        (comp.operator === '<=' || comp.operator === '<')
-    const oppositeDirectionsGreaterThan =
-      cmp(this.semver, '>', comp.semver, options) &&
-      (this.operator === '<=' || this.operator === '<') &&
-        (comp.operator === '>=' || comp.operator === '>')
-
-    return (
-      sameDirectionIncreasing ||
-      sameDirectionDecreasing ||
-      (sameSemVer && differentDirectionsInclusive) ||
-      oppositeDirectionsLessThan ||
-      oppositeDirectionsGreaterThan
-    )
-  }
-}
-
-module.exports = Comparator
-
-const parseOptions = require('../internal/parse-options')
-const {re, t} = require('../internal/re')
-const cmp = require('../functions/cmp')
-const debug = require('../internal/debug')
-const SemVer = require('./semver')
-const Range = require('./range')
-
-},{"../functions/cmp":174,"../internal/debug":199,"../internal/parse-options":201,"../internal/re":202,"./range":171,"./semver":172}],171:[function(require,module,exports){
-// hoisted class for cyclic dependency
-class Range {
-  constructor (range, options) {
-    options = parseOptions(options)
-
-    if (range instanceof Range) {
-      if (
-        range.loose === !!options.loose &&
-        range.includePrerelease === !!options.includePrerelease
-      ) {
-        return range
-      } else {
-        return new Range(range.raw, options)
-      }
-    }
-
-    if (range instanceof Comparator) {
-      // just put it in the set and return
-      this.raw = range.value
-      this.set = [[range]]
-      this.format()
-      return this
-    }
-
-    this.options = options
-    this.loose = !!options.loose
-    this.includePrerelease = !!options.includePrerelease
-
-    // First, split based on boolean or ||
-    this.raw = range
-    this.set = range
-      .split(/\s*\|\|\s*/)
-      // map the range to a 2d array of comparators
-      .map(range => this.parseRange(range.trim()))
-      // throw out any comparator lists that are empty
-      // this generally means that it was not a valid range, which is allowed
-      // in loose mode, but will still throw if the WHOLE range is invalid.
-      .filter(c => c.length)
-
-    if (!this.set.length) {
-      throw new TypeError(`Invalid SemVer Range: ${range}`)
-    }
-
-    // if we have any that are not the null set, throw out null sets.
-    if (this.set.length > 1) {
-      // keep the first one, in case they're all null sets
-      const first = this.set[0]
-      this.set = this.set.filter(c => !isNullSet(c[0]))
-      if (this.set.length === 0)
-        this.set = [first]
-      else if (this.set.length > 1) {
-        // if we have any that are *, then the range is just *
-        for (const c of this.set) {
-          if (c.length === 1 && isAny(c[0])) {
-            this.set = [c]
-            break
-          }
-        }
-      }
-    }
-
-    this.format()
-  }
-
-  format () {
-    this.range = this.set
-      .map((comps) => {
-        return comps.join(' ').trim()
-      })
-      .join('||')
-      .trim()
-    return this.range
-  }
-
-  toString () {
-    return this.range
-  }
-
-  parseRange (range) {
-    range = range.trim()
-
-    // memoize range parsing for performance.
-    // this is a very hot path, and fully deterministic.
-    const memoOpts = Object.keys(this.options).join(',')
-    const memoKey = `parseRange:${memoOpts}:${range}`
-    const cached = cache.get(memoKey)
-    if (cached)
-      return cached
-
-    const loose = this.options.loose
-    // `1.2.3 - 1.2.4` => `>=1.2.3 <=1.2.4`
-    const hr = loose ? re[t.HYPHENRANGELOOSE] : re[t.HYPHENRANGE]
-    range = range.replace(hr, hyphenReplace(this.options.includePrerelease))
-    debug('hyphen replace', range)
-    // `> 1.2.3 < 1.2.5` => `>1.2.3 <1.2.5`
-    range = range.replace(re[t.COMPARATORTRIM], comparatorTrimReplace)
-    debug('comparator trim', range, re[t.COMPARATORTRIM])
-
-    // `~ 1.2.3` => `~1.2.3`
-    range = range.replace(re[t.TILDETRIM], tildeTrimReplace)
-
-    // `^ 1.2.3` => `^1.2.3`
-    range = range.replace(re[t.CARETTRIM], caretTrimReplace)
-
-    // normalize spaces
-    range = range.split(/\s+/).join(' ')
-
-    // At this point, the range is completely trimmed and
-    // ready to be split into comparators.
-
-    const compRe = loose ? re[t.COMPARATORLOOSE] : re[t.COMPARATOR]
-    const rangeList = range
-      .split(' ')
-      .map(comp => parseComparator(comp, this.options))
-      .join(' ')
-      .split(/\s+/)
-      // >=0.0.0 is equivalent to *
-      .map(comp => replaceGTE0(comp, this.options))
-      // in loose mode, throw out any that are not valid comparators
-      .filter(this.options.loose ? comp => !!comp.match(compRe) : () => true)
-      .map(comp => new Comparator(comp, this.options))
-
-    // if any comparators are the null set, then replace with JUST null set
-    // if more than one comparator, remove any * comparators
-    // also, don't include the same comparator more than once
-    const l = rangeList.length
-    const rangeMap = new Map()
-    for (const comp of rangeList) {
-      if (isNullSet(comp))
-        return [comp]
-      rangeMap.set(comp.value, comp)
-    }
-    if (rangeMap.size > 1 && rangeMap.has(''))
-      rangeMap.delete('')
-
-    const result = [...rangeMap.values()]
-    cache.set(memoKey, result)
-    return result
-  }
-
-  intersects (range, options) {
-    if (!(range instanceof Range)) {
-      throw new TypeError('a Range is required')
-    }
-
-    return this.set.some((thisComparators) => {
-      return (
-        isSatisfiable(thisComparators, options) &&
-        range.set.some((rangeComparators) => {
-          return (
-            isSatisfiable(rangeComparators, options) &&
-            thisComparators.every((thisComparator) => {
-              return rangeComparators.every((rangeComparator) => {
-                return thisComparator.intersects(rangeComparator, options)
-              })
-            })
-          )
-        })
-      )
-    })
-  }
-
-  // if ANY of the sets match ALL of its comparators, then pass
-  test (version) {
-    if (!version) {
-      return false
-    }
-
-    if (typeof version === 'string') {
-      try {
-        version = new SemVer(version, this.options)
-      } catch (er) {
-        return false
-      }
-    }
-
-    for (let i = 0; i < this.set.length; i++) {
-      if (testSet(this.set[i], version, this.options)) {
-        return true
-      }
-    }
-    return false
-  }
-}
-module.exports = Range
-
-const LRU = require('lru-cache')
-const cache = new LRU({ max: 1000 })
-
-const parseOptions = require('../internal/parse-options')
-const Comparator = require('./comparator')
-const debug = require('../internal/debug')
-const SemVer = require('./semver')
-const {
-  re,
-  t,
-  comparatorTrimReplace,
-  tildeTrimReplace,
-  caretTrimReplace
-} = require('../internal/re')
-
-const isNullSet = c => c.value === '<0.0.0-0'
-const isAny = c => c.value === ''
-
-// take a set of comparators and determine whether there
-// exists a version which can satisfy it
-const isSatisfiable = (comparators, options) => {
-  let result = true
-  const remainingComparators = comparators.slice()
-  let testComparator = remainingComparators.pop()
-
-  while (result && remainingComparators.length) {
-    result = remainingComparators.every((otherComparator) => {
-      return testComparator.intersects(otherComparator, options)
-    })
-
-    testComparator = remainingComparators.pop()
-  }
-
-  return result
-}
-
-// comprised of xranges, tildes, stars, and gtlt's at this point.
-// already replaced the hyphen ranges
-// turn into a set of JUST comparators.
-const parseComparator = (comp, options) => {
-  debug('comp', comp, options)
-  comp = replaceCarets(comp, options)
-  debug('caret', comp)
-  comp = replaceTildes(comp, options)
-  debug('tildes', comp)
-  comp = replaceXRanges(comp, options)
-  debug('xrange', comp)
-  comp = replaceStars(comp, options)
-  debug('stars', comp)
-  return comp
-}
-
-const isX = id => !id || id.toLowerCase() === 'x' || id === '*'
-
-// ~, ~> --> * (any, kinda silly)
-// ~2, ~2.x, ~2.x.x, ~>2, ~>2.x ~>2.x.x --> >=2.0.0 <3.0.0-0
-// ~2.0, ~2.0.x, ~>2.0, ~>2.0.x --> >=2.0.0 <2.1.0-0
-// ~1.2, ~1.2.x, ~>1.2, ~>1.2.x --> >=1.2.0 <1.3.0-0
-// ~1.2.3, ~>1.2.3 --> >=1.2.3 <1.3.0-0
-// ~1.2.0, ~>1.2.0 --> >=1.2.0 <1.3.0-0
-const replaceTildes = (comp, options) =>
-  comp.trim().split(/\s+/).map((comp) => {
-    return replaceTilde(comp, options)
-  }).join(' ')
-
-const replaceTilde = (comp, options) => {
-  const r = options.loose ? re[t.TILDELOOSE] : re[t.TILDE]
-  return comp.replace(r, (_, M, m, p, pr) => {
-    debug('tilde', comp, _, M, m, p, pr)
-    let ret
-
-    if (isX(M)) {
-      ret = ''
-    } else if (isX(m)) {
-      ret = `>=${M}.0.0 <${+M + 1}.0.0-0`
-    } else if (isX(p)) {
-      // ~1.2 == >=1.2.0 <1.3.0-0
-      ret = `>=${M}.${m}.0 <${M}.${+m + 1}.0-0`
-    } else if (pr) {
-      debug('replaceTilde pr', pr)
-      ret = `>=${M}.${m}.${p}-${pr
-      } <${M}.${+m + 1}.0-0`
-    } else {
-      // ~1.2.3 == >=1.2.3 <1.3.0-0
-      ret = `>=${M}.${m}.${p
-      } <${M}.${+m + 1}.0-0`
-    }
-
-    debug('tilde return', ret)
-    return ret
-  })
-}
-
-// ^ --> * (any, kinda silly)
-// ^2, ^2.x, ^2.x.x --> >=2.0.0 <3.0.0-0
-// ^2.0, ^2.0.x --> >=2.0.0 <3.0.0-0
-// ^1.2, ^1.2.x --> >=1.2.0 <2.0.0-0
-// ^1.2.3 --> >=1.2.3 <2.0.0-0
-// ^1.2.0 --> >=1.2.0 <2.0.0-0
-const replaceCarets = (comp, options) =>
-  comp.trim().split(/\s+/).map((comp) => {
-    return replaceCaret(comp, options)
-  }).join(' ')
-
-const replaceCaret = (comp, options) => {
-  debug('caret', comp, options)
-  const r = options.loose ? re[t.CARETLOOSE] : re[t.CARET]
-  const z = options.includePrerelease ? '-0' : ''
-  return comp.replace(r, (_, M, m, p, pr) => {
-    debug('caret', comp, _, M, m, p, pr)
-    let ret
-
-    if (isX(M)) {
-      ret = ''
-    } else if (isX(m)) {
-      ret = `>=${M}.0.0${z} <${+M + 1}.0.0-0`
-    } else if (isX(p)) {
-      if (M === '0') {
-        ret = `>=${M}.${m}.0${z} <${M}.${+m + 1}.0-0`
-      } else {
-        ret = `>=${M}.${m}.0${z} <${+M + 1}.0.0-0`
-      }
-    } else if (pr) {
-      debug('replaceCaret pr', pr)
-      if (M === '0') {
-        if (m === '0') {
-          ret = `>=${M}.${m}.${p}-${pr
-          } <${M}.${m}.${+p + 1}-0`
-        } else {
-          ret = `>=${M}.${m}.${p}-${pr
-          } <${M}.${+m + 1}.0-0`
-        }
-      } else {
-        ret = `>=${M}.${m}.${p}-${pr
-        } <${+M + 1}.0.0-0`
-      }
-    } else {
-      debug('no pr')
-      if (M === '0') {
-        if (m === '0') {
-          ret = `>=${M}.${m}.${p
-          }${z} <${M}.${m}.${+p + 1}-0`
-        } else {
-          ret = `>=${M}.${m}.${p
-          }${z} <${M}.${+m + 1}.0-0`
-        }
-      } else {
-        ret = `>=${M}.${m}.${p
-        } <${+M + 1}.0.0-0`
-      }
-    }
-
-    debug('caret return', ret)
-    return ret
-  })
-}
-
-const replaceXRanges = (comp, options) => {
-  debug('replaceXRanges', comp, options)
-  return comp.split(/\s+/).map((comp) => {
-    return replaceXRange(comp, options)
-  }).join(' ')
-}
-
-const replaceXRange = (comp, options) => {
-  comp = comp.trim()
-  const r = options.loose ? re[t.XRANGELOOSE] : re[t.XRANGE]
-  return comp.replace(r, (ret, gtlt, M, m, p, pr) => {
-    debug('xRange', comp, ret, gtlt, M, m, p, pr)
-    const xM = isX(M)
-    const xm = xM || isX(m)
-    const xp = xm || isX(p)
-    const anyX = xp
-
-    if (gtlt === '=' && anyX) {
-      gtlt = ''
-    }
-
-    // if we're including prereleases in the match, then we need
-    // to fix this to -0, the lowest possible prerelease value
-    pr = options.includePrerelease ? '-0' : ''
-
-    if (xM) {
-      if (gtlt === '>' || gtlt === '<') {
-        // nothing is allowed
-        ret = '<0.0.0-0'
-      } else {
-        // nothing is forbidden
-        ret = '*'
-      }
-    } else if (gtlt && anyX) {
-      // we know patch is an x, because we have any x at all.
-      // replace X with 0
-      if (xm) {
-        m = 0
-      }
-      p = 0
-
-      if (gtlt === '>') {
-        // >1 => >=2.0.0
-        // >1.2 => >=1.3.0
-        gtlt = '>='
-        if (xm) {
-          M = +M + 1
-          m = 0
-          p = 0
-        } else {
-          m = +m + 1
-          p = 0
-        }
-      } else if (gtlt === '<=') {
-        // <=0.7.x is actually <0.8.0, since any 0.7.x should
-        // pass.  Similarly, <=7.x is actually <8.0.0, etc.
-        gtlt = '<'
-        if (xm) {
-          M = +M + 1
-        } else {
-          m = +m + 1
-        }
-      }
-
-      if (gtlt === '<')
-        pr = '-0'
-
-      ret = `${gtlt + M}.${m}.${p}${pr}`
-    } else if (xm) {
-      ret = `>=${M}.0.0${pr} <${+M + 1}.0.0-0`
-    } else if (xp) {
-      ret = `>=${M}.${m}.0${pr
-      } <${M}.${+m + 1}.0-0`
-    }
-
-    debug('xRange return', ret)
-
-    return ret
-  })
-}
-
-// Because * is AND-ed with everything else in the comparator,
-// and '' means "any version", just remove the *s entirely.
-const replaceStars = (comp, options) => {
-  debug('replaceStars', comp, options)
-  // Looseness is ignored here.  star is always as loose as it gets!
-  return comp.trim().replace(re[t.STAR], '')
-}
-
-const replaceGTE0 = (comp, options) => {
-  debug('replaceGTE0', comp, options)
-  return comp.trim()
-    .replace(re[options.includePrerelease ? t.GTE0PRE : t.GTE0], '')
-}
-
-// This function is passed to string.replace(re[t.HYPHENRANGE])
-// M, m, patch, prerelease, build
-// 1.2 - 3.4.5 => >=1.2.0 <=3.4.5
-// 1.2.3 - 3.4 => >=1.2.0 <3.5.0-0 Any 3.4.x will do
-// 1.2 - 3.4 => >=1.2.0 <3.5.0-0
-const hyphenReplace = incPr => ($0,
-  from, fM, fm, fp, fpr, fb,
-  to, tM, tm, tp, tpr, tb) => {
-  if (isX(fM)) {
-    from = ''
-  } else if (isX(fm)) {
-    from = `>=${fM}.0.0${incPr ? '-0' : ''}`
-  } else if (isX(fp)) {
-    from = `>=${fM}.${fm}.0${incPr ? '-0' : ''}`
-  } else if (fpr) {
-    from = `>=${from}`
-  } else {
-    from = `>=${from}${incPr ? '-0' : ''}`
-  }
-
-  if (isX(tM)) {
-    to = ''
-  } else if (isX(tm)) {
-    to = `<${+tM + 1}.0.0-0`
-  } else if (isX(tp)) {
-    to = `<${tM}.${+tm + 1}.0-0`
-  } else if (tpr) {
-    to = `<=${tM}.${tm}.${tp}-${tpr}`
-  } else if (incPr) {
-    to = `<${tM}.${tm}.${+tp + 1}-0`
-  } else {
-    to = `<=${to}`
-  }
-
-  return (`${from} ${to}`).trim()
-}
-
-const testSet = (set, version, options) => {
-  for (let i = 0; i < set.length; i++) {
-    if (!set[i].test(version)) {
-      return false
-    }
-  }
-
-  if (version.prerelease.length && !options.includePrerelease) {
-    // Find the set of versions that are allowed to have prereleases
-    // For example, ^1.2.3-pr.1 desugars to >=1.2.3-pr.1 <2.0.0
-    // That should allow `1.2.3-pr.2` to pass.
-    // However, `1.2.4-alpha.notready` should NOT be allowed,
-    // even though it's within the range set by the comparators.
-    for (let i = 0; i < set.length; i++) {
-      debug(set[i].semver)
-      if (set[i].semver === Comparator.ANY) {
-        continue
-      }
-
-      if (set[i].semver.prerelease.length > 0) {
-        const allowed = set[i].semver
-        if (allowed.major === version.major &&
-            allowed.minor === version.minor &&
-            allowed.patch === version.patch) {
-          return true
-        }
-      }
-    }
-
-    // Version has a -pre, but it's not one of the ones we like.
-    return false
-  }
-
-  return true
-}
-
-},{"../internal/debug":199,"../internal/parse-options":201,"../internal/re":202,"./comparator":170,"./semver":172,"lru-cache":262}],172:[function(require,module,exports){
-const debug = require('../internal/debug')
-const { MAX_LENGTH, MAX_SAFE_INTEGER } = require('../internal/constants')
-const { re, t } = require('../internal/re')
-
-const parseOptions = require('../internal/parse-options')
-const { compareIdentifiers } = require('../internal/identifiers')
-class SemVer {
-  constructor (version, options) {
-    options = parseOptions(options)
-
-    if (version instanceof SemVer) {
-      if (version.loose === !!options.loose &&
-          version.includePrerelease === !!options.includePrerelease) {
-        return version
-      } else {
-        version = version.version
-      }
-    } else if (typeof version !== 'string') {
-      throw new TypeError(`Invalid Version: ${version}`)
-    }
-
-    if (version.length > MAX_LENGTH) {
-      throw new TypeError(
-        `version is longer than ${MAX_LENGTH} characters`
-      )
-    }
-
-    debug('SemVer', version, options)
-    this.options = options
-    this.loose = !!options.loose
-    // this isn't actually relevant for versions, but keep it so that we
-    // don't run into trouble passing this.options around.
-    this.includePrerelease = !!options.includePrerelease
-
-    const m = version.trim().match(options.loose ? re[t.LOOSE] : re[t.FULL])
-
-    if (!m) {
-      throw new TypeError(`Invalid Version: ${version}`)
-    }
-
-    this.raw = version
-
-    // these are actually numbers
-    this.major = +m[1]
-    this.minor = +m[2]
-    this.patch = +m[3]
-
-    if (this.major > MAX_SAFE_INTEGER || this.major < 0) {
-      throw new TypeError('Invalid major version')
-    }
-
-    if (this.minor > MAX_SAFE_INTEGER || this.minor < 0) {
-      throw new TypeError('Invalid minor version')
-    }
-
-    if (this.patch > MAX_SAFE_INTEGER || this.patch < 0) {
-      throw new TypeError('Invalid patch version')
-    }
-
-    // numberify any prerelease numeric ids
-    if (!m[4]) {
-      this.prerelease = []
-    } else {
-      this.prerelease = m[4].split('.').map((id) => {
-        if (/^[0-9]+$/.test(id)) {
-          const num = +id
-          if (num >= 0 && num < MAX_SAFE_INTEGER) {
-            return num
-          }
-        }
-        return id
-      })
-    }
-
-    this.build = m[5] ? m[5].split('.') : []
-    this.format()
-  }
-
-  format () {
-    this.version = `${this.major}.${this.minor}.${this.patch}`
-    if (this.prerelease.length) {
-      this.version += `-${this.prerelease.join('.')}`
-    }
-    return this.version
-  }
-
-  toString () {
-    return this.version
-  }
-
-  compare (other) {
-    debug('SemVer.compare', this.version, this.options, other)
-    if (!(other instanceof SemVer)) {
-      if (typeof other === 'string' && other === this.version) {
-        return 0
-      }
-      other = new SemVer(other, this.options)
-    }
-
-    if (other.version === this.version) {
-      return 0
-    }
-
-    return this.compareMain(other) || this.comparePre(other)
-  }
-
-  compareMain (other) {
-    if (!(other instanceof SemVer)) {
-      other = new SemVer(other, this.options)
-    }
-
-    return (
-      compareIdentifiers(this.major, other.major) ||
-      compareIdentifiers(this.minor, other.minor) ||
-      compareIdentifiers(this.patch, other.patch)
-    )
-  }
-
-  comparePre (other) {
-    if (!(other instanceof SemVer)) {
-      other = new SemVer(other, this.options)
-    }
-
-    // NOT having a prerelease is > having one
-    if (this.prerelease.length && !other.prerelease.length) {
-      return -1
-    } else if (!this.prerelease.length && other.prerelease.length) {
-      return 1
-    } else if (!this.prerelease.length && !other.prerelease.length) {
-      return 0
-    }
-
-    let i = 0
-    do {
-      const a = this.prerelease[i]
-      const b = other.prerelease[i]
-      debug('prerelease compare', i, a, b)
-      if (a === undefined && b === undefined) {
-        return 0
-      } else if (b === undefined) {
-        return 1
-      } else if (a === undefined) {
-        return -1
-      } else if (a === b) {
-        continue
-      } else {
-        return compareIdentifiers(a, b)
-      }
-    } while (++i)
-  }
-
-  compareBuild (other) {
-    if (!(other instanceof SemVer)) {
-      other = new SemVer(other, this.options)
-    }
-
-    let i = 0
-    do {
-      const a = this.build[i]
-      const b = other.build[i]
-      debug('prerelease compare', i, a, b)
-      if (a === undefined && b === undefined) {
-        return 0
-      } else if (b === undefined) {
-        return 1
-      } else if (a === undefined) {
-        return -1
-      } else if (a === b) {
-        continue
-      } else {
-        return compareIdentifiers(a, b)
-      }
-    } while (++i)
-  }
-
-  // preminor will bump the version up to the next minor release, and immediately
-  // down to pre-release. premajor and prepatch work the same way.
-  inc (release, identifier) {
-    switch (release) {
-      case 'premajor':
-        this.prerelease.length = 0
-        this.patch = 0
-        this.minor = 0
-        this.major++
-        this.inc('pre', identifier)
-        break
-      case 'preminor':
-        this.prerelease.length = 0
-        this.patch = 0
-        this.minor++
-        this.inc('pre', identifier)
-        break
-      case 'prepatch':
-        // If this is already a prerelease, it will bump to the next version
-        // drop any prereleases that might already exist, since they are not
-        // relevant at this point.
-        this.prerelease.length = 0
-        this.inc('patch', identifier)
-        this.inc('pre', identifier)
-        break
-      // If the input is a non-prerelease version, this acts the same as
-      // prepatch.
-      case 'prerelease':
-        if (this.prerelease.length === 0) {
-          this.inc('patch', identifier)
-        }
-        this.inc('pre', identifier)
-        break
-
-      case 'major':
-        // If this is a pre-major version, bump up to the same major version.
-        // Otherwise increment major.
-        // 1.0.0-5 bumps to 1.0.0
-        // 1.1.0 bumps to 2.0.0
-        if (
-          this.minor !== 0 ||
-          this.patch !== 0 ||
-          this.prerelease.length === 0
-        ) {
-          this.major++
-        }
-        this.minor = 0
-        this.patch = 0
-        this.prerelease = []
-        break
-      case 'minor':
-        // If this is a pre-minor version, bump up to the same minor version.
-        // Otherwise increment minor.
-        // 1.2.0-5 bumps to 1.2.0
-        // 1.2.1 bumps to 1.3.0
-        if (this.patch !== 0 || this.prerelease.length === 0) {
-          this.minor++
-        }
-        this.patch = 0
-        this.prerelease = []
-        break
-      case 'patch':
-        // If this is not a pre-release version, it will increment the patch.
-        // If it is a pre-release it will bump up to the same patch version.
-        // 1.2.0-5 patches to 1.2.0
-        // 1.2.0 patches to 1.2.1
-        if (this.prerelease.length === 0) {
-          this.patch++
-        }
-        this.prerelease = []
-        break
-      // This probably shouldn't be used publicly.
-      // 1.0.0 'pre' would become 1.0.0-0 which is the wrong direction.
-      case 'pre':
-        if (this.prerelease.length === 0) {
-          this.prerelease = [0]
-        } else {
-          let i = this.prerelease.length
-          while (--i >= 0) {
-            if (typeof this.prerelease[i] === 'number') {
-              this.prerelease[i]++
-              i = -2
-            }
-          }
-          if (i === -1) {
-            // didn't increment anything
-            this.prerelease.push(0)
-          }
-        }
-        if (identifier) {
-          // 1.2.0-beta.1 bumps to 1.2.0-beta.2,
-          // 1.2.0-beta.fooblz or 1.2.0-beta bumps to 1.2.0-beta.0
-          if (this.prerelease[0] === identifier) {
-            if (isNaN(this.prerelease[1])) {
-              this.prerelease = [identifier, 0]
-            }
-          } else {
-            this.prerelease = [identifier, 0]
-          }
-        }
-        break
-
-      default:
-        throw new Error(`invalid increment argument: ${release}`)
-    }
-    this.format()
-    this.raw = this.version
-    return this
-  }
-}
-
-module.exports = SemVer
-
-},{"../internal/constants":198,"../internal/debug":199,"../internal/identifiers":200,"../internal/parse-options":201,"../internal/re":202}],173:[function(require,module,exports){
-const parse = require('./parse')
-const clean = (version, options) => {
-  const s = parse(version.trim().replace(/^[=v]+/, ''), options)
-  return s ? s.version : null
-}
-module.exports = clean
-
-},{"./parse":189}],174:[function(require,module,exports){
-const eq = require('./eq')
-const neq = require('./neq')
-const gt = require('./gt')
-const gte = require('./gte')
-const lt = require('./lt')
-const lte = require('./lte')
-
-const cmp = (a, op, b, loose) => {
-  switch (op) {
-    case '===':
-      if (typeof a === 'object')
-        a = a.version
-      if (typeof b === 'object')
-        b = b.version
-      return a === b
-
-    case '!==':
-      if (typeof a === 'object')
-        a = a.version
-      if (typeof b === 'object')
-        b = b.version
-      return a !== b
-
-    case '':
-    case '=':
-    case '==':
-      return eq(a, b, loose)
-
-    case '!=':
-      return neq(a, b, loose)
-
-    case '>':
-      return gt(a, b, loose)
-
-    case '>=':
-      return gte(a, b, loose)
-
-    case '<':
-      return lt(a, b, loose)
-
-    case '<=':
-      return lte(a, b, loose)
-
-    default:
-      throw new TypeError(`Invalid operator: ${op}`)
-  }
-}
-module.exports = cmp
-
-},{"./eq":180,"./gt":181,"./gte":182,"./lt":184,"./lte":185,"./neq":188}],175:[function(require,module,exports){
-const SemVer = require('../classes/semver')
-const parse = require('./parse')
-const {re, t} = require('../internal/re')
-
-const coerce = (version, options) => {
-  if (version instanceof SemVer) {
-    return version
-  }
-
-  if (typeof version === 'number') {
-    version = String(version)
-  }
-
-  if (typeof version !== 'string') {
-    return null
-  }
-
-  options = options || {}
-
-  let match = null
-  if (!options.rtl) {
-    match = version.match(re[t.COERCE])
-  } else {
-    // Find the right-most coercible string that does not share
-    // a terminus with a more left-ward coercible string.
-    // Eg, '1.2.3.4' wants to coerce '2.3.4', not '3.4' or '4'
-    //
-    // Walk through the string checking with a /g regexp
-    // Manually set the index so as to pick up overlapping matches.
-    // Stop when we get a match that ends at the string end, since no
-    // coercible string can be more right-ward without the same terminus.
-    let next
-    while ((next = re[t.COERCERTL].exec(version)) &&
-        (!match || match.index + match[0].length !== version.length)
-    ) {
-      if (!match ||
-            next.index + next[0].length !== match.index + match[0].length) {
-        match = next
-      }
-      re[t.COERCERTL].lastIndex = next.index + next[1].length + next[2].length
-    }
-    // leave it in a clean state
-    re[t.COERCERTL].lastIndex = -1
-  }
-
-  if (match === null)
-    return null
-
-  return parse(`${match[2]}.${match[3] || '0'}.${match[4] || '0'}`, options)
-}
-module.exports = coerce
-
-},{"../classes/semver":172,"../internal/re":202,"./parse":189}],176:[function(require,module,exports){
-const SemVer = require('../classes/semver')
-const compareBuild = (a, b, loose) => {
-  const versionA = new SemVer(a, loose)
-  const versionB = new SemVer(b, loose)
-  return versionA.compare(versionB) || versionA.compareBuild(versionB)
-}
-module.exports = compareBuild
-
-},{"../classes/semver":172}],177:[function(require,module,exports){
-const compare = require('./compare')
-const compareLoose = (a, b) => compare(a, b, true)
-module.exports = compareLoose
-
-},{"./compare":178}],178:[function(require,module,exports){
-const SemVer = require('../classes/semver')
-const compare = (a, b, loose) =>
-  new SemVer(a, loose).compare(new SemVer(b, loose))
-
-module.exports = compare
-
-},{"../classes/semver":172}],179:[function(require,module,exports){
-const parse = require('./parse')
-const eq = require('./eq')
-
-const diff = (version1, version2) => {
-  if (eq(version1, version2)) {
-    return null
-  } else {
-    const v1 = parse(version1)
-    const v2 = parse(version2)
-    const hasPre = v1.prerelease.length || v2.prerelease.length
-    const prefix = hasPre ? 'pre' : ''
-    const defaultResult = hasPre ? 'prerelease' : ''
-    for (const key in v1) {
-      if (key === 'major' || key === 'minor' || key === 'patch') {
-        if (v1[key] !== v2[key]) {
-          return prefix + key
-        }
-      }
-    }
-    return defaultResult // may be undefined
-  }
-}
-module.exports = diff
-
-},{"./eq":180,"./parse":189}],180:[function(require,module,exports){
-const compare = require('./compare')
-const eq = (a, b, loose) => compare(a, b, loose) === 0
-module.exports = eq
-
-},{"./compare":178}],181:[function(require,module,exports){
-const compare = require('./compare')
-const gt = (a, b, loose) => compare(a, b, loose) > 0
-module.exports = gt
-
-},{"./compare":178}],182:[function(require,module,exports){
-const compare = require('./compare')
-const gte = (a, b, loose) => compare(a, b, loose) >= 0
-module.exports = gte
-
-},{"./compare":178}],183:[function(require,module,exports){
-const SemVer = require('../classes/semver')
-
-const inc = (version, release, options, identifier) => {
-  if (typeof (options) === 'string') {
-    identifier = options
-    options = undefined
-  }
-
-  try {
-    return new SemVer(version, options).inc(release, identifier).version
-  } catch (er) {
-    return null
-  }
-}
-module.exports = inc
-
-},{"../classes/semver":172}],184:[function(require,module,exports){
-const compare = require('./compare')
-const lt = (a, b, loose) => compare(a, b, loose) < 0
-module.exports = lt
-
-},{"./compare":178}],185:[function(require,module,exports){
-const compare = require('./compare')
-const lte = (a, b, loose) => compare(a, b, loose) <= 0
-module.exports = lte
-
-},{"./compare":178}],186:[function(require,module,exports){
-const SemVer = require('../classes/semver')
-const major = (a, loose) => new SemVer(a, loose).major
-module.exports = major
-
-},{"../classes/semver":172}],187:[function(require,module,exports){
-const SemVer = require('../classes/semver')
-const minor = (a, loose) => new SemVer(a, loose).minor
-module.exports = minor
-
-},{"../classes/semver":172}],188:[function(require,module,exports){
-const compare = require('./compare')
-const neq = (a, b, loose) => compare(a, b, loose) !== 0
-module.exports = neq
-
-},{"./compare":178}],189:[function(require,module,exports){
-const {MAX_LENGTH} = require('../internal/constants')
-const { re, t } = require('../internal/re')
-const SemVer = require('../classes/semver')
-
-const parseOptions = require('../internal/parse-options')
-const parse = (version, options) => {
-  options = parseOptions(options)
-
-  if (version instanceof SemVer) {
-    return version
-  }
-
-  if (typeof version !== 'string') {
-    return null
-  }
-
-  if (version.length > MAX_LENGTH) {
-    return null
-  }
-
-  const r = options.loose ? re[t.LOOSE] : re[t.FULL]
-  if (!r.test(version)) {
-    return null
-  }
-
-  try {
-    return new SemVer(version, options)
-  } catch (er) {
-    return null
-  }
-}
-
-module.exports = parse
-
-},{"../classes/semver":172,"../internal/constants":198,"../internal/parse-options":201,"../internal/re":202}],190:[function(require,module,exports){
-const SemVer = require('../classes/semver')
-const patch = (a, loose) => new SemVer(a, loose).patch
-module.exports = patch
-
-},{"../classes/semver":172}],191:[function(require,module,exports){
-const parse = require('./parse')
-const prerelease = (version, options) => {
-  const parsed = parse(version, options)
-  return (parsed && parsed.prerelease.length) ? parsed.prerelease : null
-}
-module.exports = prerelease
-
-},{"./parse":189}],192:[function(require,module,exports){
-const compare = require('./compare')
-const rcompare = (a, b, loose) => compare(b, a, loose)
-module.exports = rcompare
-
-},{"./compare":178}],193:[function(require,module,exports){
-const compareBuild = require('./compare-build')
-const rsort = (list, loose) => list.sort((a, b) => compareBuild(b, a, loose))
-module.exports = rsort
-
-},{"./compare-build":176}],194:[function(require,module,exports){
-const Range = require('../classes/range')
-const satisfies = (version, range, options) => {
-  try {
-    range = new Range(range, options)
-  } catch (er) {
-    return false
-  }
-  return range.test(version)
-}
-module.exports = satisfies
-
-},{"../classes/range":171}],195:[function(require,module,exports){
-const compareBuild = require('./compare-build')
-const sort = (list, loose) => list.sort((a, b) => compareBuild(a, b, loose))
-module.exports = sort
-
-},{"./compare-build":176}],196:[function(require,module,exports){
-const parse = require('./parse')
-const valid = (version, options) => {
-  const v = parse(version, options)
-  return v ? v.version : null
-}
-module.exports = valid
-
-},{"./parse":189}],197:[function(require,module,exports){
-// just pre-load all the stuff that index.js lazily exports
-const internalRe = require('./internal/re')
-module.exports = {
-  re: internalRe.re,
-  src: internalRe.src,
-  tokens: internalRe.t,
-  SEMVER_SPEC_VERSION: require('./internal/constants').SEMVER_SPEC_VERSION,
-  SemVer: require('./classes/semver'),
-  compareIdentifiers: require('./internal/identifiers').compareIdentifiers,
-  rcompareIdentifiers: require('./internal/identifiers').rcompareIdentifiers,
-  parse: require('./functions/parse'),
-  valid: require('./functions/valid'),
-  clean: require('./functions/clean'),
-  inc: require('./functions/inc'),
-  diff: require('./functions/diff'),
-  major: require('./functions/major'),
-  minor: require('./functions/minor'),
-  patch: require('./functions/patch'),
-  prerelease: require('./functions/prerelease'),
-  compare: require('./functions/compare'),
-  rcompare: require('./functions/rcompare'),
-  compareLoose: require('./functions/compare-loose'),
-  compareBuild: require('./functions/compare-build'),
-  sort: require('./functions/sort'),
-  rsort: require('./functions/rsort'),
-  gt: require('./functions/gt'),
-  lt: require('./functions/lt'),
-  eq: require('./functions/eq'),
-  neq: require('./functions/neq'),
-  gte: require('./functions/gte'),
-  lte: require('./functions/lte'),
-  cmp: require('./functions/cmp'),
-  coerce: require('./functions/coerce'),
-  Comparator: require('./classes/comparator'),
-  Range: require('./classes/range'),
-  satisfies: require('./functions/satisfies'),
-  toComparators: require('./ranges/to-comparators'),
-  maxSatisfying: require('./ranges/max-satisfying'),
-  minSatisfying: require('./ranges/min-satisfying'),
-  minVersion: require('./ranges/min-version'),
-  validRange: require('./ranges/valid'),
-  outside: require('./ranges/outside'),
-  gtr: require('./ranges/gtr'),
-  ltr: require('./ranges/ltr'),
-  intersects: require('./ranges/intersects'),
-  simplifyRange: require('./ranges/simplify'),
-  subset: require('./ranges/subset'),
-}
-
-},{"./classes/comparator":170,"./classes/range":171,"./classes/semver":172,"./functions/clean":173,"./functions/cmp":174,"./functions/coerce":175,"./functions/compare":178,"./functions/compare-build":176,"./functions/compare-loose":177,"./functions/diff":179,"./functions/eq":180,"./functions/gt":181,"./functions/gte":182,"./functions/inc":183,"./functions/lt":184,"./functions/lte":185,"./functions/major":186,"./functions/minor":187,"./functions/neq":188,"./functions/parse":189,"./functions/patch":190,"./functions/prerelease":191,"./functions/rcompare":192,"./functions/rsort":193,"./functions/satisfies":194,"./functions/sort":195,"./functions/valid":196,"./internal/constants":198,"./internal/identifiers":200,"./internal/re":202,"./ranges/gtr":203,"./ranges/intersects":204,"./ranges/ltr":205,"./ranges/max-satisfying":206,"./ranges/min-satisfying":207,"./ranges/min-version":208,"./ranges/outside":209,"./ranges/simplify":210,"./ranges/subset":211,"./ranges/to-comparators":212,"./ranges/valid":213}],198:[function(require,module,exports){
-// Note: this is the semver.org version of the spec that it implements
-// Not necessarily the package version of this code.
-const SEMVER_SPEC_VERSION = '2.0.0'
-
-const MAX_LENGTH = 256
-const MAX_SAFE_INTEGER = Number.MAX_SAFE_INTEGER ||
-  /* istanbul ignore next */ 9007199254740991
-
-// Max safe segment length for coercion.
-const MAX_SAFE_COMPONENT_LENGTH = 16
-
-module.exports = {
-  SEMVER_SPEC_VERSION,
-  MAX_LENGTH,
-  MAX_SAFE_INTEGER,
-  MAX_SAFE_COMPONENT_LENGTH
-}
-
-},{}],199:[function(require,module,exports){
-(function (process){
-const debug = (
-  typeof process === 'object' &&
-  process.env &&
-  process.env.NODE_DEBUG &&
-  /\bsemver\b/i.test(process.env.NODE_DEBUG)
-) ? (...args) => console.error('SEMVER', ...args)
-  : () => {}
-
-module.exports = debug
-
-}).call(this,require('_process'))
-},{"_process":265}],200:[function(require,module,exports){
-const numeric = /^[0-9]+$/
-const compareIdentifiers = (a, b) => {
-  const anum = numeric.test(a)
-  const bnum = numeric.test(b)
-
-  if (anum && bnum) {
-    a = +a
-    b = +b
-  }
-
-  return a === b ? 0
-    : (anum && !bnum) ? -1
-    : (bnum && !anum) ? 1
-    : a < b ? -1
-    : 1
-}
-
-const rcompareIdentifiers = (a, b) => compareIdentifiers(b, a)
-
-module.exports = {
-  compareIdentifiers,
-  rcompareIdentifiers
-}
-
-},{}],201:[function(require,module,exports){
-// parse out just the options we care about so we always get a consistent
-// obj with keys in a consistent order.
-const opts = ['includePrerelease', 'loose', 'rtl']
-const parseOptions = options =>
-  !options ? {}
-  : typeof options !== 'object' ? { loose: true }
-  : opts.filter(k => options[k]).reduce((options, k) => {
-    options[k] = true
-    return options
-  }, {})
-module.exports = parseOptions
-
-},{}],202:[function(require,module,exports){
-const { MAX_SAFE_COMPONENT_LENGTH } = require('./constants')
-const debug = require('./debug')
-exports = module.exports = {}
-
-// The actual regexps go on exports.re
-const re = exports.re = []
-const src = exports.src = []
-const t = exports.t = {}
-let R = 0
-
-const createToken = (name, value, isGlobal) => {
-  const index = R++
-  debug(index, value)
-  t[name] = index
-  src[index] = value
-  re[index] = new RegExp(value, isGlobal ? 'g' : undefined)
-}
-
-// The following Regular Expressions can be used for tokenizing,
-// validating, and parsing SemVer version strings.
-
-// ## Numeric Identifier
-// A single `0`, or a non-zero digit followed by zero or more digits.
-
-createToken('NUMERICIDENTIFIER', '0|[1-9]\\d*')
-createToken('NUMERICIDENTIFIERLOOSE', '[0-9]+')
-
-// ## Non-numeric Identifier
-// Zero or more digits, followed by a letter or hyphen, and then zero or
-// more letters, digits, or hyphens.
-
-createToken('NONNUMERICIDENTIFIER', '\\d*[a-zA-Z-][a-zA-Z0-9-]*')
-
-// ## Main Version
-// Three dot-separated numeric identifiers.
-
-createToken('MAINVERSION', `(${src[t.NUMERICIDENTIFIER]})\\.` +
-                   `(${src[t.NUMERICIDENTIFIER]})\\.` +
-                   `(${src[t.NUMERICIDENTIFIER]})`)
-
-createToken('MAINVERSIONLOOSE', `(${src[t.NUMERICIDENTIFIERLOOSE]})\\.` +
-                        `(${src[t.NUMERICIDENTIFIERLOOSE]})\\.` +
-                        `(${src[t.NUMERICIDENTIFIERLOOSE]})`)
-
-// ## Pre-release Version Identifier
-// A numeric identifier, or a non-numeric identifier.
-
-createToken('PRERELEASEIDENTIFIER', `(?:${src[t.NUMERICIDENTIFIER]
-}|${src[t.NONNUMERICIDENTIFIER]})`)
-
-createToken('PRERELEASEIDENTIFIERLOOSE', `(?:${src[t.NUMERICIDENTIFIERLOOSE]
-}|${src[t.NONNUMERICIDENTIFIER]})`)
-
-// ## Pre-release Version
-// Hyphen, followed by one or more dot-separated pre-release version
-// identifiers.
-
-createToken('PRERELEASE', `(?:-(${src[t.PRERELEASEIDENTIFIER]
-}(?:\\.${src[t.PRERELEASEIDENTIFIER]})*))`)
-
-createToken('PRERELEASELOOSE', `(?:-?(${src[t.PRERELEASEIDENTIFIERLOOSE]
-}(?:\\.${src[t.PRERELEASEIDENTIFIERLOOSE]})*))`)
-
-// ## Build Metadata Identifier
-// Any combination of digits, letters, or hyphens.
-
-createToken('BUILDIDENTIFIER', '[0-9A-Za-z-]+')
-
-// ## Build Metadata
-// Plus sign, followed by one or more period-separated build metadata
-// identifiers.
-
-createToken('BUILD', `(?:\\+(${src[t.BUILDIDENTIFIER]
-}(?:\\.${src[t.BUILDIDENTIFIER]})*))`)
-
-// ## Full Version String
-// A main version, followed optionally by a pre-release version and
-// build metadata.
-
-// Note that the only major, minor, patch, and pre-release sections of
-// the version string are capturing groups.  The build metadata is not a
-// capturing group, because it should not ever be used in version
-// comparison.
-
-createToken('FULLPLAIN', `v?${src[t.MAINVERSION]
-}${src[t.PRERELEASE]}?${
-  src[t.BUILD]}?`)
-
-createToken('FULL', `^${src[t.FULLPLAIN]}$`)
-
-// like full, but allows v1.2.3 and =1.2.3, which people do sometimes.
-// also, 1.0.0alpha1 (prerelease without the hyphen) which is pretty
-// common in the npm registry.
-createToken('LOOSEPLAIN', `[v=\\s]*${src[t.MAINVERSIONLOOSE]
-}${src[t.PRERELEASELOOSE]}?${
-  src[t.BUILD]}?`)
-
-createToken('LOOSE', `^${src[t.LOOSEPLAIN]}$`)
-
-createToken('GTLT', '((?:<|>)?=?)')
-
-// Something like "2.*" or "1.2.x".
-// Note that "x.x" is a valid xRange identifer, meaning "any version"
-// Only the first item is strictly required.
-createToken('XRANGEIDENTIFIERLOOSE', `${src[t.NUMERICIDENTIFIERLOOSE]}|x|X|\\*`)
-createToken('XRANGEIDENTIFIER', `${src[t.NUMERICIDENTIFIER]}|x|X|\\*`)
-
-createToken('XRANGEPLAIN', `[v=\\s]*(${src[t.XRANGEIDENTIFIER]})` +
-                   `(?:\\.(${src[t.XRANGEIDENTIFIER]})` +
-                   `(?:\\.(${src[t.XRANGEIDENTIFIER]})` +
-                   `(?:${src[t.PRERELEASE]})?${
-                     src[t.BUILD]}?` +
-                   `)?)?`)
-
-createToken('XRANGEPLAINLOOSE', `[v=\\s]*(${src[t.XRANGEIDENTIFIERLOOSE]})` +
-                        `(?:\\.(${src[t.XRANGEIDENTIFIERLOOSE]})` +
-                        `(?:\\.(${src[t.XRANGEIDENTIFIERLOOSE]})` +
-                        `(?:${src[t.PRERELEASELOOSE]})?${
-                          src[t.BUILD]}?` +
-                        `)?)?`)
-
-createToken('XRANGE', `^${src[t.GTLT]}\\s*${src[t.XRANGEPLAIN]}$`)
-createToken('XRANGELOOSE', `^${src[t.GTLT]}\\s*${src[t.XRANGEPLAINLOOSE]}$`)
-
-// Coercion.
-// Extract anything that could conceivably be a part of a valid semver
-createToken('COERCE', `${'(^|[^\\d])' +
-              '(\\d{1,'}${MAX_SAFE_COMPONENT_LENGTH}})` +
-              `(?:\\.(\\d{1,${MAX_SAFE_COMPONENT_LENGTH}}))?` +
-              `(?:\\.(\\d{1,${MAX_SAFE_COMPONENT_LENGTH}}))?` +
-              `(?:$|[^\\d])`)
-createToken('COERCERTL', src[t.COERCE], true)
-
-// Tilde ranges.
-// Meaning is "reasonably at or greater than"
-createToken('LONETILDE', '(?:~>?)')
-
-createToken('TILDETRIM', `(\\s*)${src[t.LONETILDE]}\\s+`, true)
-exports.tildeTrimReplace = '$1~'
-
-createToken('TILDE', `^${src[t.LONETILDE]}${src[t.XRANGEPLAIN]}$`)
-createToken('TILDELOOSE', `^${src[t.LONETILDE]}${src[t.XRANGEPLAINLOOSE]}$`)
-
-// Caret ranges.
-// Meaning is "at least and backwards compatible with"
-createToken('LONECARET', '(?:\\^)')
-
-createToken('CARETTRIM', `(\\s*)${src[t.LONECARET]}\\s+`, true)
-exports.caretTrimReplace = '$1^'
-
-createToken('CARET', `^${src[t.LONECARET]}${src[t.XRANGEPLAIN]}$`)
-createToken('CARETLOOSE', `^${src[t.LONECARET]}${src[t.XRANGEPLAINLOOSE]}$`)
-
-// A simple gt/lt/eq thing, or just "" to indicate "any version"
-createToken('COMPARATORLOOSE', `^${src[t.GTLT]}\\s*(${src[t.LOOSEPLAIN]})$|^$`)
-createToken('COMPARATOR', `^${src[t.GTLT]}\\s*(${src[t.FULLPLAIN]})$|^$`)
-
-// An expression to strip any whitespace between the gtlt and the thing
-// it modifies, so that `> 1.2.3` ==> `>1.2.3`
-createToken('COMPARATORTRIM', `(\\s*)${src[t.GTLT]
-}\\s*(${src[t.LOOSEPLAIN]}|${src[t.XRANGEPLAIN]})`, true)
-exports.comparatorTrimReplace = '$1$2$3'
-
-// Something like `1.2.3 - 1.2.4`
-// Note that these all use the loose form, because they'll be
-// checked against either the strict or loose comparator form
-// later.
-createToken('HYPHENRANGE', `^\\s*(${src[t.XRANGEPLAIN]})` +
-                   `\\s+-\\s+` +
-                   `(${src[t.XRANGEPLAIN]})` +
-                   `\\s*$`)
-
-createToken('HYPHENRANGELOOSE', `^\\s*(${src[t.XRANGEPLAINLOOSE]})` +
-                        `\\s+-\\s+` +
-                        `(${src[t.XRANGEPLAINLOOSE]})` +
-                        `\\s*$`)
-
-// Star ranges basically just allow anything at all.
-createToken('STAR', '(<|>)?=?\\s*\\*')
-// >=0.0.0 is like a star
-createToken('GTE0', '^\\s*>=\\s*0\.0\.0\\s*$')
-createToken('GTE0PRE', '^\\s*>=\\s*0\.0\.0-0\\s*$')
-
-},{"./constants":198,"./debug":199}],203:[function(require,module,exports){
-// Determine if version is greater than all the versions possible in the range.
-const outside = require('./outside')
-const gtr = (version, range, options) => outside(version, range, '>', options)
-module.exports = gtr
-
-},{"./outside":209}],204:[function(require,module,exports){
-const Range = require('../classes/range')
-const intersects = (r1, r2, options) => {
-  r1 = new Range(r1, options)
-  r2 = new Range(r2, options)
-  return r1.intersects(r2)
-}
-module.exports = intersects
-
-},{"../classes/range":171}],205:[function(require,module,exports){
-const outside = require('./outside')
-// Determine if version is less than all the versions possible in the range
-const ltr = (version, range, options) => outside(version, range, '<', options)
-module.exports = ltr
-
-},{"./outside":209}],206:[function(require,module,exports){
-const SemVer = require('../classes/semver')
-const Range = require('../classes/range')
-
-const maxSatisfying = (versions, range, options) => {
-  let max = null
-  let maxSV = null
-  let rangeObj = null
-  try {
-    rangeObj = new Range(range, options)
-  } catch (er) {
-    return null
-  }
-  versions.forEach((v) => {
-    if (rangeObj.test(v)) {
-      // satisfies(v, range, options)
-      if (!max || maxSV.compare(v) === -1) {
-        // compare(max, v, true)
-        max = v
-        maxSV = new SemVer(max, options)
-      }
-    }
-  })
-  return max
-}
-module.exports = maxSatisfying
-
-},{"../classes/range":171,"../classes/semver":172}],207:[function(require,module,exports){
-const SemVer = require('../classes/semver')
-const Range = require('../classes/range')
-const minSatisfying = (versions, range, options) => {
-  let min = null
-  let minSV = null
-  let rangeObj = null
-  try {
-    rangeObj = new Range(range, options)
-  } catch (er) {
-    return null
-  }
-  versions.forEach((v) => {
-    if (rangeObj.test(v)) {
-      // satisfies(v, range, options)
-      if (!min || minSV.compare(v) === 1) {
-        // compare(min, v, true)
-        min = v
-        minSV = new SemVer(min, options)
-      }
-    }
-  })
-  return min
-}
-module.exports = minSatisfying
-
-},{"../classes/range":171,"../classes/semver":172}],208:[function(require,module,exports){
-const SemVer = require('../classes/semver')
-const Range = require('../classes/range')
-const gt = require('../functions/gt')
-
-const minVersion = (range, loose) => {
-  range = new Range(range, loose)
-
-  let minver = new SemVer('0.0.0')
-  if (range.test(minver)) {
-    return minver
-  }
-
-  minver = new SemVer('0.0.0-0')
-  if (range.test(minver)) {
-    return minver
-  }
-
-  minver = null
-  for (let i = 0; i < range.set.length; ++i) {
-    const comparators = range.set[i]
-
-    let setMin = null
-    comparators.forEach((comparator) => {
-      // Clone to avoid manipulating the comparator's semver object.
-      const compver = new SemVer(comparator.semver.version)
-      switch (comparator.operator) {
-        case '>':
-          if (compver.prerelease.length === 0) {
-            compver.patch++
-          } else {
-            compver.prerelease.push(0)
-          }
-          compver.raw = compver.format()
-          /* fallthrough */
-        case '':
-        case '>=':
-          if (!setMin || gt(compver, setMin)) {
-            setMin = compver
-          }
-          break
-        case '<':
-        case '<=':
-          /* Ignore maximum versions */
-          break
-        /* istanbul ignore next */
-        default:
-          throw new Error(`Unexpected operation: ${comparator.operator}`)
-      }
-    })
-    if (setMin && (!minver || gt(minver, setMin)))
-      minver = setMin
-  }
-
-  if (minver && range.test(minver)) {
-    return minver
-  }
-
-  return null
-}
-module.exports = minVersion
-
-},{"../classes/range":171,"../classes/semver":172,"../functions/gt":181}],209:[function(require,module,exports){
-const SemVer = require('../classes/semver')
-const Comparator = require('../classes/comparator')
-const {ANY} = Comparator
-const Range = require('../classes/range')
-const satisfies = require('../functions/satisfies')
-const gt = require('../functions/gt')
-const lt = require('../functions/lt')
-const lte = require('../functions/lte')
-const gte = require('../functions/gte')
-
-const outside = (version, range, hilo, options) => {
-  version = new SemVer(version, options)
-  range = new Range(range, options)
-
-  let gtfn, ltefn, ltfn, comp, ecomp
-  switch (hilo) {
-    case '>':
-      gtfn = gt
-      ltefn = lte
-      ltfn = lt
-      comp = '>'
-      ecomp = '>='
-      break
-    case '<':
-      gtfn = lt
-      ltefn = gte
-      ltfn = gt
-      comp = '<'
-      ecomp = '<='
-      break
-    default:
-      throw new TypeError('Must provide a hilo val of "<" or ">"')
-  }
-
-  // If it satisfies the range it is not outside
-  if (satisfies(version, range, options)) {
-    return false
-  }
-
-  // From now on, variable terms are as if we're in "gtr" mode.
-  // but note that everything is flipped for the "ltr" function.
-
-  for (let i = 0; i < range.set.length; ++i) {
-    const comparators = range.set[i]
-
-    let high = null
-    let low = null
-
-    comparators.forEach((comparator) => {
-      if (comparator.semver === ANY) {
-        comparator = new Comparator('>=0.0.0')
-      }
-      high = high || comparator
-      low = low || comparator
-      if (gtfn(comparator.semver, high.semver, options)) {
-        high = comparator
-      } else if (ltfn(comparator.semver, low.semver, options)) {
-        low = comparator
-      }
-    })
-
-    // If the edge version comparator has a operator then our version
-    // isn't outside it
-    if (high.operator === comp || high.operator === ecomp) {
-      return false
-    }
-
-    // If the lowest version comparator has an operator and our version
-    // is less than it then it isn't higher than the range
-    if ((!low.operator || low.operator === comp) &&
-        ltefn(version, low.semver)) {
-      return false
-    } else if (low.operator === ecomp && ltfn(version, low.semver)) {
-      return false
-    }
-  }
-  return true
-}
-
-module.exports = outside
-
-},{"../classes/comparator":170,"../classes/range":171,"../classes/semver":172,"../functions/gt":181,"../functions/gte":182,"../functions/lt":184,"../functions/lte":185,"../functions/satisfies":194}],210:[function(require,module,exports){
-// given a set of versions and a range, create a "simplified" range
-// that includes the same versions that the original range does
-// If the original range is shorter than the simplified one, return that.
-const satisfies = require('../functions/satisfies.js')
-const compare = require('../functions/compare.js')
-module.exports = (versions, range, options) => {
-  const set = []
-  let min = null
-  let prev = null
-  const v = versions.sort((a, b) => compare(a, b, options))
-  for (const version of v) {
-    const included = satisfies(version, range, options)
-    if (included) {
-      prev = version
-      if (!min)
-        min = version
-    } else {
-      if (prev) {
-        set.push([min, prev])
-      }
-      prev = null
-      min = null
-    }
-  }
-  if (min)
-    set.push([min, null])
-
-  const ranges = []
-  for (const [min, max] of set) {
-    if (min === max)
-      ranges.push(min)
-    else if (!max && min === v[0])
-      ranges.push('*')
-    else if (!max)
-      ranges.push(`>=${min}`)
-    else if (min === v[0])
-      ranges.push(`<=${max}`)
-    else
-      ranges.push(`${min} - ${max}`)
-  }
-  const simplified = ranges.join(' || ')
-  const original = typeof range.raw === 'string' ? range.raw : String(range)
-  return simplified.length < original.length ? simplified : range
-}
-
-},{"../functions/compare.js":178,"../functions/satisfies.js":194}],211:[function(require,module,exports){
-const Range = require('../classes/range.js')
-const Comparator = require('../classes/comparator.js')
-const { ANY } = Comparator
-const satisfies = require('../functions/satisfies.js')
-const compare = require('../functions/compare.js')
-
-// Complex range `r1 || r2 || ...` is a subset of `R1 || R2 || ...` iff:
-// - Every simple range `r1, r2, ...` is a null set, OR
-// - Every simple range `r1, r2, ...` which is not a null set is a subset of
-//   some `R1, R2, ...`
-//
-// Simple range `c1 c2 ...` is a subset of simple range `C1 C2 ...` iff:
-// - If c is only the ANY comparator
-//   - If C is only the ANY comparator, return true
-//   - Else if in prerelease mode, return false
-//   - else replace c with `[>=0.0.0]`
-// - If C is only the ANY comparator
-//   - if in prerelease mode, return true
-//   - else replace C with `[>=0.0.0]`
-// - Let EQ be the set of = comparators in c
-// - If EQ is more than one, return true (null set)
-// - Let GT be the highest > or >= comparator in c
-// - Let LT be the lowest < or <= comparator in c
-// - If GT and LT, and GT.semver > LT.semver, return true (null set)
-// - If any C is a = range, and GT or LT are set, return false
-// - If EQ
-//   - If GT, and EQ does not satisfy GT, return true (null set)
-//   - If LT, and EQ does not satisfy LT, return true (null set)
-//   - If EQ satisfies every C, return true
-//   - Else return false
-// - If GT
-//   - If GT.semver is lower than any > or >= comp in C, return false
-//   - If GT is >=, and GT.semver does not satisfy every C, return false
-//   - If GT.semver has a prerelease, and not in prerelease mode
-//     - If no C has a prerelease and the GT.semver tuple, return false
-// - If LT
-//   - If LT.semver is greater than any < or <= comp in C, return false
-//   - If LT is <=, and LT.semver does not satisfy every C, return false
-//   - If GT.semver has a prerelease, and not in prerelease mode
-//     - If no C has a prerelease and the LT.semver tuple, return false
-// - Else return true
-
-const subset = (sub, dom, options = {}) => {
-  if (sub === dom)
-    return true
-
-  sub = new Range(sub, options)
-  dom = new Range(dom, options)
-  let sawNonNull = false
-
-  OUTER: for (const simpleSub of sub.set) {
-    for (const simpleDom of dom.set) {
-      const isSub = simpleSubset(simpleSub, simpleDom, options)
-      sawNonNull = sawNonNull || isSub !== null
-      if (isSub)
-        continue OUTER
-    }
-    // the null set is a subset of everything, but null simple ranges in
-    // a complex range should be ignored.  so if we saw a non-null range,
-    // then we know this isn't a subset, but if EVERY simple range was null,
-    // then it is a subset.
-    if (sawNonNull)
-      return false
-  }
-  return true
-}
-
-const simpleSubset = (sub, dom, options) => {
-  if (sub === dom)
-    return true
-
-  if (sub.length === 1 && sub[0].semver === ANY) {
-    if (dom.length === 1 && dom[0].semver === ANY)
-      return true
-    else if (options.includePrerelease)
-      sub = [ new Comparator('>=0.0.0-0') ]
-    else
-      sub = [ new Comparator('>=0.0.0') ]
-  }
-
-  if (dom.length === 1 && dom[0].semver === ANY) {
-    if (options.includePrerelease)
-      return true
-    else
-      dom = [ new Comparator('>=0.0.0') ]
-  }
-
-  const eqSet = new Set()
-  let gt, lt
-  for (const c of sub) {
-    if (c.operator === '>' || c.operator === '>=')
-      gt = higherGT(gt, c, options)
-    else if (c.operator === '<' || c.operator === '<=')
-      lt = lowerLT(lt, c, options)
-    else
-      eqSet.add(c.semver)
-  }
-
-  if (eqSet.size > 1)
-    return null
-
-  let gtltComp
-  if (gt && lt) {
-    gtltComp = compare(gt.semver, lt.semver, options)
-    if (gtltComp > 0)
-      return null
-    else if (gtltComp === 0 && (gt.operator !== '>=' || lt.operator !== '<='))
-      return null
-  }
-
-  // will iterate one or zero times
-  for (const eq of eqSet) {
-    if (gt && !satisfies(eq, String(gt), options))
-      return null
-
-    if (lt && !satisfies(eq, String(lt), options))
-      return null
-
-    for (const c of dom) {
-      if (!satisfies(eq, String(c), options))
-        return false
-    }
-
-    return true
-  }
-
-  let higher, lower
-  let hasDomLT, hasDomGT
-  // if the subset has a prerelease, we need a comparator in the superset
-  // with the same tuple and a prerelease, or it's not a subset
-  let needDomLTPre = lt &&
-    !options.includePrerelease &&
-    lt.semver.prerelease.length ? lt.semver : false
-  let needDomGTPre = gt &&
-    !options.includePrerelease &&
-    gt.semver.prerelease.length ? gt.semver : false
-  // exception: <1.2.3-0 is the same as <1.2.3
-  if (needDomLTPre && needDomLTPre.prerelease.length === 1 &&
-      lt.operator === '<' && needDomLTPre.prerelease[0] === 0) {
-    needDomLTPre = false
-  }
-
-  for (const c of dom) {
-    hasDomGT = hasDomGT || c.operator === '>' || c.operator === '>='
-    hasDomLT = hasDomLT || c.operator === '<' || c.operator === '<='
-    if (gt) {
-      if (needDomGTPre) {
-        if (c.semver.prerelease && c.semver.prerelease.length &&
-            c.semver.major === needDomGTPre.major &&
-            c.semver.minor === needDomGTPre.minor &&
-            c.semver.patch === needDomGTPre.patch) {
-          needDomGTPre = false
-        }
-      }
-      if (c.operator === '>' || c.operator === '>=') {
-        higher = higherGT(gt, c, options)
-        if (higher === c && higher !== gt)
-          return false
-      } else if (gt.operator === '>=' && !satisfies(gt.semver, String(c), options))
-        return false
-    }
-    if (lt) {
-      if (needDomLTPre) {
-        if (c.semver.prerelease && c.semver.prerelease.length &&
-            c.semver.major === needDomLTPre.major &&
-            c.semver.minor === needDomLTPre.minor &&
-            c.semver.patch === needDomLTPre.patch) {
-          needDomLTPre = false
-        }
-      }
-      if (c.operator === '<' || c.operator === '<=') {
-        lower = lowerLT(lt, c, options)
-        if (lower === c && lower !== lt)
-          return false
-      } else if (lt.operator === '<=' && !satisfies(lt.semver, String(c), options))
-        return false
-    }
-    if (!c.operator && (lt || gt) && gtltComp !== 0)
-      return false
-  }
-
-  // if there was a < or >, and nothing in the dom, then must be false
-  // UNLESS it was limited by another range in the other direction.
-  // Eg, >1.0.0 <1.0.1 is still a subset of <2.0.0
-  if (gt && hasDomLT && !lt && gtltComp !== 0)
-    return false
-
-  if (lt && hasDomGT && !gt && gtltComp !== 0)
-    return false
-
-  // we needed a prerelease range in a specific tuple, but didn't get one
-  // then this isn't a subset.  eg >=1.2.3-pre is not a subset of >=1.0.0,
-  // because it includes prereleases in the 1.2.3 tuple
-  if (needDomGTPre || needDomLTPre)
-    return false
-
-  return true
-}
-
-// >=1.2.3 is lower than >1.2.3
-const higherGT = (a, b, options) => {
-  if (!a)
-    return b
-  const comp = compare(a.semver, b.semver, options)
-  return comp > 0 ? a
-    : comp < 0 ? b
-    : b.operator === '>' && a.operator === '>=' ? b
-    : a
-}
-
-// <=1.2.3 is higher than <1.2.3
-const lowerLT = (a, b, options) => {
-  if (!a)
-    return b
-  const comp = compare(a.semver, b.semver, options)
-  return comp < 0 ? a
-    : comp > 0 ? b
-    : b.operator === '<' && a.operator === '<=' ? b
-    : a
-}
-
-module.exports = subset
-
-},{"../classes/comparator.js":170,"../classes/range.js":171,"../functions/compare.js":178,"../functions/satisfies.js":194}],212:[function(require,module,exports){
-const Range = require('../classes/range')
-
-// Mostly just for testing and legacy API reasons
-const toComparators = (range, options) =>
-  new Range(range, options).set
-    .map(comp => comp.map(c => c.value).join(' ').trim().split(' '))
-
-module.exports = toComparators
-
-},{"../classes/range":171}],213:[function(require,module,exports){
-const Range = require('../classes/range')
-const validRange = (range, options) => {
-  try {
-    // Return '*' instead of '' so that truthiness works.
-    // This will throw if it's invalid anyway
-    return new Range(range, options).range || '*'
-  } catch (er) {
-    return null
-  }
-}
-module.exports = validRange
-
-},{"../classes/range":171}],214:[function(require,module,exports){
+},{"@ledgerhq/errors":123,"@ledgerhq/hw-transport":163,"@ledgerhq/logs":164,"buffer":172,"u2f-api":216}],163:[function(require,module,exports){
 arguments[4][160][0].apply(exports,arguments)
-},{"@ledgerhq/errors":123,"buffer":223,"dup":160,"events":245}],215:[function(require,module,exports){
+},{"@ledgerhq/errors":123,"buffer":172,"dup":160,"events":194}],164:[function(require,module,exports){
 arguments[4][161][0].apply(exports,arguments)
-},{"dup":161}],216:[function(require,module,exports){
+},{"dup":161}],165:[function(require,module,exports){
 "use strict";
 
 (function(root) {
@@ -25662,7 +22632,7 @@ arguments[4][161][0].apply(exports,arguments)
 
 })(this);
 
-},{}],217:[function(require,module,exports){
+},{}],166:[function(require,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -25815,7 +22785,7 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],218:[function(require,module,exports){
+},{}],167:[function(require,module,exports){
 'use strict'
 var ALPHABET = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l'
 
@@ -25999,7 +22969,7 @@ module.exports = {
   fromWords: fromWords
 }
 
-},{}],219:[function(require,module,exports){
+},{}],168:[function(require,module,exports){
 ;(function (globalObject) {
   'use strict';
 
@@ -28903,7 +25873,7 @@ module.exports = {
   }
 })(this);
 
-},{}],220:[function(require,module,exports){
+},{}],169:[function(require,module,exports){
 (function (module, exports) {
   'use strict';
 
@@ -32351,7 +29321,7 @@ module.exports = {
   };
 })(typeof module === 'undefined' || module, this);
 
-},{"buffer":222}],221:[function(require,module,exports){
+},{"buffer":171}],170:[function(require,module,exports){
 var r;
 
 module.exports = function rand(len) {
@@ -32418,9 +29388,9 @@ if (typeof self === 'object') {
   }
 }
 
-},{"crypto":222}],222:[function(require,module,exports){
+},{"crypto":171}],171:[function(require,module,exports){
 
-},{}],223:[function(require,module,exports){
+},{}],172:[function(require,module,exports){
 (function (Buffer){
 /*!
  * The buffer module from node.js, for the browser.
@@ -34201,7 +31171,7 @@ function numberIsNaN (obj) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"base64-js":217,"buffer":223,"ieee754":259}],224:[function(require,module,exports){
+},{"base64-js":166,"buffer":172,"ieee754":208}],173:[function(require,module,exports){
 'use strict';
 
 var elliptic = exports;
@@ -34216,7 +31186,7 @@ elliptic.curves = require('./elliptic/curves');
 elliptic.ec = require('./elliptic/ec');
 elliptic.eddsa = require('./elliptic/eddsa');
 
-},{"../package.json":240,"./elliptic/curve":227,"./elliptic/curves":230,"./elliptic/ec":231,"./elliptic/eddsa":234,"./elliptic/utils":238,"brorand":221}],225:[function(require,module,exports){
+},{"../package.json":189,"./elliptic/curve":176,"./elliptic/curves":179,"./elliptic/ec":180,"./elliptic/eddsa":183,"./elliptic/utils":187,"brorand":170}],174:[function(require,module,exports){
 'use strict';
 
 var BN = require('bn.js');
@@ -34599,7 +31569,7 @@ BasePoint.prototype.dblp = function dblp(k) {
   return r;
 };
 
-},{"../utils":238,"bn.js":220}],226:[function(require,module,exports){
+},{"../utils":187,"bn.js":169}],175:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -35036,7 +32006,7 @@ Point.prototype.eqXToP = function eqXToP(x) {
 Point.prototype.toP = Point.prototype.normalize;
 Point.prototype.mixedAdd = Point.prototype.add;
 
-},{"../utils":238,"./base":225,"bn.js":220,"inherits":239}],227:[function(require,module,exports){
+},{"../utils":187,"./base":174,"bn.js":169,"inherits":188}],176:[function(require,module,exports){
 'use strict';
 
 var curve = exports;
@@ -35046,7 +32016,7 @@ curve.short = require('./short');
 curve.mont = require('./mont');
 curve.edwards = require('./edwards');
 
-},{"./base":225,"./edwards":226,"./mont":228,"./short":229}],228:[function(require,module,exports){
+},{"./base":174,"./edwards":175,"./mont":177,"./short":178}],177:[function(require,module,exports){
 'use strict';
 
 var BN = require('bn.js');
@@ -35226,7 +32196,7 @@ Point.prototype.getX = function getX() {
   return this.x.fromRed();
 };
 
-},{"../utils":238,"./base":225,"bn.js":220,"inherits":239}],229:[function(require,module,exports){
+},{"../utils":187,"./base":174,"bn.js":169,"inherits":188}],178:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -36166,7 +33136,7 @@ JPoint.prototype.isInfinity = function isInfinity() {
   return this.z.cmpn(0) === 0;
 };
 
-},{"../utils":238,"./base":225,"bn.js":220,"inherits":239}],230:[function(require,module,exports){
+},{"../utils":187,"./base":174,"bn.js":169,"inherits":188}],179:[function(require,module,exports){
 'use strict';
 
 var curves = exports;
@@ -36374,7 +33344,7 @@ defineCurve('secp256k1', {
   ],
 });
 
-},{"./curve":227,"./precomputed/secp256k1":237,"./utils":238,"hash.js":246}],231:[function(require,module,exports){
+},{"./curve":176,"./precomputed/secp256k1":186,"./utils":187,"hash.js":195}],180:[function(require,module,exports){
 'use strict';
 
 var BN = require('bn.js');
@@ -36619,7 +33589,7 @@ EC.prototype.getKeyRecoveryParam = function(e, signature, Q, enc) {
   throw new Error('Unable to find valid recovery factor');
 };
 
-},{"../curves":230,"../utils":238,"./key":232,"./signature":233,"bn.js":220,"brorand":221,"hmac-drbg":258}],232:[function(require,module,exports){
+},{"../curves":179,"../utils":187,"./key":181,"./signature":182,"bn.js":169,"brorand":170,"hmac-drbg":207}],181:[function(require,module,exports){
 'use strict';
 
 var BN = require('bn.js');
@@ -36742,7 +33712,7 @@ KeyPair.prototype.inspect = function inspect() {
          ' pub: ' + (this.pub && this.pub.inspect()) + ' >';
 };
 
-},{"../utils":238,"bn.js":220}],233:[function(require,module,exports){
+},{"../utils":187,"bn.js":169}],182:[function(require,module,exports){
 'use strict';
 
 var BN = require('bn.js');
@@ -36910,7 +33880,7 @@ Signature.prototype.toDER = function toDER(enc) {
   return utils.encode(res, enc);
 };
 
-},{"../utils":238,"bn.js":220}],234:[function(require,module,exports){
+},{"../utils":187,"bn.js":169}],183:[function(require,module,exports){
 'use strict';
 
 var hash = require('hash.js');
@@ -37030,7 +34000,7 @@ EDDSA.prototype.isPoint = function isPoint(val) {
   return val instanceof this.pointClass;
 };
 
-},{"../curves":230,"../utils":238,"./key":235,"./signature":236,"hash.js":246}],235:[function(require,module,exports){
+},{"../curves":179,"../utils":187,"./key":184,"./signature":185,"hash.js":195}],184:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -37127,7 +34097,7 @@ KeyPair.prototype.getPublic = function getPublic(enc) {
 
 module.exports = KeyPair;
 
-},{"../utils":238}],236:[function(require,module,exports){
+},{"../utils":187}],185:[function(require,module,exports){
 'use strict';
 
 var BN = require('bn.js');
@@ -37194,7 +34164,7 @@ Signature.prototype.toHex = function toHex() {
 
 module.exports = Signature;
 
-},{"../utils":238,"bn.js":220}],237:[function(require,module,exports){
+},{"../utils":187,"bn.js":169}],186:[function(require,module,exports){
 module.exports = {
   doubles: {
     step: 4,
@@ -37976,7 +34946,7 @@ module.exports = {
   },
 };
 
-},{}],238:[function(require,module,exports){
+},{}],187:[function(require,module,exports){
 'use strict';
 
 var utils = exports;
@@ -38097,7 +35067,7 @@ function intFromLE(bytes) {
 utils.intFromLE = intFromLE;
 
 
-},{"bn.js":220,"minimalistic-assert":263,"minimalistic-crypto-utils":264}],239:[function(require,module,exports){
+},{"bn.js":169,"minimalistic-assert":211,"minimalistic-crypto-utils":212}],188:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -38126,38 +35096,55 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],240:[function(require,module,exports){
+},{}],189:[function(require,module,exports){
 module.exports={
-  "name": "elliptic",
-  "version": "6.5.4",
-  "description": "EC cryptography",
-  "main": "lib/elliptic.js",
-  "files": [
-    "lib"
+  "_args": [
+    [
+      "elliptic@6.5.4",
+      "/home/pc/Desktop/workspace/eth-ledger-bridge-keyring"
+    ]
   ],
-  "scripts": {
-    "lint": "eslint lib test",
-    "lint:fix": "npm run lint -- --fix",
-    "unit": "istanbul test _mocha --reporter=spec test/index.js",
-    "test": "npm run lint && npm run unit",
-    "version": "grunt dist && git add dist/"
+  "_from": "elliptic@6.5.4",
+  "_id": "elliptic@6.5.4",
+  "_inBundle": false,
+  "_integrity": "sha512-iLhC6ULemrljPZb+QutR5TQGB+pdW6KGD5RSegS+8sorOZT+rdQFbsQFJgvN3eRqNALqJer4oQ16YvJHlU8hzQ==",
+  "_location": "/elliptic",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "version",
+    "registry": true,
+    "raw": "elliptic@6.5.4",
+    "name": "elliptic",
+    "escapedName": "elliptic",
+    "rawSpec": "6.5.4",
+    "saveSpec": null,
+    "fetchSpec": "6.5.4"
   },
-  "repository": {
-    "type": "git",
-    "url": "git@github.com:indutny/elliptic"
-  },
-  "keywords": [
-    "EC",
-    "Elliptic",
-    "curve",
-    "Cryptography"
+  "_requiredBy": [
+    "/@ethersproject/signing-key",
+    "/browserify-sign",
+    "/create-ecdh"
   ],
-  "author": "Fedor Indutny <fedor@indutny.com>",
-  "license": "MIT",
+  "_resolved": "https://registry.npmjs.org/elliptic/-/elliptic-6.5.4.tgz",
+  "_spec": "6.5.4",
+  "_where": "/home/pc/Desktop/workspace/eth-ledger-bridge-keyring",
+  "author": {
+    "name": "Fedor Indutny",
+    "email": "fedor@indutny.com"
+  },
   "bugs": {
     "url": "https://github.com/indutny/elliptic/issues"
   },
-  "homepage": "https://github.com/indutny/elliptic",
+  "dependencies": {
+    "bn.js": "^4.11.9",
+    "brorand": "^1.1.0",
+    "hash.js": "^1.0.0",
+    "hmac-drbg": "^1.0.1",
+    "inherits": "^2.0.4",
+    "minimalistic-assert": "^1.0.1",
+    "minimalistic-crypto-utils": "^1.0.1"
+  },
+  "description": "EC cryptography",
   "devDependencies": {
     "brfs": "^2.0.2",
     "coveralls": "^3.1.0",
@@ -38173,24 +35160,40 @@ module.exports={
     "istanbul": "^0.4.5",
     "mocha": "^8.0.1"
   },
-  "dependencies": {
-    "bn.js": "^4.11.9",
-    "brorand": "^1.1.0",
-    "hash.js": "^1.0.0",
-    "hmac-drbg": "^1.0.1",
-    "inherits": "^2.0.4",
-    "minimalistic-assert": "^1.0.1",
-    "minimalistic-crypto-utils": "^1.0.1"
-  }
+  "files": [
+    "lib"
+  ],
+  "homepage": "https://github.com/indutny/elliptic",
+  "keywords": [
+    "EC",
+    "Elliptic",
+    "curve",
+    "Cryptography"
+  ],
+  "license": "MIT",
+  "main": "lib/elliptic.js",
+  "name": "elliptic",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/indutny/elliptic.git"
+  },
+  "scripts": {
+    "lint": "eslint lib test",
+    "lint:fix": "npm run lint -- --fix",
+    "test": "npm run lint && npm run unit",
+    "unit": "istanbul test _mocha --reporter=spec test/index.js",
+    "version": "grunt dist && git add dist/"
+  },
+  "version": "6.5.4"
 }
 
-},{}],241:[function(require,module,exports){
+},{}],190:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.version = void 0;
 exports.version = "ethers/5.4.4";
 
-},{}],242:[function(require,module,exports){
+},{}],191:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -38246,7 +35249,7 @@ Object.defineProperty(exports, "version", { enumerable: true, get: function () {
 var logger = new logger_1.Logger(_version_1.version);
 exports.logger = logger;
 
-},{"./_version":241,"./utils":244,"@ethersproject/abstract-signer":22,"@ethersproject/bignumber":31,"@ethersproject/constants":37,"@ethersproject/contracts":40,"@ethersproject/logger":57,"@ethersproject/providers":73,"@ethersproject/wallet":106,"@ethersproject/wordlists":111}],243:[function(require,module,exports){
+},{"./_version":190,"./utils":193,"@ethersproject/abstract-signer":22,"@ethersproject/bignumber":31,"@ethersproject/constants":37,"@ethersproject/contracts":40,"@ethersproject/logger":57,"@ethersproject/providers":73,"@ethersproject/wallet":106,"@ethersproject/wordlists":111}],192:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -38300,7 +35303,7 @@ Object.defineProperty(exports, "wordlists", { enumerable: true, get: function ()
 Object.defineProperty(exports, "version", { enumerable: true, get: function () { return ethers_1.version; } });
 Object.defineProperty(exports, "Wordlist", { enumerable: true, get: function () { return ethers_1.Wordlist; } });
 
-},{"./ethers":242}],244:[function(require,module,exports){
+},{"./ethers":191}],193:[function(require,module,exports){
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -38448,7 +35451,7 @@ var strings_2 = require("@ethersproject/strings");
 Object.defineProperty(exports, "UnicodeNormalizationForm", { enumerable: true, get: function () { return strings_2.UnicodeNormalizationForm; } });
 Object.defineProperty(exports, "Utf8ErrorReason", { enumerable: true, get: function () { return strings_2.Utf8ErrorReason; } });
 
-},{"@ethersproject/abi":17,"@ethersproject/address":24,"@ethersproject/base64":26,"@ethersproject/basex":27,"@ethersproject/bytes":33,"@ethersproject/hash":43,"@ethersproject/hdnode":48,"@ethersproject/json-wallets":51,"@ethersproject/keccak256":55,"@ethersproject/logger":57,"@ethersproject/properties":63,"@ethersproject/random":84,"@ethersproject/rlp":87,"@ethersproject/sha2":90,"@ethersproject/signing-key":94,"@ethersproject/solidity":95,"@ethersproject/strings":99,"@ethersproject/transactions":102,"@ethersproject/units":104,"@ethersproject/wallet":106,"@ethersproject/web":109}],245:[function(require,module,exports){
+},{"@ethersproject/abi":17,"@ethersproject/address":24,"@ethersproject/base64":26,"@ethersproject/basex":27,"@ethersproject/bytes":33,"@ethersproject/hash":43,"@ethersproject/hdnode":48,"@ethersproject/json-wallets":51,"@ethersproject/keccak256":55,"@ethersproject/logger":57,"@ethersproject/properties":63,"@ethersproject/random":84,"@ethersproject/rlp":87,"@ethersproject/sha2":90,"@ethersproject/signing-key":94,"@ethersproject/solidity":95,"@ethersproject/strings":99,"@ethersproject/transactions":102,"@ethersproject/units":104,"@ethersproject/wallet":106,"@ethersproject/web":109}],194:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -38973,7 +35976,7 @@ function functionBindPolyfill(context) {
   };
 }
 
-},{}],246:[function(require,module,exports){
+},{}],195:[function(require,module,exports){
 var hash = exports;
 
 hash.utils = require('./hash/utils');
@@ -38990,7 +35993,7 @@ hash.sha384 = hash.sha.sha384;
 hash.sha512 = hash.sha.sha512;
 hash.ripemd160 = hash.ripemd.ripemd160;
 
-},{"./hash/common":247,"./hash/hmac":248,"./hash/ripemd":249,"./hash/sha":250,"./hash/utils":257}],247:[function(require,module,exports){
+},{"./hash/common":196,"./hash/hmac":197,"./hash/ripemd":198,"./hash/sha":199,"./hash/utils":206}],196:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -39084,7 +36087,7 @@ BlockHash.prototype._pad = function pad() {
   return res;
 };
 
-},{"./utils":257,"minimalistic-assert":263}],248:[function(require,module,exports){
+},{"./utils":206,"minimalistic-assert":211}],197:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -39133,7 +36136,7 @@ Hmac.prototype.digest = function digest(enc) {
   return this.outer.digest(enc);
 };
 
-},{"./utils":257,"minimalistic-assert":263}],249:[function(require,module,exports){
+},{"./utils":206,"minimalistic-assert":211}],198:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -39281,7 +36284,7 @@ var sh = [
   8, 5, 12, 9, 12, 5, 14, 6, 8, 13, 6, 5, 15, 13, 11, 11
 ];
 
-},{"./common":247,"./utils":257}],250:[function(require,module,exports){
+},{"./common":196,"./utils":206}],199:[function(require,module,exports){
 'use strict';
 
 exports.sha1 = require('./sha/1');
@@ -39290,7 +36293,7 @@ exports.sha256 = require('./sha/256');
 exports.sha384 = require('./sha/384');
 exports.sha512 = require('./sha/512');
 
-},{"./sha/1":251,"./sha/224":252,"./sha/256":253,"./sha/384":254,"./sha/512":255}],251:[function(require,module,exports){
+},{"./sha/1":200,"./sha/224":201,"./sha/256":202,"./sha/384":203,"./sha/512":204}],200:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -39366,7 +36369,7 @@ SHA1.prototype._digest = function digest(enc) {
     return utils.split32(this.h, 'big');
 };
 
-},{"../common":247,"../utils":257,"./common":256}],252:[function(require,module,exports){
+},{"../common":196,"../utils":206,"./common":205}],201:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -39398,7 +36401,7 @@ SHA224.prototype._digest = function digest(enc) {
 };
 
 
-},{"../utils":257,"./256":253}],253:[function(require,module,exports){
+},{"../utils":206,"./256":202}],202:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -39505,7 +36508,7 @@ SHA256.prototype._digest = function digest(enc) {
     return utils.split32(this.h, 'big');
 };
 
-},{"../common":247,"../utils":257,"./common":256,"minimalistic-assert":263}],254:[function(require,module,exports){
+},{"../common":196,"../utils":206,"./common":205,"minimalistic-assert":211}],203:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -39542,7 +36545,7 @@ SHA384.prototype._digest = function digest(enc) {
     return utils.split32(this.h.slice(0, 12), 'big');
 };
 
-},{"../utils":257,"./512":255}],255:[function(require,module,exports){
+},{"../utils":206,"./512":204}],204:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -39874,7 +36877,7 @@ function g1_512_lo(xh, xl) {
   return r;
 }
 
-},{"../common":247,"../utils":257,"minimalistic-assert":263}],256:[function(require,module,exports){
+},{"../common":196,"../utils":206,"minimalistic-assert":211}],205:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -39925,7 +36928,7 @@ function g1_256(x) {
 }
 exports.g1_256 = g1_256;
 
-},{"../utils":257}],257:[function(require,module,exports){
+},{"../utils":206}],206:[function(require,module,exports){
 'use strict';
 
 var assert = require('minimalistic-assert');
@@ -40205,7 +37208,7 @@ function shr64_lo(ah, al, num) {
 }
 exports.shr64_lo = shr64_lo;
 
-},{"inherits":260,"minimalistic-assert":263}],258:[function(require,module,exports){
+},{"inherits":209,"minimalistic-assert":211}],207:[function(require,module,exports){
 'use strict';
 
 var hash = require('hash.js');
@@ -40320,7 +37323,7 @@ HmacDRBG.prototype.generate = function generate(len, enc, add, addEnc) {
   return utils.encode(res, enc);
 };
 
-},{"hash.js":246,"minimalistic-assert":263,"minimalistic-crypto-utils":264}],259:[function(require,module,exports){
+},{"hash.js":195,"minimalistic-assert":211,"minimalistic-crypto-utils":212}],208:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = (nBytes * 8) - mLen - 1
@@ -40406,7 +37409,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],260:[function(require,module,exports){
+},{}],209:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -40431,7 +37434,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],261:[function(require,module,exports){
+},{}],210:[function(require,module,exports){
 (function (process,global){
 /**
  * [js-sha3]{@link https://github.com/emn178/js-sha3}
@@ -40910,343 +37913,7 @@ if (typeof Object.create === 'function') {
 })();
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":265}],262:[function(require,module,exports){
-'use strict'
-
-// A linked list to keep track of recently-used-ness
-const Yallist = require('yallist')
-
-const MAX = Symbol('max')
-const LENGTH = Symbol('length')
-const LENGTH_CALCULATOR = Symbol('lengthCalculator')
-const ALLOW_STALE = Symbol('allowStale')
-const MAX_AGE = Symbol('maxAge')
-const DISPOSE = Symbol('dispose')
-const NO_DISPOSE_ON_SET = Symbol('noDisposeOnSet')
-const LRU_LIST = Symbol('lruList')
-const CACHE = Symbol('cache')
-const UPDATE_AGE_ON_GET = Symbol('updateAgeOnGet')
-
-const naiveLength = () => 1
-
-// lruList is a yallist where the head is the youngest
-// item, and the tail is the oldest.  the list contains the Hit
-// objects as the entries.
-// Each Hit object has a reference to its Yallist.Node.  This
-// never changes.
-//
-// cache is a Map (or PseudoMap) that matches the keys to
-// the Yallist.Node object.
-class LRUCache {
-  constructor (options) {
-    if (typeof options === 'number')
-      options = { max: options }
-
-    if (!options)
-      options = {}
-
-    if (options.max && (typeof options.max !== 'number' || options.max < 0))
-      throw new TypeError('max must be a non-negative number')
-    // Kind of weird to have a default max of Infinity, but oh well.
-    const max = this[MAX] = options.max || Infinity
-
-    const lc = options.length || naiveLength
-    this[LENGTH_CALCULATOR] = (typeof lc !== 'function') ? naiveLength : lc
-    this[ALLOW_STALE] = options.stale || false
-    if (options.maxAge && typeof options.maxAge !== 'number')
-      throw new TypeError('maxAge must be a number')
-    this[MAX_AGE] = options.maxAge || 0
-    this[DISPOSE] = options.dispose
-    this[NO_DISPOSE_ON_SET] = options.noDisposeOnSet || false
-    this[UPDATE_AGE_ON_GET] = options.updateAgeOnGet || false
-    this.reset()
-  }
-
-  // resize the cache when the max changes.
-  set max (mL) {
-    if (typeof mL !== 'number' || mL < 0)
-      throw new TypeError('max must be a non-negative number')
-
-    this[MAX] = mL || Infinity
-    trim(this)
-  }
-  get max () {
-    return this[MAX]
-  }
-
-  set allowStale (allowStale) {
-    this[ALLOW_STALE] = !!allowStale
-  }
-  get allowStale () {
-    return this[ALLOW_STALE]
-  }
-
-  set maxAge (mA) {
-    if (typeof mA !== 'number')
-      throw new TypeError('maxAge must be a non-negative number')
-
-    this[MAX_AGE] = mA
-    trim(this)
-  }
-  get maxAge () {
-    return this[MAX_AGE]
-  }
-
-  // resize the cache when the lengthCalculator changes.
-  set lengthCalculator (lC) {
-    if (typeof lC !== 'function')
-      lC = naiveLength
-
-    if (lC !== this[LENGTH_CALCULATOR]) {
-      this[LENGTH_CALCULATOR] = lC
-      this[LENGTH] = 0
-      this[LRU_LIST].forEach(hit => {
-        hit.length = this[LENGTH_CALCULATOR](hit.value, hit.key)
-        this[LENGTH] += hit.length
-      })
-    }
-    trim(this)
-  }
-  get lengthCalculator () { return this[LENGTH_CALCULATOR] }
-
-  get length () { return this[LENGTH] }
-  get itemCount () { return this[LRU_LIST].length }
-
-  rforEach (fn, thisp) {
-    thisp = thisp || this
-    for (let walker = this[LRU_LIST].tail; walker !== null;) {
-      const prev = walker.prev
-      forEachStep(this, fn, walker, thisp)
-      walker = prev
-    }
-  }
-
-  forEach (fn, thisp) {
-    thisp = thisp || this
-    for (let walker = this[LRU_LIST].head; walker !== null;) {
-      const next = walker.next
-      forEachStep(this, fn, walker, thisp)
-      walker = next
-    }
-  }
-
-  keys () {
-    return this[LRU_LIST].toArray().map(k => k.key)
-  }
-
-  values () {
-    return this[LRU_LIST].toArray().map(k => k.value)
-  }
-
-  reset () {
-    if (this[DISPOSE] &&
-        this[LRU_LIST] &&
-        this[LRU_LIST].length) {
-      this[LRU_LIST].forEach(hit => this[DISPOSE](hit.key, hit.value))
-    }
-
-    this[CACHE] = new Map() // hash of items by key
-    this[LRU_LIST] = new Yallist() // list of items in order of use recency
-    this[LENGTH] = 0 // length of items in the list
-  }
-
-  dump () {
-    return this[LRU_LIST].map(hit =>
-      isStale(this, hit) ? false : {
-        k: hit.key,
-        v: hit.value,
-        e: hit.now + (hit.maxAge || 0)
-      }).toArray().filter(h => h)
-  }
-
-  dumpLru () {
-    return this[LRU_LIST]
-  }
-
-  set (key, value, maxAge) {
-    maxAge = maxAge || this[MAX_AGE]
-
-    if (maxAge && typeof maxAge !== 'number')
-      throw new TypeError('maxAge must be a number')
-
-    const now = maxAge ? Date.now() : 0
-    const len = this[LENGTH_CALCULATOR](value, key)
-
-    if (this[CACHE].has(key)) {
-      if (len > this[MAX]) {
-        del(this, this[CACHE].get(key))
-        return false
-      }
-
-      const node = this[CACHE].get(key)
-      const item = node.value
-
-      // dispose of the old one before overwriting
-      // split out into 2 ifs for better coverage tracking
-      if (this[DISPOSE]) {
-        if (!this[NO_DISPOSE_ON_SET])
-          this[DISPOSE](key, item.value)
-      }
-
-      item.now = now
-      item.maxAge = maxAge
-      item.value = value
-      this[LENGTH] += len - item.length
-      item.length = len
-      this.get(key)
-      trim(this)
-      return true
-    }
-
-    const hit = new Entry(key, value, len, now, maxAge)
-
-    // oversized objects fall out of cache automatically.
-    if (hit.length > this[MAX]) {
-      if (this[DISPOSE])
-        this[DISPOSE](key, value)
-
-      return false
-    }
-
-    this[LENGTH] += hit.length
-    this[LRU_LIST].unshift(hit)
-    this[CACHE].set(key, this[LRU_LIST].head)
-    trim(this)
-    return true
-  }
-
-  has (key) {
-    if (!this[CACHE].has(key)) return false
-    const hit = this[CACHE].get(key).value
-    return !isStale(this, hit)
-  }
-
-  get (key) {
-    return get(this, key, true)
-  }
-
-  peek (key) {
-    return get(this, key, false)
-  }
-
-  pop () {
-    const node = this[LRU_LIST].tail
-    if (!node)
-      return null
-
-    del(this, node)
-    return node.value
-  }
-
-  del (key) {
-    del(this, this[CACHE].get(key))
-  }
-
-  load (arr) {
-    // reset the cache
-    this.reset()
-
-    const now = Date.now()
-    // A previous serialized cache has the most recent items first
-    for (let l = arr.length - 1; l >= 0; l--) {
-      const hit = arr[l]
-      const expiresAt = hit.e || 0
-      if (expiresAt === 0)
-        // the item was created without expiration in a non aged cache
-        this.set(hit.k, hit.v)
-      else {
-        const maxAge = expiresAt - now
-        // dont add already expired items
-        if (maxAge > 0) {
-          this.set(hit.k, hit.v, maxAge)
-        }
-      }
-    }
-  }
-
-  prune () {
-    this[CACHE].forEach((value, key) => get(this, key, false))
-  }
-}
-
-const get = (self, key, doUse) => {
-  const node = self[CACHE].get(key)
-  if (node) {
-    const hit = node.value
-    if (isStale(self, hit)) {
-      del(self, node)
-      if (!self[ALLOW_STALE])
-        return undefined
-    } else {
-      if (doUse) {
-        if (self[UPDATE_AGE_ON_GET])
-          node.value.now = Date.now()
-        self[LRU_LIST].unshiftNode(node)
-      }
-    }
-    return hit.value
-  }
-}
-
-const isStale = (self, hit) => {
-  if (!hit || (!hit.maxAge && !self[MAX_AGE]))
-    return false
-
-  const diff = Date.now() - hit.now
-  return hit.maxAge ? diff > hit.maxAge
-    : self[MAX_AGE] && (diff > self[MAX_AGE])
-}
-
-const trim = self => {
-  if (self[LENGTH] > self[MAX]) {
-    for (let walker = self[LRU_LIST].tail;
-      self[LENGTH] > self[MAX] && walker !== null;) {
-      // We know that we're about to delete this one, and also
-      // what the next least recently used key will be, so just
-      // go ahead and set it now.
-      const prev = walker.prev
-      del(self, walker)
-      walker = prev
-    }
-  }
-}
-
-const del = (self, node) => {
-  if (node) {
-    const hit = node.value
-    if (self[DISPOSE])
-      self[DISPOSE](hit.key, hit.value)
-
-    self[LENGTH] -= hit.length
-    self[CACHE].delete(hit.key)
-    self[LRU_LIST].removeNode(node)
-  }
-}
-
-class Entry {
-  constructor (key, value, length, now, maxAge) {
-    this.key = key
-    this.value = value
-    this.length = length
-    this.now = now
-    this.maxAge = maxAge || 0
-  }
-}
-
-const forEachStep = (self, fn, node, thisp) => {
-  let hit = node.value
-  if (isStale(self, hit)) {
-    del(self, node)
-    if (!self[ALLOW_STALE])
-      hit = undefined
-  }
-  if (hit)
-    fn.call(thisp, hit.value, hit.key, self)
-}
-
-module.exports = LRUCache
-
-},{"yallist":273}],263:[function(require,module,exports){
+},{"_process":213}],211:[function(require,module,exports){
 module.exports = assert;
 
 function assert(val, msg) {
@@ -41259,7 +37926,7 @@ assert.equal = function assertEqual(l, r, msg) {
     throw new Error(msg || ('Assertion failed: ' + l + ' != ' + r));
 };
 
-},{}],264:[function(require,module,exports){
+},{}],212:[function(require,module,exports){
 'use strict';
 
 var utils = exports;
@@ -41319,7 +37986,7 @@ utils.encode = function encode(arr, enc) {
     return arr;
 };
 
-},{}],265:[function(require,module,exports){
+},{}],213:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -41505,7 +38172,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],266:[function(require,module,exports){
+},{}],214:[function(require,module,exports){
 (function (setImmediate){
 "use strict";
 
@@ -41997,7 +38664,7 @@ process.umask = function() { return 0; };
 })(this);
 
 }).call(this,require("timers").setImmediate)
-},{"timers":267}],267:[function(require,module,exports){
+},{"timers":215}],215:[function(require,module,exports){
 (function (setImmediate,clearImmediate){
 var nextTick = require('process/browser.js').nextTick;
 var apply = Function.prototype.apply;
@@ -42076,10 +38743,10 @@ exports.clearImmediate = typeof clearImmediate === "function" ? clearImmediate :
   delete immediateIds[id];
 };
 }).call(this,require("timers").setImmediate,require("timers").clearImmediate)
-},{"process/browser.js":265,"timers":267}],268:[function(require,module,exports){
+},{"process/browser.js":213,"timers":215}],216:[function(require,module,exports){
 'use strict';
 module.exports = require( './lib/u2f-api' );
-},{"./lib/u2f-api":270}],269:[function(require,module,exports){
+},{"./lib/u2f-api":218}],217:[function(require,module,exports){
 // Copyright 2014 Google Inc. All rights reserved
 //
 // Use of this source code is governed by a BSD-style
@@ -42487,7 +39154,7 @@ u2f.register = function(registerRequests, signRequests,
   });
 };
 
-},{}],270:[function(require,module,exports){
+},{}],218:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -42806,7 +39473,7 @@ makeDefault( 'register' );
 makeDefault( 'sign' );
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./google-u2f-api":269}],271:[function(require,module,exports){
+},{"./google-u2f-api":217}],219:[function(require,module,exports){
 'use strict';
 
 module.exports = function() {
@@ -42816,442 +39483,4 @@ module.exports = function() {
   );
 };
 
-},{}],272:[function(require,module,exports){
-'use strict'
-module.exports = function (Yallist) {
-  Yallist.prototype[Symbol.iterator] = function* () {
-    for (let walker = this.head; walker; walker = walker.next) {
-      yield walker.value
-    }
-  }
-}
-
-},{}],273:[function(require,module,exports){
-'use strict'
-module.exports = Yallist
-
-Yallist.Node = Node
-Yallist.create = Yallist
-
-function Yallist (list) {
-  var self = this
-  if (!(self instanceof Yallist)) {
-    self = new Yallist()
-  }
-
-  self.tail = null
-  self.head = null
-  self.length = 0
-
-  if (list && typeof list.forEach === 'function') {
-    list.forEach(function (item) {
-      self.push(item)
-    })
-  } else if (arguments.length > 0) {
-    for (var i = 0, l = arguments.length; i < l; i++) {
-      self.push(arguments[i])
-    }
-  }
-
-  return self
-}
-
-Yallist.prototype.removeNode = function (node) {
-  if (node.list !== this) {
-    throw new Error('removing node which does not belong to this list')
-  }
-
-  var next = node.next
-  var prev = node.prev
-
-  if (next) {
-    next.prev = prev
-  }
-
-  if (prev) {
-    prev.next = next
-  }
-
-  if (node === this.head) {
-    this.head = next
-  }
-  if (node === this.tail) {
-    this.tail = prev
-  }
-
-  node.list.length--
-  node.next = null
-  node.prev = null
-  node.list = null
-
-  return next
-}
-
-Yallist.prototype.unshiftNode = function (node) {
-  if (node === this.head) {
-    return
-  }
-
-  if (node.list) {
-    node.list.removeNode(node)
-  }
-
-  var head = this.head
-  node.list = this
-  node.next = head
-  if (head) {
-    head.prev = node
-  }
-
-  this.head = node
-  if (!this.tail) {
-    this.tail = node
-  }
-  this.length++
-}
-
-Yallist.prototype.pushNode = function (node) {
-  if (node === this.tail) {
-    return
-  }
-
-  if (node.list) {
-    node.list.removeNode(node)
-  }
-
-  var tail = this.tail
-  node.list = this
-  node.prev = tail
-  if (tail) {
-    tail.next = node
-  }
-
-  this.tail = node
-  if (!this.head) {
-    this.head = node
-  }
-  this.length++
-}
-
-Yallist.prototype.push = function () {
-  for (var i = 0, l = arguments.length; i < l; i++) {
-    push(this, arguments[i])
-  }
-  return this.length
-}
-
-Yallist.prototype.unshift = function () {
-  for (var i = 0, l = arguments.length; i < l; i++) {
-    unshift(this, arguments[i])
-  }
-  return this.length
-}
-
-Yallist.prototype.pop = function () {
-  if (!this.tail) {
-    return undefined
-  }
-
-  var res = this.tail.value
-  this.tail = this.tail.prev
-  if (this.tail) {
-    this.tail.next = null
-  } else {
-    this.head = null
-  }
-  this.length--
-  return res
-}
-
-Yallist.prototype.shift = function () {
-  if (!this.head) {
-    return undefined
-  }
-
-  var res = this.head.value
-  this.head = this.head.next
-  if (this.head) {
-    this.head.prev = null
-  } else {
-    this.tail = null
-  }
-  this.length--
-  return res
-}
-
-Yallist.prototype.forEach = function (fn, thisp) {
-  thisp = thisp || this
-  for (var walker = this.head, i = 0; walker !== null; i++) {
-    fn.call(thisp, walker.value, i, this)
-    walker = walker.next
-  }
-}
-
-Yallist.prototype.forEachReverse = function (fn, thisp) {
-  thisp = thisp || this
-  for (var walker = this.tail, i = this.length - 1; walker !== null; i--) {
-    fn.call(thisp, walker.value, i, this)
-    walker = walker.prev
-  }
-}
-
-Yallist.prototype.get = function (n) {
-  for (var i = 0, walker = this.head; walker !== null && i < n; i++) {
-    // abort out of the list early if we hit a cycle
-    walker = walker.next
-  }
-  if (i === n && walker !== null) {
-    return walker.value
-  }
-}
-
-Yallist.prototype.getReverse = function (n) {
-  for (var i = 0, walker = this.tail; walker !== null && i < n; i++) {
-    // abort out of the list early if we hit a cycle
-    walker = walker.prev
-  }
-  if (i === n && walker !== null) {
-    return walker.value
-  }
-}
-
-Yallist.prototype.map = function (fn, thisp) {
-  thisp = thisp || this
-  var res = new Yallist()
-  for (var walker = this.head; walker !== null;) {
-    res.push(fn.call(thisp, walker.value, this))
-    walker = walker.next
-  }
-  return res
-}
-
-Yallist.prototype.mapReverse = function (fn, thisp) {
-  thisp = thisp || this
-  var res = new Yallist()
-  for (var walker = this.tail; walker !== null;) {
-    res.push(fn.call(thisp, walker.value, this))
-    walker = walker.prev
-  }
-  return res
-}
-
-Yallist.prototype.reduce = function (fn, initial) {
-  var acc
-  var walker = this.head
-  if (arguments.length > 1) {
-    acc = initial
-  } else if (this.head) {
-    walker = this.head.next
-    acc = this.head.value
-  } else {
-    throw new TypeError('Reduce of empty list with no initial value')
-  }
-
-  for (var i = 0; walker !== null; i++) {
-    acc = fn(acc, walker.value, i)
-    walker = walker.next
-  }
-
-  return acc
-}
-
-Yallist.prototype.reduceReverse = function (fn, initial) {
-  var acc
-  var walker = this.tail
-  if (arguments.length > 1) {
-    acc = initial
-  } else if (this.tail) {
-    walker = this.tail.prev
-    acc = this.tail.value
-  } else {
-    throw new TypeError('Reduce of empty list with no initial value')
-  }
-
-  for (var i = this.length - 1; walker !== null; i--) {
-    acc = fn(acc, walker.value, i)
-    walker = walker.prev
-  }
-
-  return acc
-}
-
-Yallist.prototype.toArray = function () {
-  var arr = new Array(this.length)
-  for (var i = 0, walker = this.head; walker !== null; i++) {
-    arr[i] = walker.value
-    walker = walker.next
-  }
-  return arr
-}
-
-Yallist.prototype.toArrayReverse = function () {
-  var arr = new Array(this.length)
-  for (var i = 0, walker = this.tail; walker !== null; i++) {
-    arr[i] = walker.value
-    walker = walker.prev
-  }
-  return arr
-}
-
-Yallist.prototype.slice = function (from, to) {
-  to = to || this.length
-  if (to < 0) {
-    to += this.length
-  }
-  from = from || 0
-  if (from < 0) {
-    from += this.length
-  }
-  var ret = new Yallist()
-  if (to < from || to < 0) {
-    return ret
-  }
-  if (from < 0) {
-    from = 0
-  }
-  if (to > this.length) {
-    to = this.length
-  }
-  for (var i = 0, walker = this.head; walker !== null && i < from; i++) {
-    walker = walker.next
-  }
-  for (; walker !== null && i < to; i++, walker = walker.next) {
-    ret.push(walker.value)
-  }
-  return ret
-}
-
-Yallist.prototype.sliceReverse = function (from, to) {
-  to = to || this.length
-  if (to < 0) {
-    to += this.length
-  }
-  from = from || 0
-  if (from < 0) {
-    from += this.length
-  }
-  var ret = new Yallist()
-  if (to < from || to < 0) {
-    return ret
-  }
-  if (from < 0) {
-    from = 0
-  }
-  if (to > this.length) {
-    to = this.length
-  }
-  for (var i = this.length, walker = this.tail; walker !== null && i > to; i--) {
-    walker = walker.prev
-  }
-  for (; walker !== null && i > from; i--, walker = walker.prev) {
-    ret.push(walker.value)
-  }
-  return ret
-}
-
-Yallist.prototype.splice = function (start, deleteCount, ...nodes) {
-  if (start > this.length) {
-    start = this.length - 1
-  }
-  if (start < 0) {
-    start = this.length + start;
-  }
-
-  for (var i = 0, walker = this.head; walker !== null && i < start; i++) {
-    walker = walker.next
-  }
-
-  var ret = []
-  for (var i = 0; walker && i < deleteCount; i++) {
-    ret.push(walker.value)
-    walker = this.removeNode(walker)
-  }
-  if (walker === null) {
-    walker = this.tail
-  }
-
-  if (walker !== this.head && walker !== this.tail) {
-    walker = walker.prev
-  }
-
-  for (var i = 0; i < nodes.length; i++) {
-    walker = insert(this, walker, nodes[i])
-  }
-  return ret;
-}
-
-Yallist.prototype.reverse = function () {
-  var head = this.head
-  var tail = this.tail
-  for (var walker = head; walker !== null; walker = walker.prev) {
-    var p = walker.prev
-    walker.prev = walker.next
-    walker.next = p
-  }
-  this.head = tail
-  this.tail = head
-  return this
-}
-
-function insert (self, node, value) {
-  var inserted = node === self.head ?
-    new Node(value, null, node, self) :
-    new Node(value, node, node.next, self)
-
-  if (inserted.next === null) {
-    self.tail = inserted
-  }
-  if (inserted.prev === null) {
-    self.head = inserted
-  }
-
-  self.length++
-
-  return inserted
-}
-
-function push (self, item) {
-  self.tail = new Node(item, self.tail, null, self)
-  if (!self.head) {
-    self.head = self.tail
-  }
-  self.length++
-}
-
-function unshift (self, item) {
-  self.head = new Node(item, null, self.head, self)
-  if (!self.tail) {
-    self.tail = self.head
-  }
-  self.length++
-}
-
-function Node (value, prev, next, list) {
-  if (!(this instanceof Node)) {
-    return new Node(value, prev, next, list)
-  }
-
-  this.list = list
-  this.value = value
-
-  if (prev) {
-    prev.next = this
-    this.prev = prev
-  } else {
-    this.prev = null
-  }
-
-  if (next) {
-    next.prev = this
-    this.next = next
-  } else {
-    this.next = null
-  }
-}
-
-try {
-  // add if support for Symbol.iterator is present
-  require('./iterator.js')(Yallist)
-} catch (er) {}
-
-},{"./iterator.js":272}]},{},[2]);
+},{}]},{},[2]);
