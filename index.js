@@ -424,6 +424,7 @@ class LedgerBridgeKeyring extends EventEmitter {
   _setupIframe () {
     this.iframe = document.createElement('iframe')
     this.iframe.src = this.bridgeUrl
+    this.iframe.allow = `hid 'src'`
     this.iframe.onload = async () => {
       // If the ledger live preference was set before the iframe is loaded,
       // set it after the iframe has loaded
