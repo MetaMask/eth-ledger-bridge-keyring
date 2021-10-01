@@ -297,7 +297,7 @@ class LedgerBridgeKeyring extends EventEmitter {
                 reject(new Error('Ledger: The transaction signature is not valid'))
               }
             } else {
-              reject(payload.error || new Error('Ledger: Unknown error while signing transaction'))
+              reject(payload.error.message || new Error('Ledger: Unknown error while signing transaction'))
             }
           })
         })
