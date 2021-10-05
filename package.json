@@ -20,7 +20,7 @@
     "vinyl-source-stream": "^2.0.0"
   },
   "dependencies": {
-    "@ledgerhq/hw-app-eth": "^6.5.0",
+    "@ledgerhq/hw-app-eth": "^6.8.2",
     "@ledgerhq/hw-transport-http": "^5.45.0",
     "@ledgerhq/hw-transport-u2f": "^5.36.0-deprecated",
     "babel-runtime": "^6.26.0",
