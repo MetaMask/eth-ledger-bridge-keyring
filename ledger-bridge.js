@@ -2,6 +2,7 @@
 require('buffer')
 
 import TransportU2F from '@ledgerhq/hw-transport-u2f'
+import TransportWebHID from '@ledgerhq/hw-transport-webhid'
 import LedgerEth from '@ledgerhq/hw-app-eth'
 import WebSocketTransport from '@ledgerhq/hw-transport-http/lib/WebSocketTransport'
 
@@ -16,6 +17,7 @@ export default class LedgerBridge {
     constructor () {
         this.addEventListeners()
         this.useLedgerLive = false
+        this.useWebHid = false
     }
 
     addEventListeners () {
@@ -39,6 +41,9 @@ export default class LedgerBridge {
                         break
                     case 'ledger-update-transport':
                         this.updateLedgerLivePreference(replyAction, params.useLedgerLive)
+                        break
+                    case 'ledger-use-webhid':
+                        this.updateWebHidPreference(replyAction, params.useWebHid)
                         break
                     case 'ledger-sign-typed-data':
                         this.signTypedData(replyAction, params.hdPath, params.domainSeparatorHex, params.hashStructMessageHex)
@@ -83,8 +88,10 @@ export default class LedgerBridge {
                     this.transport = await WebSocketTransport.open(BRIDGE_URL)
                     this.app = new LedgerEth(this.transport)
                 }
-            }
-            else {
+            } else if (this.useWebHid) {
+                this.transport = await TransportWebHID.create()
+                this.app = new LedgerEth(this.transport)
+            } else {
                 this.transport = await TransportU2F.create()
                 this.app = new LedgerEth(this.transport)
             }
@@ -96,6 +103,15 @@ export default class LedgerBridge {
 
     updateLedgerLivePreference (replyAction, useLedgerLive) {
         this.useLedgerLive = useLedgerLive
+        this.cleanUp()
+        this.sendMessageToExtension({
+            action: replyAction,
+            success: true,
+        })
+    }
+
+    updateWebHidPreference (replyAction, useWebHid) {
+        this.useWebHid = useWebHid
         this.cleanUp()
         this.sendMessageToExtension({
             action: replyAction,
