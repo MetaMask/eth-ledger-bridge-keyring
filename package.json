@@ -28,10 +28,6 @@
     "browserify": "^16.2.2",
     "buffer": "^5.2.0"
   },
-  "resolutions": {
-    "yargs-parser": "^20.2.9",
-    "glob-parent": "^6.0.2"
-  },
   "engines": {
     "npm": "^7.6.0"
   }
