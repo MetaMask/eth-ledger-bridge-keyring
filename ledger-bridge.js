@@ -40,10 +40,11 @@ export default class LedgerBridge {
                         this.cleanUp(replyAction)
                         break
                     case 'ledger-update-transport':
-                        this.updateLedgerLivePreference(replyAction, params.useLedgerLive)
-                        break
-                    case 'ledger-use-webhid':
-                        this.updateWebHidPreference(replyAction, params.useWebHid)
+                        if (params.useLedgerLive !== undefined) {
+                            this.updateLedgerLivePreference(replyAction, params.useLedgerLive)
+                        } else if (params.useWebHid !== undefined) {
+                            this.updateWebHidPreference(replyAction, params.useWebHid)
+                        }
                         break
                     case 'ledger-sign-typed-data':
                         this.signTypedData(replyAction, params.hdPath, params.domainSeparatorHex, params.hashStructMessageHex)
