@@ -72,10 +72,11 @@ var LedgerBridge = function () {
                             _this.cleanUp(replyAction);
                             break;
                         case 'ledger-update-transport':
-                            _this.updateLedgerLivePreference(replyAction, params.useLedgerLive);
-                            break;
-                        case 'ledger-use-webhid':
-                            _this.updateWebHidPreference(replyAction, params.useWebHid);
+                            if (params.useLedgerLive !== undefined) {
+                                _this.updateLedgerLivePreference(replyAction, params.useLedgerLive);
+                            } else if (params.useWebHid !== undefined) {
+                                _this.updateWebHidPreference(replyAction, params.useWebHid);
+                            }
                             break;
                         case 'ledger-sign-typed-data':
                             _this.signTypedData(replyAction, params.hdPath, params.domainSeparatorHex, params.hashStructMessageHex);
