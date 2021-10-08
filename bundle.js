@@ -72,10 +72,15 @@ var LedgerBridge = function () {
                             _this.cleanUp(replyAction);
                             break;
                         case 'ledger-update-transport':
-                            if (params.useLedgerLive !== undefined) {
-                                _this.updateLedgerLivePreference(replyAction, params.useLedgerLive);
-                            } else if (params.useWebHid !== undefined) {
-                                _this.updateWebHidPreference(replyAction, params.useWebHid);
+                            if (params.transportType === 'ledgerLive' || params.useLedgerLive) {
+                                _this.updateLedgerLivePreference(replyAction, true);
+                                _this.updateWebHidPreference(replyAction, false);
+                            } else if (params.transportType === 'webhid') {
+                                _this.updateLedgerLivePreference(replyAction, false);
+                                _this.updateWebHidPreference(replyAction, true);
+                            } else {
+                                _this.updateLedgerLivePreference(replyAction, false);
+                                _this.updateWebHidPreference(replyAction, false);
                             }
                             break;
                         case 'ledger-sign-typed-data':
