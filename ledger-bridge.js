@@ -40,10 +40,15 @@ export default class LedgerBridge {
                         this.cleanUp(replyAction)
                         break
                     case 'ledger-update-transport':
-                        if (params.useLedgerLive !== undefined) {
-                            this.updateLedgerLivePreference(replyAction, params.useLedgerLive)
-                        } else if (params.useWebHid !== undefined) {
-                            this.updateWebHidPreference(replyAction, params.useWebHid)
+                        if (params.transportType === 'ledgerLive' || params.useLedgerLive) {
+                            this.updateLedgerLivePreference(replyAction, true)
+                            this.updateWebHidPreference(replyAction, false)
+                        } else if (params.transportType === 'webhid') {
+                            this.updateLedgerLivePreference(replyAction, false)
+                            this.updateWebHidPreference(replyAction, true)
+                        } else {
+                           this.updateLedgerLivePreference(replyAction, false)
+                           this.updateWebHidPreference(replyAction, false) 
                         }
                         break
                     case 'ledger-sign-typed-data':
