@@ -432,7 +432,7 @@ class LedgerBridgeKeyring extends EventEmitter {
       if (this.delayedPromise) {
         try {
           const result = await this.updateTransportMethod(
-            this.delayedPromise.transportType
+            this.delayedPromise.transportType,
           )
           this.delayedPromise.resolve(result)
         } catch (e) {
