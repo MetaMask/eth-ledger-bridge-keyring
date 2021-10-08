@@ -191,23 +191,22 @@ class LedgerBridgeKeyring extends EventEmitter {
     delete this.accountDetails[ethUtil.toChecksumAddress(address)]
   }
 
-  updateTransportMethod (useLedgerLive = false, useWebHid = false) {
+  updateTransportMethod (transportType) {
     return new Promise((resolve, reject) => {
-      // If the iframe isn't loaded yet, let's store the desired useLedgerLive value and
+      // If the iframe isn't loaded yet, let's store the desired transportType value and
       // optimistically return a successful promise
       if (!this.iframeLoaded) {
         this.delayedPromise = {
           resolve,
           reject,
-          useLedgerLive,
-          useWebHid,
+          transportType,
         }
         return
       }
 
       this._sendMessage({
         action: 'ledger-update-transport',
-        params: { useLedgerLive, useWebHid },
+        params: { transportType },
       }, ({ success }) => {
         if (success) {
           resolve(true)
@@ -433,8 +432,7 @@ class LedgerBridgeKeyring extends EventEmitter {
       if (this.delayedPromise) {
         try {
           const result = await this.updateTransportMethod(
-            this.delayedPromise.useLedgerLive,
-            this.delayedPromise.useWebHid
+            this.delayedPromise.transportType
           )
           this.delayedPromise.resolve(result)
         } catch (e) {
