@@ -41,8 +41,7 @@ var LedgerBridge = function () {
         _classCallCheck(this, LedgerBridge);
 
         this.addEventListeners();
-        this.useLedgerLive = false;
-        this.useWebHid = false;
+        this.transportType = '';
     }
 
     _createClass(LedgerBridge, [{
@@ -73,14 +72,11 @@ var LedgerBridge = function () {
                             break;
                         case 'ledger-update-transport':
                             if (params.transportType === 'ledgerLive' || params.useLedgerLive) {
-                                _this.updateLedgerLivePreference(replyAction, true);
-                                _this.updateWebHidPreference(replyAction, false);
+                                _this.updateTransportTypePreference(replyAction, 'ledgerLive');
                             } else if (params.transportType === 'webhid') {
-                                _this.updateLedgerLivePreference(replyAction, false);
-                                _this.updateWebHidPreference(replyAction, true);
+                                _this.updateTransportTypePreference(replyAction, 'webhid');
                             } else {
-                                _this.updateLedgerLivePreference(replyAction, false);
-                                _this.updateWebHidPreference(replyAction, false);
+                                _this.updateTransportTypePreference(replyAction, '');
                             }
                             break;
                         case 'ledger-sign-typed-data':
@@ -121,7 +117,7 @@ var LedgerBridge = function () {
         key: 'makeApp',
         value: async function makeApp() {
             try {
-                if (this.useLedgerLive) {
+                if (this.transportType === 'ledgerLive') {
                     var reestablish = false;
                     try {
                         await _WebSocketTransport2.default.check(BRIDGE_URL);
@@ -134,7 +130,7 @@ var LedgerBridge = function () {
                         this.transport = await _WebSocketTransport2.default.open(BRIDGE_URL);
                         this.app = new _hwAppEth2.default(this.transport);
                     }
-                } else if (this.useWebHid) {
+                } else if (this.transportType === 'webhid') {
                     this.transport = await _hwTransportWebhid2.default.create();
                     this.app = new _hwAppEth2.default(this.transport);
                 } else {
@@ -147,19 +143,9 @@ var LedgerBridge = function () {
             }
         }
     }, {
-        key: 'updateLedgerLivePreference',
-        value: function updateLedgerLivePreference(replyAction, useLedgerLive) {
-            this.useLedgerLive = useLedgerLive;
-            this.cleanUp();
-            this.sendMessageToExtension({
-                action: replyAction,
-                success: true
-            });
-        }
-    }, {
-        key: 'updateWebHidPreference',
-        value: function updateWebHidPreference(replyAction, useWebHid) {
-            this.useWebHid = useWebHid;
+        key: 'updateTransportTypePreference',
+        value: function updateTransportTypePreference(replyAction, transportType) {
+            this.transportType = transportType;
             this.cleanUp();
             this.sendMessageToExtension({
                 action: replyAction,
