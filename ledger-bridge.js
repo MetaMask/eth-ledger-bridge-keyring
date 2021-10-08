@@ -16,7 +16,7 @@ const TRANSPORT_CHECK_LIMIT = 120
 export default class LedgerBridge {
     constructor () {
         this.addEventListeners()
-        this.transportType = ''
+        this.transportType = 'u2f'
     }
 
     addEventListeners () {
@@ -44,7 +44,7 @@ export default class LedgerBridge {
                         } else if (params.transportType === 'webhid') {
                             this.updateTransportTypePreference(replyAction, 'webhid')
                         } else {
-                           this.updateTransportTypePreference(replyAction, '')
+                           this.updateTransportTypePreference(replyAction, 'u2f')
                         }
                         break
                     case 'ledger-sign-typed-data':

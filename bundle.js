@@ -41,7 +41,7 @@ var LedgerBridge = function () {
         _classCallCheck(this, LedgerBridge);
 
         this.addEventListeners();
-        this.transportType = '';
+        this.transportType = 'u2f';
     }
 
     _createClass(LedgerBridge, [{
@@ -76,7 +76,7 @@ var LedgerBridge = function () {
                             } else if (params.transportType === 'webhid') {
                                 _this.updateTransportTypePreference(replyAction, 'webhid');
                             } else {
-                                _this.updateTransportTypePreference(replyAction, '');
+                                _this.updateTransportTypePreference(replyAction, 'u2f');
                             }
                             break;
                         case 'ledger-sign-typed-data':
