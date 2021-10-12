@@ -2,6 +2,7 @@
 require('buffer')
 
 import TransportU2F from '@ledgerhq/hw-transport-u2f'
+import TransportWebHID from '@ledgerhq/hw-transport-webhid'
 import LedgerEth from '@ledgerhq/hw-app-eth'
 import WebSocketTransport from '@ledgerhq/hw-transport-http/lib/WebSocketTransport'
 
@@ -15,7 +16,7 @@ const TRANSPORT_CHECK_LIMIT = 120
 export default class LedgerBridge {
     constructor () {
         this.addEventListeners()
-        this.useLedgerLive = false
+        this.transportType = 'u2f'
     }
 
     addEventListeners () {
@@ -38,7 +39,13 @@ export default class LedgerBridge {
                         this.cleanUp(replyAction)
                         break
                     case 'ledger-update-transport':
-                        this.updateLedgerLivePreference(replyAction, params.useLedgerLive)
+                        if (params.transportType === 'ledgerLive' || params.useLedgerLive) {
+                            this.updateTransportTypePreference(replyAction, 'ledgerLive')
+                        } else if (params.transportType === 'webhid') {
+                            this.updateTransportTypePreference(replyAction, 'webhid')
+                        } else {
+                           this.updateTransportTypePreference(replyAction, 'u2f')
+                        }
                         break
                     case 'ledger-sign-typed-data':
                         this.signTypedData(replyAction, params.hdPath, params.domainSeparatorHex, params.hashStructMessageHex)
@@ -70,7 +77,7 @@ export default class LedgerBridge {
 
     async makeApp () {
         try {
-            if (this.useLedgerLive) {
+            if (this.transportType === 'ledgerLive') {
                 let reestablish = false;
                 try {
                     await WebSocketTransport.check(BRIDGE_URL)
@@ -83,8 +90,10 @@ export default class LedgerBridge {
                     this.transport = await WebSocketTransport.open(BRIDGE_URL)
                     this.app = new LedgerEth(this.transport)
                 }
-            }
-            else {
+            } else if (this.transportType === 'webhid') {
+                this.transport = await TransportWebHID.create()
+                this.app = new LedgerEth(this.transport)
+            } else {
                 this.transport = await TransportU2F.create()
                 this.app = new LedgerEth(this.transport)
             }
@@ -94,8 +103,8 @@ export default class LedgerBridge {
         }
     }
 
-    updateLedgerLivePreference (replyAction, useLedgerLive) {
-        this.useLedgerLive = useLedgerLive
+    updateTransportTypePreference (replyAction, transportType) {
+        this.transportType = transportType
         this.cleanUp()
         this.sendMessageToExtension({
             action: replyAction,
