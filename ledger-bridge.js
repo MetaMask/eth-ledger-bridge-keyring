@@ -142,7 +142,7 @@ export default class LedgerBridge {
                 payload: { error: e },
             })
         } finally {
-            if (!this.useLedgerLive) {
+            if (this.transportType !== 'ledgerLive') {
                 this.cleanUp()
             }
         }
@@ -167,7 +167,7 @@ export default class LedgerBridge {
             })
 
         } finally {
-            if (!this.useLedgerLive) {
+            if (this.transportType !== 'ledgerLive') {
                 this.cleanUp()
             }
         }
@@ -192,7 +192,7 @@ export default class LedgerBridge {
             })
 
         } finally {
-            if (!this.useLedgerLive) {
+            if (this.transportType !== 'ledgerLive') {
                 this.cleanUp()
             }
         }

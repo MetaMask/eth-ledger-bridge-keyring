@@ -185,7 +185,7 @@ var LedgerBridge = function () {
                     payload: { error: e }
                 });
             } finally {
-                if (!this.useLedgerLive) {
+                if (this.transportType !== 'ledgerLive') {
                     this.cleanUp();
                 }
             }
@@ -209,7 +209,7 @@ var LedgerBridge = function () {
                     payload: { error: e }
                 });
             } finally {
-                if (!this.useLedgerLive) {
+                if (this.transportType !== 'ledgerLive') {
                     this.cleanUp();
                 }
             }
@@ -234,7 +234,7 @@ var LedgerBridge = function () {
                     payload: { error: e }
                 });
             } finally {
-                if (!this.useLedgerLive) {
+                if (this.transportType !== 'ledgerLive') {
                     this.cleanUp();
                 }
             }
