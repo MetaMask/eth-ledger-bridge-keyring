@@ -35,6 +35,7 @@ class LedgerBridgeKeyring extends EventEmitter {
     this.deserialize(opts)
 
     this.iframeLoaded = false
+    this.transportType = '';
     this._setupIframe()
   }
 
@@ -192,6 +193,7 @@ class LedgerBridgeKeyring extends EventEmitter {
   }
 
   updateTransportMethod (transportType) {
+    this.transportType = transportType;
     return new Promise((resolve, reject) => {
       // If the iframe isn't loaded yet, let's store the desired transportType value and
       // optimistically return a successful promise
@@ -419,6 +421,10 @@ class LedgerBridgeKeyring extends EventEmitter {
     this.hdk = new HDKey()
   }
 
+  reloadIframe () {
+    this.iframe.src = this.iframe.src;
+  }
+
   /* PRIVATE METHODS */
 
   _setupIframe () {
@@ -440,6 +446,10 @@ class LedgerBridgeKeyring extends EventEmitter {
         } finally {
           delete this.delayedPromise
         }
+      } else if (this.transportType) {
+        this.updateTransportMethod(
+          this.transportType,
+        )
       }
     }
     document.head.appendChild(this.iframe)
