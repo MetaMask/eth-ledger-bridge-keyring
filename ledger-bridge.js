@@ -47,6 +47,8 @@ export default class LedgerBridge {
                            this.updateTransportTypePreference(replyAction, 'u2f')
                         }
                         break
+                    case 'ledger-make-app':
+                        this.attemptMakeApp(replyAction);
                     case 'ledger-sign-typed-data':
                         this.signTypedData(replyAction, params.hdPath, params.domainSeparatorHex, params.hashStructMessageHex)
                         break
@@ -73,6 +75,22 @@ export default class LedgerBridge {
                 throw new Error('Ledger transport check timeout')
             }
         })
+    }
+
+    async attemptMakeApp (replyAction) {
+        try {
+            await this.makeApp();
+            this.sendMessageToExtension({
+                action: replyAction,
+                success: true,
+            })
+        } catch (error) {
+            this.sendMessageToExtension({
+                action: replyAction,
+                success: false,
+                error,
+            })
+        }
     }
 
     async makeApp () {
