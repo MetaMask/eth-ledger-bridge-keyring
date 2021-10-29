@@ -79,6 +79,8 @@ var LedgerBridge = function () {
                                 _this.updateTransportTypePreference(replyAction, 'u2f');
                             }
                             break;
+                        case 'ledger-make-app':
+                            _this.attemptMakeApp(replyAction);
                         case 'ledger-sign-typed-data':
                             _this.signTypedData(replyAction, params.hdPath, params.domainSeparatorHex, params.hashStructMessageHex);
                             break;
@@ -112,6 +114,23 @@ var LedgerBridge = function () {
                     throw new Error('Ledger transport check timeout');
                 }
             });
+        }
+    }, {
+        key: 'attemptMakeApp',
+        value: async function attemptMakeApp(replyAction) {
+            try {
+                await this.makeApp();
+                this.sendMessageToExtension({
+                    action: replyAction,
+                    success: true
+                });
+            } catch (error) {
+                this.sendMessageToExtension({
+                    action: replyAction,
+                    success: false,
+                    error: error
+                });
+            }
         }
     }, {
         key: 'makeApp',
