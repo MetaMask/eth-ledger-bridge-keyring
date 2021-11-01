@@ -49,6 +49,7 @@ export default class LedgerBridge {
                         break
                     case 'ledger-make-app':
                         this.attemptMakeApp(replyAction);
+                        break
                     case 'ledger-sign-typed-data':
                         this.signTypedData(replyAction, params.hdPath, params.domainSeparatorHex, params.hashStructMessageHex)
                         break

@@ -81,6 +81,7 @@ var LedgerBridge = function () {
                             break;
                         case 'ledger-make-app':
                             _this.attemptMakeApp(replyAction);
+                            break;
                         case 'ledger-sign-typed-data':
                             _this.signTypedData(replyAction, params.hdPath, params.domainSeparatorHex, params.hashStructMessageHex);
                             break;
