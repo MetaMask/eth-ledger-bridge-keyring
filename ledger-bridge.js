@@ -110,6 +110,12 @@ export default class LedgerBridge {
                     this.app = new LedgerEth(this.transport)
                 }
             } else if (this.transportType === 'webhid') {
+                const device = this.transport && this.transport.device
+                const nameOfDeviceType = device && device.constructor.name
+                const deviceIsOpen = device && device.opened
+                if (this.app && nameOfDeviceType === 'HIDDevice' && deviceIsOpen) {
+                    return;
+                }
                 this.transport = await TransportWebHID.create()
                 this.app = new LedgerEth(this.transport)
             } else {

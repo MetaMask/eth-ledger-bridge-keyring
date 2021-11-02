@@ -151,6 +151,12 @@ var LedgerBridge = function () {
                         this.app = new _hwAppEth2.default(this.transport);
                     }
                 } else if (this.transportType === 'webhid') {
+                    var device = this.transport && this.transport.device;
+                    var nameOfDeviceType = device && device.constructor.name;
+                    var deviceIsOpen = device && device.opened;
+                    if (this.app && nameOfDeviceType === 'HIDDevice' && deviceIsOpen) {
+                        return;
+                    }
                     this.transport = await _hwTransportWebhid2.default.create();
                     this.app = new _hwAppEth2.default(this.transport);
                 } else {
