@@ -191,6 +191,20 @@ class LedgerBridgeKeyring extends EventEmitter {
     delete this.accountDetails[ethUtil.toChecksumAddress(address)]
   }
 
+  attemptMakeApp () {
+    return new Promise((resolve, reject) => {
+      this._sendMessage({
+        action: 'ledger-make-app',
+      }, ({ success, error }) => {
+        if (success) {
+          resolve(true)
+        } else {
+          reject(error)
+        }
+      })
+    })
+  }
+
   updateTransportMethod (transportType) {
     return new Promise((resolve, reject) => {
       // If the iframe isn't loaded yet, let's store the desired transportType value and
