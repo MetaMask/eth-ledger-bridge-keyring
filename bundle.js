@@ -120,7 +120,7 @@ var LedgerBridge = function () {
         key: 'attemptMakeApp',
         value: async function attemptMakeApp(replyAction) {
             try {
-                await this.makeApp();
+                await this.makeApp({ openOnly: true });
                 await this.cleanUp();
                 this.sendMessageToExtension({
                     action: replyAction,
@@ -137,7 +137,8 @@ var LedgerBridge = function () {
         }
     }, {
         key: 'makeApp',
-        value: async function makeApp() {
+        value: async function makeApp(config) {
+            config = config || {};
             try {
                 if (this.transportType === 'ledgerLive') {
                     var reestablish = false;
@@ -159,7 +160,7 @@ var LedgerBridge = function () {
                     if (this.app && nameOfDeviceType === 'HIDDevice' && deviceIsOpen) {
                         return;
                     }
-                    this.transport = await _hwTransportWebhid2.default.create();
+                    this.transport = config.openOnly ? await _hwTransportWebhid2.default.openConnected() : await _hwTransportWebhid2.default.create();
                     this.app = new _hwAppEth2.default(this.transport);
                 } else {
                     this.transport = await _hwTransportU2f2.default.create();

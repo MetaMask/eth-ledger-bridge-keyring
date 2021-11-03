@@ -80,7 +80,7 @@ export default class LedgerBridge {
 
     async attemptMakeApp (replyAction) {
         try {
-            await this.makeApp();
+            await this.makeApp({ openOnly: true });
             await this.cleanUp();
             this.sendMessageToExtension({
                 action: replyAction,
@@ -96,7 +96,8 @@ export default class LedgerBridge {
         }
     }
 
-    async makeApp () {
+    async makeApp (config) {
+        config = config || {};
         try {
             if (this.transportType === 'ledgerLive') {
                 let reestablish = false;
@@ -118,7 +119,9 @@ export default class LedgerBridge {
                 if (this.app && nameOfDeviceType === 'HIDDevice' && deviceIsOpen) {
                     return;
                 }
-                this.transport = await TransportWebHID.create()
+                this.transport = config.openOnly
+                ? await TransportWebHID.openConnected()
+                : await TransportWebHID.create()
                 this.app = new LedgerEth(this.transport)
             } else {
                 this.transport = await TransportU2F.create()
