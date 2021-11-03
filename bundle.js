@@ -121,11 +121,13 @@ var LedgerBridge = function () {
         value: async function attemptMakeApp(replyAction) {
             try {
                 await this.makeApp();
+                await this.cleanUp();
                 this.sendMessageToExtension({
                     action: replyAction,
                     success: true
                 });
             } catch (error) {
+                await this.cleanUp();
                 this.sendMessageToExtension({
                     action: replyAction,
                     success: false,
@@ -180,10 +182,11 @@ var LedgerBridge = function () {
         }
     }, {
         key: 'cleanUp',
-        value: function cleanUp(replyAction) {
+        value: async function cleanUp(replyAction) {
             this.app = null;
             if (this.transport) {
-                this.transport.close();
+                await this.transport.close();
+                this.transport = null;
             }
             if (replyAction) {
                 this.sendMessageToExtension({

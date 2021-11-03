@@ -81,11 +81,13 @@ export default class LedgerBridge {
     async attemptMakeApp (replyAction) {
         try {
             await this.makeApp();
+            await this.cleanUp();
             this.sendMessageToExtension({
                 action: replyAction,
                 success: true,
             })
         } catch (error) {
+            await this.cleanUp();
             this.sendMessageToExtension({
                 action: replyAction,
                 success: false,
@@ -137,10 +139,11 @@ export default class LedgerBridge {
         })
     }
 
-    cleanUp (replyAction) {
+    async cleanUp (replyAction) {
         this.app = null
         if (this.transport) {
-            this.transport.close()
+            await this.transport.close()
+            this.transport = null
         }
         if (replyAction) {
             this.sendMessageToExtension({
