@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.9.0]
+## [0.10.0]
 ### Added
 - Add a new `attemptMakeApp` method which allows clients to attempt a creation of the Ledger transport for the purposes of detecting/catching potential connection errors.  ([#126](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/126))
 
