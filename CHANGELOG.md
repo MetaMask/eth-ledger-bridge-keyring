@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ## [0.9.0]
+### Added
+- Add a new `attemptMakeApp` method which allows clients to attempt a creation of the Ledger transport for the purposes of detecting/catching potential connection errors.  ([#126](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/126))
+
+### Changed
+- Update `hw-eth-app` dependency to `^6.12.2`. This fixes a bug in the Ledger eth-app signing code that could cause failures when trying to sign EIP-1559 transactions on networks with high chain ids.  ([#127](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/127))
+
+## [0.9.0]
 ### Changed
 - `updateTransportMethod` no longer defaults its parameter to false, and now names the param sent with the `'ledger-update-transport'` message `transportType`. This better is to support the use of an enum, instead of a boolean, for specifying transport preferences.  ([#114](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/114))
 
