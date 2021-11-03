@@ -79,6 +79,9 @@ var LedgerBridge = function () {
                                 _this.updateTransportTypePreference(replyAction, 'u2f');
                             }
                             break;
+                        case 'ledger-make-app':
+                            _this.attemptMakeApp(replyAction);
+                            break;
                         case 'ledger-sign-typed-data':
                             _this.signTypedData(replyAction, params.hdPath, params.domainSeparatorHex, params.hashStructMessageHex);
                             break;
@@ -114,8 +117,29 @@ var LedgerBridge = function () {
             });
         }
     }, {
+        key: 'attemptMakeApp',
+        value: async function attemptMakeApp(replyAction) {
+            try {
+                await this.makeApp({ openOnly: true });
+                await this.cleanUp();
+                this.sendMessageToExtension({
+                    action: replyAction,
+                    success: true
+                });
+            } catch (error) {
+                await this.cleanUp();
+                this.sendMessageToExtension({
+                    action: replyAction,
+                    success: false,
+                    error: error
+                });
+            }
+        }
+    }, {
         key: 'makeApp',
         value: async function makeApp() {
+            var config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
             try {
                 if (this.transportType === 'ledgerLive') {
                     var reestablish = false;
@@ -131,7 +155,13 @@ var LedgerBridge = function () {
                         this.app = new _hwAppEth2.default(this.transport);
                     }
                 } else if (this.transportType === 'webhid') {
-                    this.transport = await _hwTransportWebhid2.default.create();
+                    var device = this.transport && this.transport.device;
+                    var nameOfDeviceType = device && device.constructor.name;
+                    var deviceIsOpen = device && device.opened;
+                    if (this.app && nameOfDeviceType === 'HIDDevice' && deviceIsOpen) {
+                        return;
+                    }
+                    this.transport = config.openOnly ? await _hwTransportWebhid2.default.openConnected() : await _hwTransportWebhid2.default.create();
                     this.app = new _hwAppEth2.default(this.transport);
                 } else {
                     this.transport = await _hwTransportU2f2.default.create();
@@ -154,10 +184,11 @@ var LedgerBridge = function () {
         }
     }, {
         key: 'cleanUp',
-        value: function cleanUp(replyAction) {
+        value: async function cleanUp(replyAction) {
             this.app = null;
             if (this.transport) {
-                this.transport.close();
+                await this.transport.close();
+                this.transport = null;
             }
             if (replyAction) {
                 this.sendMessageToExtension({

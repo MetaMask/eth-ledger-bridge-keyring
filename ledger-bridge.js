@@ -47,6 +47,9 @@ export default class LedgerBridge {
                            this.updateTransportTypePreference(replyAction, 'u2f')
                         }
                         break
+                    case 'ledger-make-app':
+                        this.attemptMakeApp(replyAction);
+                        break
                     case 'ledger-sign-typed-data':
                         this.signTypedData(replyAction, params.hdPath, params.domainSeparatorHex, params.hashStructMessageHex)
                         break
@@ -75,7 +78,25 @@ export default class LedgerBridge {
         })
     }
 
-    async makeApp () {
+    async attemptMakeApp (replyAction) {
+        try {
+            await this.makeApp({ openOnly: true });
+            await this.cleanUp();
+            this.sendMessageToExtension({
+                action: replyAction,
+                success: true,
+            })
+        } catch (error) {
+            await this.cleanUp();
+            this.sendMessageToExtension({
+                action: replyAction,
+                success: false,
+                error,
+            })
+        }
+    }
+
+    async makeApp (config = {}) {
         try {
             if (this.transportType === 'ledgerLive') {
                 let reestablish = false;
@@ -91,7 +112,15 @@ export default class LedgerBridge {
                     this.app = new LedgerEth(this.transport)
                 }
             } else if (this.transportType === 'webhid') {
-                this.transport = await TransportWebHID.create()
+                const device = this.transport && this.transport.device
+                const nameOfDeviceType = device && device.constructor.name
+                const deviceIsOpen = device && device.opened
+                if (this.app && nameOfDeviceType === 'HIDDevice' && deviceIsOpen) {
+                    return;
+                }
+                this.transport = config.openOnly
+                ? await TransportWebHID.openConnected()
+                : await TransportWebHID.create()
                 this.app = new LedgerEth(this.transport)
             } else {
                 this.transport = await TransportU2F.create()
@@ -112,10 +141,11 @@ export default class LedgerBridge {
         })
     }
 
-    cleanUp (replyAction) {
+    async cleanUp (replyAction) {
         this.app = null
         if (this.transport) {
-            this.transport.close()
+            await this.transport.close()
+            this.transport = null
         }
         if (replyAction) {
             this.sendMessageToExtension({
