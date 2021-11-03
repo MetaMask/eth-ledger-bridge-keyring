@@ -137,8 +137,9 @@ var LedgerBridge = function () {
         }
     }, {
         key: 'makeApp',
-        value: async function makeApp(config) {
-            config = config || {};
+        value: async function makeApp() {
+            var config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
             try {
                 if (this.transportType === 'ledgerLive') {
                     var reestablish = false;

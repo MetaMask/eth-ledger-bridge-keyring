@@ -96,8 +96,7 @@ export default class LedgerBridge {
         }
     }
 
-    async makeApp (config) {
-        config = config || {};
+    async makeApp (config = {}) {
         try {
             if (this.transportType === 'ledgerLive') {
                 let reestablish = false;
