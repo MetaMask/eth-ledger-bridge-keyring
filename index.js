@@ -32,6 +32,7 @@ class LedgerBridgeKeyring extends EventEmitter {
     this.iframe = null
     this.network = 'mainnet'
     this.implementFullBIP44 = false
+    this.msgQueue = []
     this.deserialize(opts)
 
     this.iframeLoaded = false
@@ -455,6 +456,9 @@ class LedgerBridgeKeyring extends EventEmitter {
           delete this.delayedPromise
         }
       }
+      if (this.msgQueue.length > 0) {
+        this.msgQueue.forEach((fn) => fn())
+      }
     }
     document.head.appendChild(this.iframe)
   }
@@ -467,7 +471,13 @@ class LedgerBridgeKeyring extends EventEmitter {
 
   _sendMessage (msg, cb) {
     msg.target = 'LEDGER-IFRAME'
-    this.iframe.contentWindow.postMessage(msg, '*')
+    if (!this.iframeLoaded) {
+      this.msgQueue.push(() => {
+        this.iframe.contentWindow.postMessage(msg, '*');
+      });
+    } else {
+      this.iframe.contentWindow.postMessage(msg, '*');
+    }
     const eventListener = ({ origin, data }) => {
       if (origin !== this._getOrigin()) {
         return false
