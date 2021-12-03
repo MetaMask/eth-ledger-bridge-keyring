@@ -4,6 +4,10 @@
     <title>MetaMask &lt; = &gt; Ledger Bridge</title>
   </head>
   <body>
-    <script src="./bundle.js" type="text/javascript"></script>
+    <script type="text/javascript">
+      const script = document.createElement('script');
+      script.src = './bundle.js?' + Date.now();
+      document.body.appendChild(script);
+    </script>
   </body>
 </html>

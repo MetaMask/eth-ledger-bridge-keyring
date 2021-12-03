@@ -128,6 +128,13 @@ export default class LedgerBridge {
                 this.transport = await TransportU2F.create()
                 this.app = new LedgerEth(this.transport)
             }
+
+            if(this.transport) {
+                this.onConnect()
+                this.transport.on('disconnect', (event) => {
+                    this.onDisconnect(event);
+                })
+            }
         } catch (e) {
             console.log('LEDGER:::CREATE APP ERROR', e)
             throw e
@@ -149,6 +156,9 @@ export default class LedgerBridge {
         if (this.transport) {
             await this.transport.close()
             this.transport = null
+        }
+        if (this.pollingInterval) {
+            clearInterval(this.pollingInterval)
         }
         if (replyAction) {
             this.sendMessageToExtension({
@@ -261,6 +271,43 @@ export default class LedgerBridge {
         } finally {
             this.cleanUp()
         }
+    }
+
+    onConnect() {
+        console.log("[gh-pages] Ledger device connected!")
+
+        this.pollingInterval = setInterval(async () => {
+            // Per the Ledger team, this code tells us that the 
+            // correct application is opened
+            // https://github.com/LedgerHQ/ledger-live-common/blob/master/src/hw/getAppAndVersion.ts
+
+            console.log("[gh-pages] POLLING INTERVAL STARTED!")
+
+            console.log("[gh-pages] ABOUT TO HIT LEDGER FOR PULSE!")
+            const result = await this.transport.send(0xb0, 0x01, 0x00, 0x00);
+            console.log("[gh-pages] LEDGER PULSE RETURNED!")
+
+            const [, appReadyInt] = result;
+            const correctAppOpen = Boolean(appReadyInt) === 1;
+
+            console.log("[gh-pages] Ledger onConnect poll: ", result, appReadyInt, correctAppOpen);
+
+            this.sendMessageToExtension({
+                action: 'ledger-connection-change',
+                success: true,
+                payload: { connected: correctAppOpen }
+            })
+        }, 5000);
+    }
+
+    onDisconnect(event) {
+        console.log("[gh-pages] Ledger disconnect event!", event)
+        this.cleanUp();
+        this.sendMessageToExtension({
+            action: 'ledger-connection-change',
+            success: true,
+            payload: { connected: false }
+        })
     }
 
     ledgerErrToMessage (err) {

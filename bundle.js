@@ -5,6 +5,8 @@ Object.defineProperty(exports, "__esModule", {
     value: true
 });
 
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _hwTransportU2f = require('@ledgerhq/hw-transport-u2f');
@@ -141,6 +143,8 @@ var LedgerBridge = function () {
     }, {
         key: 'makeApp',
         value: async function makeApp() {
+            var _this3 = this;
+
             var config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
             try {
@@ -170,6 +174,13 @@ var LedgerBridge = function () {
                     this.transport = await _hwTransportU2f2.default.create();
                     this.app = new _hwAppEth2.default(this.transport);
                 }
+
+                if (this.transport) {
+                    this.onConnect();
+                    this.transport.on('disconnect', function (event) {
+                        _this3.onDisconnect(event);
+                    });
+                }
             } catch (e) {
                 console.log('LEDGER:::CREATE APP ERROR', e);
                 throw e;
@@ -193,6 +204,9 @@ var LedgerBridge = function () {
             if (this.transport) {
                 await this.transport.close();
                 this.transport = null;
+            }
+            if (this.pollingInterval) {
+                clearInterval(this.pollingInterval);
             }
             if (replyAction) {
                 this.sendMessageToExtension({
@@ -305,6 +319,49 @@ var LedgerBridge = function () {
             } finally {
                 this.cleanUp();
             }
+        }
+    }, {
+        key: 'onConnect',
+        value: function onConnect() {
+            var _this4 = this;
+
+            console.log("[gh-pages] Ledger device connected!");
+
+            this.pollingInterval = setInterval(async function () {
+                // Per the Ledger team, this code tells us that the 
+                // correct application is opened
+                // https://github.com/LedgerHQ/ledger-live-common/blob/master/src/hw/getAppAndVersion.ts
+
+                console.log("[gh-pages] POLLING INTERVAL STARTED!");
+
+                console.log("[gh-pages] ABOUT TO HIT LEDGER FOR PULSE!");
+                var result = await _this4.transport.send(0xb0, 0x01, 0x00, 0x00);
+                console.log("[gh-pages] LEDGER PULSE RETURNED!");
+
+                var _result = _slicedToArray(result, 2),
+                    appReadyInt = _result[1];
+
+                var correctAppOpen = Boolean(appReadyInt) === 1;
+
+                console.log("[gh-pages] Ledger onConnect poll: ", result, appReadyInt, correctAppOpen);
+
+                _this4.sendMessageToExtension({
+                    action: 'ledger-connection-change',
+                    success: true,
+                    payload: { connected: correctAppOpen }
+                });
+            }, 5000);
+        }
+    }, {
+        key: 'onDisconnect',
+        value: function onDisconnect(event) {
+            console.log("[gh-pages] Ledger disconnect event!", event);
+            this.cleanUp();
+            this.sendMessageToExtension({
+                action: 'ledger-connection-change',
+                success: true,
+                payload: { connected: false }
+            });
         }
     }, {
         key: 'ledgerErrToMessage',
