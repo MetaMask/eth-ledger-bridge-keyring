@@ -493,9 +493,6 @@ class LedgerBridgeKeyring extends EventEmitter {
       return undefined
     }
     window.addEventListener('message', eventListener)
-    window.addEventListener('beforeunload', () => {
-      window.removeEventListener('message', eventListener)
-    })
   }
 
   async __getPage (increment) {
