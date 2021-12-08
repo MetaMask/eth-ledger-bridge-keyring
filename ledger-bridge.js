@@ -23,6 +23,7 @@ export default class LedgerBridge {
         window.addEventListener('message', async e => {
             if (e && e.data && e.data.target === 'LEDGER-IFRAME') {
                 const { action, params, messageId } = e.data
+                const replyAction = `${action}-reply`
 
                 switch (action) {
                     case 'ledger-unlock':

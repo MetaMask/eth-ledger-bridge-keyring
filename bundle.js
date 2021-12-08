@@ -56,6 +56,7 @@ var LedgerBridge = function () {
                         params = _e$data.params,
                         messageId = _e$data.messageId;
 
+                    var replyAction = action + '-reply';
 
                     switch (action) {
                         case 'ledger-unlock':
