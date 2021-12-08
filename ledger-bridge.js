@@ -26,31 +26,31 @@ export default class LedgerBridge {
 
                 switch (action) {
                     case 'ledger-unlock':
-                        this.unlock(replyAction, messageId, params.hdPath)
+                        this.unlock(replyAction, params.hdPath, messageId)
                         break
                     case 'ledger-sign-transaction':
-                        this.signTransaction(replyAction, messageId, params.hdPath, params.tx)
+                        this.signTransaction(replyAction, params.hdPath, params.tx, messageId)
                         break
                     case 'ledger-sign-personal-message':
-                        this.signPersonalMessage(replyAction, messageId, params.hdPath, params.message)
+                        this.signPersonalMessage(replyAction, params.hdPath, params.message, messageId)
                         break
                     case 'ledger-close-bridge':
                         this.cleanUp(replyAction, messageId)
                         break
                     case 'ledger-update-transport':
                         if (params.transportType === 'ledgerLive' || params.useLedgerLive) {
-                            this.updateTransportTypePreference(replyAction, messageId, 'ledgerLive')
+                            this.updateTransportTypePreference(replyAction, 'ledgerLive', messageId)
                         } else if (params.transportType === 'webhid') {
-                            this.updateTransportTypePreference(replyAction, messageId, 'webhid')
+                            this.updateTransportTypePreference(replyAction, 'webhid', messageId)
                         } else {
-                           this.updateTransportTypePreference(replyAction, messageId, 'u2f')
+                           this.updateTransportTypePreference(replyAction, 'u2f', messageId)
                         }
                         break
                     case 'ledger-make-app':
                         this.attemptMakeApp(replyAction, messageId);
                         break
                     case 'ledger-sign-typed-data':
-                        this.signTypedData(replyAction, messageId, params.hdPath, params.domainSeparatorHex, params.hashStructMessageHex)
+                        this.signTypedData(replyAction, params.hdPath, params.domainSeparatorHex, params.hashStructMessageHex, messageId)
                         break
                 }
             }
@@ -133,7 +133,7 @@ export default class LedgerBridge {
         }
     }
 
-    updateTransportTypePreference (replyAction, messageId, transportType) {
+    updateTransportTypePreference (replyAction, transportType, messageId) {
         this.transportType = transportType
         this.cleanUp()
         this.sendMessageToExtension({
@@ -158,7 +158,7 @@ export default class LedgerBridge {
         }
     }
 
-    async unlock (replyAction, messageId, hdPath) {
+    async unlock (replyAction, hdPath, messageId) {
         try {
             await this.makeApp()
             const res = await this.app.getAddress(hdPath, false, true)
@@ -183,7 +183,7 @@ export default class LedgerBridge {
         }
     }
 
-    async signTransaction (replyAction, messageId, hdPath, tx) {
+    async signTransaction (replyAction, hdPath, tx, messageId) {
         try {
             await this.makeApp()
             const res = await this.app.signTransaction(hdPath, tx)
@@ -210,7 +210,7 @@ export default class LedgerBridge {
         }
     }
 
-    async signPersonalMessage (replyAction, messageId, hdPath, message) {
+    async signPersonalMessage (replyAction, hdPath, message, messageId) {
         try {
             await this.makeApp()
 
@@ -237,7 +237,7 @@ export default class LedgerBridge {
         }
     }
 
-    async signTypedData (replyAction, messageId, hdPath, domainSeparatorHex, hashStructMessageHex) {
+    async signTypedData (replyAction, hdPath, domainSeparatorHex, hashStructMessageHex, messageId) {
         try {
             await this.makeApp()
             const res = await this.app.signEIP712HashedMessage(hdPath, domainSeparatorHex, hashStructMessageHex)

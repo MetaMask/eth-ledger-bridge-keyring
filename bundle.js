@@ -59,31 +59,31 @@ var LedgerBridge = function () {
 
                     switch (action) {
                         case 'ledger-unlock':
-                            _this.unlock(replyAction, messageId, params.hdPath);
+                            _this.unlock(replyAction, params.hdPath, messageId);
                             break;
                         case 'ledger-sign-transaction':
-                            _this.signTransaction(replyAction, messageId, params.hdPath, params.tx);
+                            _this.signTransaction(replyAction, params.hdPath, params.tx, messageId);
                             break;
                         case 'ledger-sign-personal-message':
-                            _this.signPersonalMessage(replyAction, messageId, params.hdPath, params.message);
+                            _this.signPersonalMessage(replyAction, params.hdPath, params.message, messageId);
                             break;
                         case 'ledger-close-bridge':
                             _this.cleanUp(replyAction, messageId);
                             break;
                         case 'ledger-update-transport':
                             if (params.transportType === 'ledgerLive' || params.useLedgerLive) {
-                                _this.updateTransportTypePreference(replyAction, messageId, 'ledgerLive');
+                                _this.updateTransportTypePreference(replyAction, 'ledgerLive', messageId);
                             } else if (params.transportType === 'webhid') {
-                                _this.updateTransportTypePreference(replyAction, messageId, 'webhid');
+                                _this.updateTransportTypePreference(replyAction, 'webhid', messageId);
                             } else {
-                                _this.updateTransportTypePreference(replyAction, messageId, 'u2f');
+                                _this.updateTransportTypePreference(replyAction, 'u2f', messageId);
                             }
                             break;
                         case 'ledger-make-app':
                             _this.attemptMakeApp(replyAction, messageId);
                             break;
                         case 'ledger-sign-typed-data':
-                            _this.signTypedData(replyAction, messageId, params.hdPath, params.domainSeparatorHex, params.hashStructMessageHex);
+                            _this.signTypedData(replyAction, params.hdPath, params.domainSeparatorHex, params.hashStructMessageHex, messageId);
                             break;
                     }
                 }
@@ -176,7 +176,7 @@ var LedgerBridge = function () {
         }
     }, {
         key: 'updateTransportTypePreference',
-        value: function updateTransportTypePreference(replyAction, messageId, transportType) {
+        value: function updateTransportTypePreference(replyAction, transportType, messageId) {
             this.transportType = transportType;
             this.cleanUp();
             this.sendMessageToExtension({
@@ -203,7 +203,7 @@ var LedgerBridge = function () {
         }
     }, {
         key: 'unlock',
-        value: async function unlock(replyAction, messageId, hdPath) {
+        value: async function unlock(replyAction, hdPath, messageId) {
             try {
                 await this.makeApp();
                 var res = await this.app.getAddress(hdPath, false, true);
@@ -229,7 +229,7 @@ var LedgerBridge = function () {
         }
     }, {
         key: 'signTransaction',
-        value: async function signTransaction(replyAction, messageId, hdPath, tx) {
+        value: async function signTransaction(replyAction, hdPath, tx, messageId) {
             try {
                 await this.makeApp();
                 var res = await this.app.signTransaction(hdPath, tx);
@@ -255,7 +255,7 @@ var LedgerBridge = function () {
         }
     }, {
         key: 'signPersonalMessage',
-        value: async function signPersonalMessage(replyAction, messageId, hdPath, message) {
+        value: async function signPersonalMessage(replyAction, hdPath, message, messageId) {
             try {
                 await this.makeApp();
 
@@ -282,7 +282,7 @@ var LedgerBridge = function () {
         }
     }, {
         key: 'signTypedData',
-        value: async function signTypedData(replyAction, messageId, hdPath, domainSeparatorHex, hashStructMessageHex) {
+        value: async function signTypedData(replyAction, hdPath, domainSeparatorHex, hashStructMessageHex, messageId) {
             try {
                 await this.makeApp();
                 var res = await this.app.signEIP712HashedMessage(hdPath, domainSeparatorHex, hashStructMessageHex);
