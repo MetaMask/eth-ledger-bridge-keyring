@@ -337,7 +337,7 @@ class LedgerBridgeKeyring extends EventEmitter {
           },
           ({ success, payload }) => {
             if (success) {
-              let v = payload.v - 27
+              let v = payload.v
               v = v.toString(16)
               if (v.length < 2) {
                 v = `0${v}`
@@ -402,7 +402,7 @@ class LedgerBridgeKeyring extends EventEmitter {
     })
 
     if (success) {
-      let v = payload.v - 27
+      let v = payload.v
       v = v.toString(16)
       if (v.length < 2) {
         v = `0${v}`
