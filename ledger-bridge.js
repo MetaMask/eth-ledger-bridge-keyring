@@ -81,14 +81,14 @@ export default class LedgerBridge {
     async attemptMakeApp (replyAction, messageId) {
         try {
             await this.makeApp({ openOnly: true });
-            await this.cleanUp();
+            //await this.cleanUp();
             this.sendMessageToExtension({
                 action: replyAction,
                 success: true,
                 messageId,
             })
         } catch (error) {
-            await this.cleanUp();
+            //await this.cleanUp();
             this.sendMessageToExtension({
                 action: replyAction,
                 success: false,
@@ -284,7 +284,8 @@ export default class LedgerBridge {
             console.log("[gh-pages] POLLING INTERVAL STARTED!")
 
             console.log("[gh-pages] ABOUT TO HIT LEDGER FOR PULSE!")
-            const result = await this.transport.send(0xb0, 0x01, 0x00, 0x00);
+            const result = await this.
+            transport.send(0xb0, 0x01, 0x00, 0x00);
             console.log("[gh-pages] LEDGER PULSE RETURNED!")
 
             const [, appReadyInt] = result;
