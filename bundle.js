@@ -1,11 +1,10 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+(function (Buffer){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-
-var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
@@ -37,6 +36,9 @@ var BRIDGE_URL = 'ws://localhost:8435';
 // Number of seconds to poll for Ledger Live and Ethereum app opening
 var TRANSPORT_CHECK_DELAY = 1000;
 var TRANSPORT_CHECK_LIMIT = 120;
+
+// Connection hearbeat polling
+var HEARTBEAT_POLLING_INTERVAL = 5000;
 
 var LedgerBridge = function () {
     function LedgerBridge() {
@@ -124,14 +126,14 @@ var LedgerBridge = function () {
         value: async function attemptMakeApp(replyAction, messageId) {
             try {
                 await this.makeApp({ openOnly: true });
-                //await this.cleanUp();
+                //await this.cleanUp()
                 this.sendMessageToExtension({
                     action: replyAction,
                     success: true,
                     messageId: messageId
                 });
             } catch (error) {
-                //await this.cleanUp();
+                //await this.cleanUp()
                 this.sendMessageToExtension({
                     action: replyAction,
                     success: false,
@@ -325,42 +327,47 @@ var LedgerBridge = function () {
         value: function onConnect() {
             var _this4 = this;
 
-            console.log("[gh-pages] Ledger device connected!");
-
             this.pollingInterval = setInterval(async function () {
                 // Per the Ledger team, this code tells us that the 
                 // correct application is opened
                 // https://github.com/LedgerHQ/ledger-live-common/blob/master/src/hw/getAppAndVersion.ts
-
-                console.log("[gh-pages] POLLING INTERVAL STARTED!");
-
-                console.log("[gh-pages] ABOUT TO HIT LEDGER FOR PULSE!");
-                var result = await _this4.transport.send(0xb0, 0x01, 0x00, 0x00);
-                console.log("[gh-pages] LEDGER PULSE RETURNED!");
-
-                var _result = _slicedToArray(result, 2),
-                    appReadyInt = _result[1];
-
-                var correctAppOpen = Boolean(appReadyInt) === 1;
-
-                console.log("[gh-pages] Ledger onConnect poll: ", result, appReadyInt, correctAppOpen);
-
-                _this4.sendMessageToExtension({
-                    action: 'ledger-connection-change',
-                    success: true,
-                    payload: { connected: correctAppOpen }
-                });
-            }, 5000);
+                try {
+                    var result = await _this4.transport.send(0xb0, 0x01, 0x00, 0x00);
+                    var bufferResult = Buffer.from(result).toString();
+                    // Ensures the correct app is open
+                    if (bufferResult.includes('Ethereum')) {
+                        _this4.sendConnectionMessage(true);
+                    }
+                    // The incorrect app is open
+                    else {
+                            // What to do?
+                            _this4.sendConnectionMessage(false);
+                        }
+                } catch (e) {
+                    // "An action was already pending on the Ledger device. Please deny or reconnect."
+                    if (e.name === "TransportRaceCondition") {
+                        // Make no change ?
+                        _this4.sendConnectionMessage(false);
+                    } else {
+                        // Error, the Ledger is likely locked
+                        _this4.onDisconnect();
+                    }
+                }
+            }, HEARTBEAT_POLLING_INTERVAL);
         }
     }, {
         key: 'onDisconnect',
         value: function onDisconnect(event) {
-            console.log("[gh-pages] Ledger disconnect event!", event);
             this.cleanUp();
+            this.sendConnectionMessage(false);
+        }
+    }, {
+        key: 'sendConnectionMessage',
+        value: function sendConnectionMessage(connected) {
             this.sendMessageToExtension({
                 action: 'ledger-connection-change',
                 success: true,
-                payload: { connected: false }
+                payload: { connected: connected }
             });
         }
     }, {
@@ -415,6 +422,7 @@ var LedgerBridge = function () {
 
 exports.default = LedgerBridge;
 
+}).call(this,require("buffer").Buffer)
 },{"@ledgerhq/hw-app-eth":125,"@ledgerhq/hw-transport-http/lib/WebSocketTransport":161,"@ledgerhq/hw-transport-u2f":165,"@ledgerhq/hw-transport-webhid":166,"buffer":226}],2:[function(require,module,exports){
 'use strict';
 

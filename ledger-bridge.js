@@ -13,6 +13,9 @@ const BRIDGE_URL = 'ws://localhost:8435'
 const TRANSPORT_CHECK_DELAY = 1000
 const TRANSPORT_CHECK_LIMIT = 120
 
+// Connection hearbeat polling
+const HEARTBEAT_POLLING_INTERVAL = 5000
+
 export default class LedgerBridge {
     constructor () {
         this.addEventListeners()
@@ -80,15 +83,15 @@ export default class LedgerBridge {
 
     async attemptMakeApp (replyAction, messageId) {
         try {
-            await this.makeApp({ openOnly: true });
-            //await this.cleanUp();
+            await this.makeApp({ openOnly: true })
+            //await this.cleanUp()
             this.sendMessageToExtension({
                 action: replyAction,
                 success: true,
                 messageId,
             })
         } catch (error) {
-            //await this.cleanUp();
+            //await this.cleanUp()
             this.sendMessageToExtension({
                 action: replyAction,
                 success: false,
@@ -101,13 +104,13 @@ export default class LedgerBridge {
     async makeApp (config = {}) {
         try {
             if (this.transportType === 'ledgerLive') {
-                let reestablish = false;
+                let reestablish = false
                 try {
                     await WebSocketTransport.check(BRIDGE_URL)
                 } catch (_err) {
                     window.open('ledgerlive://bridge?appName=Ethereum')
                     await this.checkTransportLoop()
-                    reestablish = true;
+                    reestablish = true
                 }
                 if (!this.app || reestablish) {
                     this.transport = await WebSocketTransport.open(BRIDGE_URL)
@@ -118,7 +121,7 @@ export default class LedgerBridge {
                 const nameOfDeviceType = device && device.constructor.name
                 const deviceIsOpen = device && device.opened
                 if (this.app && nameOfDeviceType === 'HIDDevice' && deviceIsOpen) {
-                    return;
+                    return
                 }
                 this.transport = config.openOnly
                 ? await TransportWebHID.openConnected()
@@ -132,7 +135,7 @@ export default class LedgerBridge {
             if(this.transport) {
                 this.onConnect()
                 this.transport.on('disconnect', (event) => {
-                    this.onDisconnect(event);
+                    this.onDisconnect(event)
                 })
             }
         } catch (e) {
@@ -274,40 +277,46 @@ export default class LedgerBridge {
     }
 
     onConnect() {
-        console.log("[gh-pages] Ledger device connected!")
-
         this.pollingInterval = setInterval(async () => {
             // Per the Ledger team, this code tells us that the 
             // correct application is opened
             // https://github.com/LedgerHQ/ledger-live-common/blob/master/src/hw/getAppAndVersion.ts
-
-            console.log("[gh-pages] POLLING INTERVAL STARTED!")
-
-            console.log("[gh-pages] ABOUT TO HIT LEDGER FOR PULSE!")
-            const result = await this.
-            transport.send(0xb0, 0x01, 0x00, 0x00);
-            console.log("[gh-pages] LEDGER PULSE RETURNED!")
-
-            const [, appReadyInt] = result;
-            const correctAppOpen = Boolean(appReadyInt) === 1;
-
-            console.log("[gh-pages] Ledger onConnect poll: ", result, appReadyInt, correctAppOpen);
-
-            this.sendMessageToExtension({
-                action: 'ledger-connection-change',
-                success: true,
-                payload: { connected: correctAppOpen }
-            })
-        }, 5000);
+            try {
+                const result = await this.transport.send(0xb0, 0x01, 0x00, 0x00)
+                const bufferResult = Buffer.from(result).toString()
+                // Ensures the correct app is open
+                if(bufferResult.includes('Ethereum')) {
+                    this.sendConnectionMessage(true)
+                }
+                // The incorrect app is open
+                else {
+                    // What to do?
+                    this.sendConnectionMessage(false)
+                }
+            } catch(e) {
+                // "An action was already pending on the Ledger device. Please deny or reconnect."
+                if (e.name === "TransportRaceCondition") {
+                    // Make no change ?
+                    this.sendConnectionMessage(false)
+                }
+                else {
+                    // Error, the Ledger is likely locked
+                    this.onDisconnect()
+                }
+            }
+        }, HEARTBEAT_POLLING_INTERVAL)
     }
 
     onDisconnect(event) {
-        console.log("[gh-pages] Ledger disconnect event!", event)
-        this.cleanUp();
+        this.cleanUp()
+        this.sendConnectionMessage(false)
+    }
+
+    sendConnectionMessage(connected) {
         this.sendMessageToExtension({
             action: 'ledger-connection-change',
             success: true,
-            payload: { connected: false }
+            payload: { connected }
         })
     }
 
