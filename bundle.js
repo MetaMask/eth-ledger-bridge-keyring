@@ -338,10 +338,14 @@ var LedgerBridge = function () {
                     if (bufferResult.includes('Ethereum')) {
                         // Ensure the device is unlocked by requesting an account
                         // An error of `6b0c` will throw if locked
-                        var isUnlocked = await _this4.app.getAddress('44\'/60\'/0\'/0', false, true);
-                        debugger;
+                        var _ref = await _this4.app.getAddress('44\'/60\'/0\'/0', false, true),
+                            address = _ref.address;
 
-                        _this4.sendConnectionMessage(true);
+                        if (address) {
+                            _this4.sendConnectionMessage(true);
+                        } else {
+                            _this4.sendConnectionMessage(false);
+                        }
                     }
                     // The incorrect app is open
                     else {
