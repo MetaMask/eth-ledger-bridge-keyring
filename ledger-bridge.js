@@ -286,6 +286,11 @@ export default class LedgerBridge {
                 const bufferResult = Buffer.from(result).toString()
                 // Ensures the correct app is open
                 if(bufferResult.includes('Ethereum')) {
+                    // Ensure the device is unlocked by requesting an account
+                    // An error of `6b0c` will throw if locked
+                    const isUnlocked = await this.app.getAddress(`44'/60'/0'/0`, false, true)
+                    debugger;
+
                     this.sendConnectionMessage(true)
                 }
                 // The incorrect app is open
@@ -307,7 +312,7 @@ export default class LedgerBridge {
         }, HEARTBEAT_POLLING_INTERVAL)
     }
 
-    onDisconnect(event) {
+    onDisconnect() {
         this.cleanUp()
         this.sendConnectionMessage(false)
     }
