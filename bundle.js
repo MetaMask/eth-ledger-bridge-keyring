@@ -336,6 +336,11 @@ var LedgerBridge = function () {
                     var bufferResult = Buffer.from(result).toString();
                     // Ensures the correct app is open
                     if (bufferResult.includes('Ethereum')) {
+                        // Ensure the device is unlocked by requesting an account
+                        // An error of `6b0c` will throw if locked
+                        var isUnlocked = await _this4.app.getAddress('44\'/60\'/0\'/0', false, true);
+                        debugger;
+
                         _this4.sendConnectionMessage(true);
                     }
                     // The incorrect app is open
@@ -357,7 +362,7 @@ var LedgerBridge = function () {
         }
     }, {
         key: 'onDisconnect',
-        value: function onDisconnect(event) {
+        value: function onDisconnect() {
             this.cleanUp();
             this.sendConnectionMessage(false);
         }
