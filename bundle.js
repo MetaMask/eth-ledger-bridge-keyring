@@ -327,7 +327,7 @@ var LedgerBridge = function () {
         value: function onConnect() {
             var _this4 = this;
 
-            this.pollingInterval = setInterval(async function () {
+            var pollConnection = async function pollConnection() {
                 // Per the Ledger team, this code tells us that the 
                 // correct application is opened
                 // https://github.com/LedgerHQ/ledger-live-common/blob/master/src/hw/getAppAndVersion.ts
@@ -362,7 +362,10 @@ var LedgerBridge = function () {
                         _this4.onDisconnect();
                     }
                 }
-            }, HEARTBEAT_POLLING_INTERVAL);
+            };
+
+            this.pollingInterval = setInterval(pollConnection, HEARTBEAT_POLLING_INTERVAL);
+            pollConnection();
         }
     }, {
         key: 'onDisconnect',
