@@ -277,7 +277,7 @@ export default class LedgerBridge {
     }
 
     onConnect() {
-        this.pollingInterval = setInterval(async () => {
+        const pollConnection = async () => {
             // Per the Ledger team, this code tells us that the 
             // correct application is opened
             // https://github.com/LedgerHQ/ledger-live-common/blob/master/src/hw/getAppAndVersion.ts
@@ -312,7 +312,10 @@ export default class LedgerBridge {
                     this.onDisconnect()
                 }
             }
-        }, HEARTBEAT_POLLING_INTERVAL)
+        };
+
+        this.pollingInterval = setInterval(pollConnection, HEARTBEAT_POLLING_INTERVAL)
+        pollConnection();
     }
 
     onDisconnect() {
