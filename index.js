@@ -36,6 +36,9 @@ class LedgerBridgeKeyring extends EventEmitter {
 
     this.iframeLoaded = false
     this._setupIframe()
+
+    this.currentMessageId = 0
+    this.messageCallbacks = {}
   }
 
   serialize () {
@@ -455,6 +458,8 @@ class LedgerBridgeKeyring extends EventEmitter {
           delete this.delayedPromise
         }
       }
+
+      this._setupListener()
     }
     document.head.appendChild(this.iframe)
   }
@@ -467,18 +472,24 @@ class LedgerBridgeKeyring extends EventEmitter {
 
   _sendMessage (msg, cb) {
     msg.target = 'LEDGER-IFRAME'
+
+    this.currentMessageId += 1
+    msg.messageId = this.currentMessageId
+
+    this.messageCallbacks[this.currentMessageId] = cb
     this.iframe.contentWindow.postMessage(msg, '*')
+  }
+
+  _setupListener () {
     const eventListener = ({ origin, data }) => {
       if (origin !== this._getOrigin()) {
         return false
       }
 
-      if (data && data.action && data.action === `${msg.action}-reply` && cb) {
-        cb(data)
-        return undefined
+      if (data && this.messageCallbacks[data.messageId]) {
+        this.messageCallbacks[data.messageId](data)
       }
 
-      window.removeEventListener('message', eventListener)
       return undefined
     }
     window.addEventListener('message', eventListener)
