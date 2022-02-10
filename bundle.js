@@ -74,6 +74,7 @@ var LedgerBridge = function () {
                             break;
                         case 'ledger-close-bridge':
                             _this.cleanUp(replyAction, messageId);
+                            _this.clearPollingInterval();
                             break;
                         case 'ledger-update-transport':
                             if (params.transportType === 'ledgerLive' || params.useLedgerLive) {
@@ -126,14 +127,14 @@ var LedgerBridge = function () {
         value: async function attemptMakeApp(replyAction, messageId) {
             try {
                 await this.makeApp({ openOnly: true });
-                //await this.cleanUp()
+                await this.cleanUp();
                 this.sendMessageToExtension({
                     action: replyAction,
                     success: true,
                     messageId: messageId
                 });
             } catch (error) {
-                //await this.cleanUp()
+                await this.cleanUp();
                 this.sendMessageToExtension({
                     action: replyAction,
                     success: false,
@@ -193,6 +194,7 @@ var LedgerBridge = function () {
         value: function updateTransportTypePreference(replyAction, transportType, messageId) {
             this.transportType = transportType;
             this.cleanUp();
+            this.clearPollingInterval();
             this.sendMessageToExtension({
                 action: replyAction,
                 success: true,
@@ -207,15 +209,19 @@ var LedgerBridge = function () {
                 await this.transport.close();
                 this.transport = null;
             }
-            if (this.pollingInterval) {
-                clearInterval(this.pollingInterval);
-            }
             if (replyAction) {
                 this.sendMessageToExtension({
                     action: replyAction,
                     success: true,
                     messageId: messageId
                 });
+            }
+        }
+    }, {
+        key: 'clearPollingInterval',
+        value: function clearPollingInterval() {
+            if (this.pollingInterval) {
+                clearInterval(this.pollingInterval);
             }
         }
     }, {
@@ -241,6 +247,7 @@ var LedgerBridge = function () {
             } finally {
                 if (this.transportType !== 'ledgerLive') {
                     this.cleanUp();
+                    this.clearPollingInterval();
                 }
             }
         }
@@ -267,6 +274,7 @@ var LedgerBridge = function () {
             } finally {
                 if (this.transportType !== 'ledgerLive') {
                     this.cleanUp();
+                    this.clearPollingInterval();
                 }
             }
         }
@@ -294,6 +302,7 @@ var LedgerBridge = function () {
             } finally {
                 if (this.transportType !== 'ledgerLive') {
                     this.cleanUp();
+                    this.clearPollingInterval();
                 }
             }
         }
@@ -320,6 +329,7 @@ var LedgerBridge = function () {
                 });
             } finally {
                 this.cleanUp();
+                this.clearPollingInterval();
             }
         }
     }, {
@@ -371,6 +381,7 @@ var LedgerBridge = function () {
         key: 'onDisconnect',
         value: function onDisconnect() {
             this.cleanUp();
+            this.clearPollingInterval();
             this.sendConnectionMessage(false);
         }
     }, {

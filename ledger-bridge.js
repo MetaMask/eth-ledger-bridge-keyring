@@ -40,6 +40,7 @@ export default class LedgerBridge {
                         break
                     case 'ledger-close-bridge':
                         this.cleanUp(replyAction, messageId)
+                        this.clearPollingInterval()
                         break
                     case 'ledger-update-transport':
                         if (params.transportType === 'ledgerLive' || params.useLedgerLive) {
@@ -84,14 +85,14 @@ export default class LedgerBridge {
     async attemptMakeApp (replyAction, messageId) {
         try {
             await this.makeApp({ openOnly: true })
-            //await this.cleanUp()
+            await this.cleanUp()
             this.sendMessageToExtension({
                 action: replyAction,
                 success: true,
                 messageId,
             })
         } catch (error) {
-            //await this.cleanUp()
+            await this.cleanUp()
             this.sendMessageToExtension({
                 action: replyAction,
                 success: false,
@@ -147,6 +148,7 @@ export default class LedgerBridge {
     updateTransportTypePreference (replyAction, transportType, messageId) {
         this.transportType = transportType
         this.cleanUp()
+        this.clearPollingInterval()
         this.sendMessageToExtension({
             action: replyAction,
             success: true,
@@ -160,15 +162,18 @@ export default class LedgerBridge {
             await this.transport.close()
             this.transport = null
         }
-        if (this.pollingInterval) {
-            clearInterval(this.pollingInterval)
-        }
         if (replyAction) {
             this.sendMessageToExtension({
                 action: replyAction,
                 success: true,
                 messageId,
             })
+        }
+    }
+
+    clearPollingInterval() {
+        if (this.pollingInterval) {
+            clearInterval(this.pollingInterval)
         }
     }
 
@@ -193,6 +198,7 @@ export default class LedgerBridge {
         } finally {
             if (this.transportType !== 'ledgerLive') {
                 this.cleanUp()
+                this.clearPollingInterval()
             }
         }
     }
@@ -220,6 +226,7 @@ export default class LedgerBridge {
         } finally {
             if (this.transportType !== 'ledgerLive') {
                 this.cleanUp()
+                this.clearPollingInterval()
             }
         }
     }
@@ -247,6 +254,7 @@ export default class LedgerBridge {
         } finally {
             if (this.transportType !== 'ledgerLive') {
                 this.cleanUp()
+                this.clearPollingInterval()
             }
         }
     }
@@ -273,6 +281,7 @@ export default class LedgerBridge {
 
         } finally {
             this.cleanUp()
+            this.clearPollingInterval()
         }
     }
 
@@ -320,6 +329,7 @@ export default class LedgerBridge {
 
     onDisconnect() {
         this.cleanUp()
+        this.clearPollingInterval()
         this.sendConnectionMessage(false)
     }
 
