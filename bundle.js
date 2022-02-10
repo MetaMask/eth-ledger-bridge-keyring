@@ -53,37 +53,38 @@ var LedgerBridge = function () {
                 if (e && e.data && e.data.target === 'LEDGER-IFRAME') {
                     var _e$data = e.data,
                         action = _e$data.action,
-                        params = _e$data.params;
+                        params = _e$data.params,
+                        messageId = _e$data.messageId;
 
                     var replyAction = action + '-reply';
 
                     switch (action) {
                         case 'ledger-unlock':
-                            _this.unlock(replyAction, params.hdPath);
+                            _this.unlock(replyAction, params.hdPath, messageId);
                             break;
                         case 'ledger-sign-transaction':
-                            _this.signTransaction(replyAction, params.hdPath, params.tx);
+                            _this.signTransaction(replyAction, params.hdPath, params.tx, messageId);
                             break;
                         case 'ledger-sign-personal-message':
-                            _this.signPersonalMessage(replyAction, params.hdPath, params.message);
+                            _this.signPersonalMessage(replyAction, params.hdPath, params.message, messageId);
                             break;
                         case 'ledger-close-bridge':
-                            _this.cleanUp(replyAction);
+                            _this.cleanUp(replyAction, messageId);
                             break;
                         case 'ledger-update-transport':
                             if (params.transportType === 'ledgerLive' || params.useLedgerLive) {
-                                _this.updateTransportTypePreference(replyAction, 'ledgerLive');
+                                _this.updateTransportTypePreference(replyAction, 'ledgerLive', messageId);
                             } else if (params.transportType === 'webhid') {
-                                _this.updateTransportTypePreference(replyAction, 'webhid');
+                                _this.updateTransportTypePreference(replyAction, 'webhid', messageId);
                             } else {
-                                _this.updateTransportTypePreference(replyAction, 'u2f');
+                                _this.updateTransportTypePreference(replyAction, 'u2f', messageId);
                             }
                             break;
                         case 'ledger-make-app':
-                            _this.attemptMakeApp(replyAction);
+                            _this.attemptMakeApp(replyAction, messageId);
                             break;
                         case 'ledger-sign-typed-data':
-                            _this.signTypedData(replyAction, params.hdPath, params.domainSeparatorHex, params.hashStructMessageHex);
+                            _this.signTypedData(replyAction, params.hdPath, params.domainSeparatorHex, params.hashStructMessageHex, messageId);
                             break;
                     }
                 }
@@ -118,19 +119,21 @@ var LedgerBridge = function () {
         }
     }, {
         key: 'attemptMakeApp',
-        value: async function attemptMakeApp(replyAction) {
+        value: async function attemptMakeApp(replyAction, messageId) {
             try {
                 await this.makeApp({ openOnly: true });
                 await this.cleanUp();
                 this.sendMessageToExtension({
                     action: replyAction,
-                    success: true
+                    success: true,
+                    messageId: messageId
                 });
             } catch (error) {
                 await this.cleanUp();
                 this.sendMessageToExtension({
                     action: replyAction,
                     success: false,
+                    messageId: messageId,
                     error: error
                 });
             }
@@ -174,17 +177,18 @@ var LedgerBridge = function () {
         }
     }, {
         key: 'updateTransportTypePreference',
-        value: function updateTransportTypePreference(replyAction, transportType) {
+        value: function updateTransportTypePreference(replyAction, transportType, messageId) {
             this.transportType = transportType;
             this.cleanUp();
             this.sendMessageToExtension({
                 action: replyAction,
-                success: true
+                success: true,
+                messageId: messageId
             });
         }
     }, {
         key: 'cleanUp',
-        value: async function cleanUp(replyAction) {
+        value: async function cleanUp(replyAction, messageId) {
             this.app = null;
             if (this.transport) {
                 await this.transport.close();
@@ -193,27 +197,30 @@ var LedgerBridge = function () {
             if (replyAction) {
                 this.sendMessageToExtension({
                     action: replyAction,
-                    success: true
+                    success: true,
+                    messageId: messageId
                 });
             }
         }
     }, {
         key: 'unlock',
-        value: async function unlock(replyAction, hdPath) {
+        value: async function unlock(replyAction, hdPath, messageId) {
             try {
                 await this.makeApp();
                 var res = await this.app.getAddress(hdPath, false, true);
                 this.sendMessageToExtension({
                     action: replyAction,
                     success: true,
-                    payload: res
+                    payload: res,
+                    messageId: messageId
                 });
             } catch (err) {
                 var e = this.ledgerErrToMessage(err);
                 this.sendMessageToExtension({
                     action: replyAction,
                     success: false,
-                    payload: { error: e }
+                    payload: { error: e },
+                    messageId: messageId
                 });
             } finally {
                 if (this.transportType !== 'ledgerLive') {
@@ -223,21 +230,23 @@ var LedgerBridge = function () {
         }
     }, {
         key: 'signTransaction',
-        value: async function signTransaction(replyAction, hdPath, tx) {
+        value: async function signTransaction(replyAction, hdPath, tx, messageId) {
             try {
                 await this.makeApp();
                 var res = await this.app.signTransaction(hdPath, tx);
                 this.sendMessageToExtension({
                     action: replyAction,
                     success: true,
-                    payload: res
+                    payload: res,
+                    messageId: messageId
                 });
             } catch (err) {
                 var e = this.ledgerErrToMessage(err);
                 this.sendMessageToExtension({
                     action: replyAction,
                     success: false,
-                    payload: { error: e }
+                    payload: { error: e },
+                    messageId: messageId
                 });
             } finally {
                 if (this.transportType !== 'ledgerLive') {
@@ -247,7 +256,7 @@ var LedgerBridge = function () {
         }
     }, {
         key: 'signPersonalMessage',
-        value: async function signPersonalMessage(replyAction, hdPath, message) {
+        value: async function signPersonalMessage(replyAction, hdPath, message, messageId) {
             try {
                 await this.makeApp();
 
@@ -255,14 +264,16 @@ var LedgerBridge = function () {
                 this.sendMessageToExtension({
                     action: replyAction,
                     success: true,
-                    payload: res
+                    payload: res,
+                    messageId: messageId
                 });
             } catch (err) {
                 var e = this.ledgerErrToMessage(err);
                 this.sendMessageToExtension({
                     action: replyAction,
                     success: false,
-                    payload: { error: e }
+                    payload: { error: e },
+                    messageId: messageId
                 });
             } finally {
                 if (this.transportType !== 'ledgerLive') {
@@ -272,7 +283,7 @@ var LedgerBridge = function () {
         }
     }, {
         key: 'signTypedData',
-        value: async function signTypedData(replyAction, hdPath, domainSeparatorHex, hashStructMessageHex) {
+        value: async function signTypedData(replyAction, hdPath, domainSeparatorHex, hashStructMessageHex, messageId) {
             try {
                 await this.makeApp();
                 var res = await this.app.signEIP712HashedMessage(hdPath, domainSeparatorHex, hashStructMessageHex);
@@ -280,14 +291,16 @@ var LedgerBridge = function () {
                 this.sendMessageToExtension({
                     action: replyAction,
                     success: true,
-                    payload: res
+                    payload: res,
+                    messageId: messageId
                 });
             } catch (err) {
                 var e = this.ledgerErrToMessage(err);
                 this.sendMessageToExtension({
                     action: replyAction,
                     success: false,
-                    payload: { error: e }
+                    payload: { error: e },
+                    messageId: messageId
                 });
             } finally {
                 this.cleanUp();

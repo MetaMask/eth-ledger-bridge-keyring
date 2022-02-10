@@ -22,36 +22,36 @@ export default class LedgerBridge {
     addEventListeners () {
         window.addEventListener('message', async e => {
             if (e && e.data && e.data.target === 'LEDGER-IFRAME') {
-                const { action, params } = e.data
+                const { action, params, messageId } = e.data
                 const replyAction = `${action}-reply`
 
                 switch (action) {
                     case 'ledger-unlock':
-                        this.unlock(replyAction, params.hdPath)
+                        this.unlock(replyAction, params.hdPath, messageId)
                         break
                     case 'ledger-sign-transaction':
-                        this.signTransaction(replyAction, params.hdPath, params.tx)
+                        this.signTransaction(replyAction, params.hdPath, params.tx, messageId)
                         break
                     case 'ledger-sign-personal-message':
-                        this.signPersonalMessage(replyAction, params.hdPath, params.message)
+                        this.signPersonalMessage(replyAction, params.hdPath, params.message, messageId)
                         break
                     case 'ledger-close-bridge':
-                        this.cleanUp(replyAction)
+                        this.cleanUp(replyAction, messageId)
                         break
                     case 'ledger-update-transport':
                         if (params.transportType === 'ledgerLive' || params.useLedgerLive) {
-                            this.updateTransportTypePreference(replyAction, 'ledgerLive')
+                            this.updateTransportTypePreference(replyAction, 'ledgerLive', messageId)
                         } else if (params.transportType === 'webhid') {
-                            this.updateTransportTypePreference(replyAction, 'webhid')
+                            this.updateTransportTypePreference(replyAction, 'webhid', messageId)
                         } else {
-                           this.updateTransportTypePreference(replyAction, 'u2f')
+                           this.updateTransportTypePreference(replyAction, 'u2f', messageId)
                         }
                         break
                     case 'ledger-make-app':
-                        this.attemptMakeApp(replyAction);
+                        this.attemptMakeApp(replyAction, messageId);
                         break
                     case 'ledger-sign-typed-data':
-                        this.signTypedData(replyAction, params.hdPath, params.domainSeparatorHex, params.hashStructMessageHex)
+                        this.signTypedData(replyAction, params.hdPath, params.domainSeparatorHex, params.hashStructMessageHex, messageId)
                         break
                 }
             }
@@ -78,19 +78,21 @@ export default class LedgerBridge {
         })
     }
 
-    async attemptMakeApp (replyAction) {
+    async attemptMakeApp (replyAction, messageId) {
         try {
             await this.makeApp({ openOnly: true });
             await this.cleanUp();
             this.sendMessageToExtension({
                 action: replyAction,
                 success: true,
+                messageId,
             })
         } catch (error) {
             await this.cleanUp();
             this.sendMessageToExtension({
                 action: replyAction,
                 success: false,
+                messageId,
                 error,
             })
         }
@@ -132,16 +134,17 @@ export default class LedgerBridge {
         }
     }
 
-    updateTransportTypePreference (replyAction, transportType) {
+    updateTransportTypePreference (replyAction, transportType, messageId) {
         this.transportType = transportType
         this.cleanUp()
         this.sendMessageToExtension({
             action: replyAction,
             success: true,
+            messageId,
         })
     }
 
-    async cleanUp (replyAction) {
+    async cleanUp (replyAction, messageId) {
         this.app = null
         if (this.transport) {
             await this.transport.close()
@@ -151,11 +154,12 @@ export default class LedgerBridge {
             this.sendMessageToExtension({
                 action: replyAction,
                 success: true,
+                messageId,
             })
         }
     }
 
-    async unlock (replyAction, hdPath) {
+    async unlock (replyAction, hdPath, messageId) {
         try {
             await this.makeApp()
             const res = await this.app.getAddress(hdPath, false, true)
@@ -163,6 +167,7 @@ export default class LedgerBridge {
                 action: replyAction,
                 success: true,
                 payload: res,
+                messageId,
             })
         } catch (err) {
             const e = this.ledgerErrToMessage(err)
@@ -170,6 +175,7 @@ export default class LedgerBridge {
                 action: replyAction,
                 success: false,
                 payload: { error: e },
+                messageId,
             })
         } finally {
             if (this.transportType !== 'ledgerLive') {
@@ -178,7 +184,7 @@ export default class LedgerBridge {
         }
     }
 
-    async signTransaction (replyAction, hdPath, tx) {
+    async signTransaction (replyAction, hdPath, tx, messageId) {
         try {
             await this.makeApp()
             const res = await this.app.signTransaction(hdPath, tx)
@@ -186,6 +192,7 @@ export default class LedgerBridge {
                 action: replyAction,
                 success: true,
                 payload: res,
+                messageId,
             })
 
         } catch (err) {
@@ -194,6 +201,7 @@ export default class LedgerBridge {
                 action: replyAction,
                 success: false,
                 payload: { error: e },
+                messageId,
             })
 
         } finally {
@@ -203,7 +211,7 @@ export default class LedgerBridge {
         }
     }
 
-    async signPersonalMessage (replyAction, hdPath, message) {
+    async signPersonalMessage (replyAction, hdPath, message, messageId) {
         try {
             await this.makeApp()
 
@@ -212,6 +220,7 @@ export default class LedgerBridge {
                 action: replyAction,
                 success: true,
                 payload: res,
+                messageId,
             })
         } catch (err) {
             const e = this.ledgerErrToMessage(err)
@@ -219,6 +228,7 @@ export default class LedgerBridge {
                 action: replyAction,
                 success: false,
                 payload: { error: e },
+                messageId,
             })
 
         } finally {
@@ -228,7 +238,7 @@ export default class LedgerBridge {
         }
     }
 
-    async signTypedData (replyAction, hdPath, domainSeparatorHex, hashStructMessageHex) {
+    async signTypedData (replyAction, hdPath, domainSeparatorHex, hashStructMessageHex, messageId) {
         try {
             await this.makeApp()
             const res = await this.app.signEIP712HashedMessage(hdPath, domainSeparatorHex, hashStructMessageHex)
@@ -237,6 +247,7 @@ export default class LedgerBridge {
                 action: replyAction,
                 success: true,
                 payload: res,
+                messageId,
             })
         } catch (err) {
             const e = this.ledgerErrToMessage(err)
@@ -244,6 +255,7 @@ export default class LedgerBridge {
                 action: replyAction,
                 success: false,
                 payload: { error: e },
+                messageId,
             })
 
         } finally {
