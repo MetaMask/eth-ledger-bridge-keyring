@@ -324,7 +324,7 @@ export default class LedgerBridge {
         };
 
         this.pollingInterval = setInterval(pollConnection, HEARTBEAT_POLLING_INTERVAL)
-        pollConnection();
+        //pollConnection();
     }
 
     onDisconnect() {
