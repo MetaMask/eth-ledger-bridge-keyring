@@ -39,6 +39,7 @@ class LedgerBridgeKeyring extends EventEmitter {
 
     this.currentMessageId = 0
     this.messageCallbacks = {}
+    this._setupListener()
   }
 
   serialize () {
@@ -458,8 +459,6 @@ class LedgerBridgeKeyring extends EventEmitter {
           delete this.delayedPromise
         }
       }
-
-      this._setupListener()
     }
     document.head.appendChild(this.iframe)
   }
