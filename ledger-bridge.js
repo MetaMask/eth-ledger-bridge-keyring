@@ -85,14 +85,12 @@ export default class LedgerBridge {
     async attemptMakeApp (replyAction, messageId) {
         try {
             await this.makeApp({ openOnly: true })
-            // await this.cleanUp()
             this.sendMessageToExtension({
                 action: replyAction,
                 success: true,
                 messageId,
             })
         } catch (error) {
-            // await this.cleanUp()
             this.sendMessageToExtension({
                 action: replyAction,
                 success: false,
