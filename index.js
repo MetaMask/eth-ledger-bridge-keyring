@@ -18,6 +18,8 @@ const NETWORK_API_URLS = {
   mainnet: 'https://api.etherscan.io',
 }
 
+const CONNECTION_EVENT = 'ledger-connection-change'
+
 class LedgerBridgeKeyring extends EventEmitter {
   constructor (opts = {}) {
     super()
@@ -36,6 +38,10 @@ class LedgerBridgeKeyring extends EventEmitter {
 
     this.iframeLoaded = false
     this._setupIframe()
+
+    this.currentMessageId = 0
+    this.messageCallbacks = {}
+    this._setupListener()
   }
 
   serialize () {
@@ -95,6 +101,10 @@ class LedgerBridgeKeyring extends EventEmitter {
 
   isUnlocked () {
     return Boolean(this.hdk && this.hdk.publicKey)
+  }
+
+  isConnected () {
+    return this.isDeviceConnected
   }
 
   setAccountToUnlock (index) {
@@ -467,18 +477,28 @@ class LedgerBridgeKeyring extends EventEmitter {
 
   _sendMessage (msg, cb) {
     msg.target = 'LEDGER-IFRAME'
+
+    this.currentMessageId += 1
+    msg.messageId = this.currentMessageId
+
+    this.messageCallbacks[this.currentMessageId] = cb
     this.iframe.contentWindow.postMessage(msg, '*')
+  }
+
+  _setupListener () {
     const eventListener = ({ origin, data }) => {
       if (origin !== this._getOrigin()) {
         return false
       }
 
-      if (data && data.action && data.action === `${msg.action}-reply` && cb) {
-        cb(data)
-        return undefined
+      if (data) {
+        if (this.messageCallbacks[data.messageId]) {
+          this.messageCallbacks[data.messageId](data)
+        } else if (data.action === CONNECTION_EVENT) {
+          this.isDeviceConnected = data.payload.connected
+        }
       }
 
-      window.removeEventListener('message', eventListener)
       return undefined
     }
     window.addEventListener('message', eventListener)
