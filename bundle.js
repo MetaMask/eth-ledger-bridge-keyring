@@ -373,7 +373,6 @@ var LedgerBridge = function () {
             };
 
             this.pollingInterval = setInterval(pollConnection, HEARTBEAT_POLLING_INTERVAL);
-            //pollConnection();
         }
     }, {
         key: 'onDisconnect',
