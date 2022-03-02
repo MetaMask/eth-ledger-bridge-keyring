@@ -18,6 +18,8 @@ const NETWORK_API_URLS = {
   mainnet: 'https://api.etherscan.io',
 }
 
+const CONNECTION_EVENT = 'ledger-connection-change'
+
 class LedgerBridgeKeyring extends EventEmitter {
   constructor (opts = {}) {
     super()
@@ -99,6 +101,10 @@ class LedgerBridgeKeyring extends EventEmitter {
 
   isUnlocked () {
     return Boolean(this.hdk && this.hdk.publicKey)
+  }
+
+  isConnected () {
+    return this.isDeviceConnected
   }
 
   setAccountToUnlock (index) {
@@ -485,8 +491,12 @@ class LedgerBridgeKeyring extends EventEmitter {
         return false
       }
 
-      if (data && this.messageCallbacks[data.messageId]) {
-        this.messageCallbacks[data.messageId](data)
+      if (data) {
+        if (this.messageCallbacks[data.messageId]) {
+          this.messageCallbacks[data.messageId](data)
+        } else if (data.action === CONNECTION_EVENT) {
+          this.isDeviceConnected = data.payload.connected
+        }
       }
 
       return undefined
