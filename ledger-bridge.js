@@ -13,9 +13,6 @@ const BRIDGE_URL = 'ws://localhost:8435'
 const TRANSPORT_CHECK_DELAY = 1000
 const TRANSPORT_CHECK_LIMIT = 120
 
-// Connection hearbeat polling
-const HEARTBEAT_POLLING_INTERVAL = 5000
-
 export default class LedgerBridge {
     constructor () {
         this.addEventListeners()
@@ -40,7 +37,6 @@ export default class LedgerBridge {
                         break
                     case 'ledger-close-bridge':
                         this.cleanUp(replyAction, messageId)
-                        this.clearPollingInterval()
                         break
                     case 'ledger-update-transport':
                         if (params.transportType === 'ledgerLive' || params.useLedgerLive) {
@@ -101,6 +97,12 @@ export default class LedgerBridge {
     }
 
     async makeApp (config = {}) {
+        // It's possible that a connection to the device could already exist
+        // at the time a user tries to sign; in that case, simply bail!
+        if(this.transport) {
+            return Promise.resolve(true);
+        }
+
         try {
             if (this.transportType === 'ledgerLive') {
                 let reestablish = false
@@ -132,10 +134,33 @@ export default class LedgerBridge {
             }
 
             if(this.transport) {
-                this.onConnect()
-                this.transport.on('disconnect', (event) => {
-                    this.onDisconnect(event)
-                })
+                // Ensure the correct (Ethereum) app is open; if not, immediately kill
+                // the connection as the wrong app is open and switching apps will call
+                // a disconnect from within the Ledger API
+                try {
+                    const sampleSendResult = await this.transport.send(0xb0, 0x01, 0x00, 0x00)
+                    const bufferResult = Buffer.from(sampleSendResult).toString()
+                    // Ensures the correct app is open
+                    if(bufferResult.includes('Ethereum')) {
+                        // Ensure the device is unlocked by requesting an account
+                        // An error of `6b0c` will throw if locked
+                        const { address } = await this.app.getAddress(`44'/60'/0'/0`, false, true)
+                        if (address) {
+                            this.sendConnectionMessage(true)
+
+                            this.transport.on('disconnect', (event) => {
+                                this.onDisconnect()
+                            })
+                        }
+                        else {
+                            this.onDisconnect()
+                        }
+                    }
+                }
+                catch(e) {
+                    this.sendConnectionMessage(false)
+                    this.onDisconnect()
+                }
             }
         } catch (e) {
             console.log('LEDGER:::CREATE APP ERROR', e)
@@ -146,7 +171,6 @@ export default class LedgerBridge {
     updateTransportTypePreference (replyAction, transportType, messageId) {
         this.transportType = transportType
         this.cleanUp()
-        this.clearPollingInterval()
         this.sendMessageToExtension({
             action: replyAction,
             success: true,
@@ -166,12 +190,6 @@ export default class LedgerBridge {
                 success: true,
                 messageId,
             })
-        }
-    }
-
-    clearPollingInterval() {
-        if (this.pollingInterval) {
-            clearInterval(this.pollingInterval)
         }
     }
 
@@ -196,7 +214,6 @@ export default class LedgerBridge {
         } finally {
             if (this.transportType !== 'ledgerLive') {
                 this.cleanUp()
-                this.clearPollingInterval()
             }
         }
     }
@@ -224,7 +241,6 @@ export default class LedgerBridge {
         } finally {
             if (this.transportType !== 'ledgerLive') {
                 this.cleanUp()
-                this.clearPollingInterval()
             }
         }
     }
@@ -252,7 +268,6 @@ export default class LedgerBridge {
         } finally {
             if (this.transportType !== 'ledgerLive') {
                 this.cleanUp()
-                this.clearPollingInterval()
             }
         }
     }
@@ -279,56 +294,11 @@ export default class LedgerBridge {
 
         } finally {
             this.cleanUp()
-            this.clearPollingInterval()
         }
-    }
-
-    onConnect() {
-        const pollConnection = async () => {
-            // Per the Ledger team, this code tells us that the 
-            // correct application is opened
-            // https://github.com/LedgerHQ/ledger-live-common/blob/master/src/hw/getAppAndVersion.ts
-            try {
-                const result = await this.transport.send(0xb0, 0x01, 0x00, 0x00)
-                const bufferResult = Buffer.from(result).toString()
-                // Ensures the correct app is open
-                if(bufferResult.includes('Ethereum')) {
-                    // Ensure the device is unlocked by requesting an account
-                    // An error of `6b0c` will throw if locked
-                    const { address } = await this.app.getAddress(`44'/60'/0'/0`, false, true)
-                    if (address) {
-                        this.sendConnectionMessage(true)
-                    }
-                    else {
-                        this.sendConnectionMessage(false)
-                    }
-                }
-                // The incorrect app is open
-                else {
-                    // What to do?
-                    this.sendConnectionMessage(false)
-                }
-            } catch(e) {
-                // "An action was already pending on the Ledger device. Please deny or reconnect."
-                if (e.name === "TransportRaceCondition") {
-                    // Make no change ?
-                    this.sendConnectionMessage(false)
-                }
-                else {
-                    // Error, the Ledger is likely locked
-                    this.onDisconnect()
-                }
-            }
-        };
-
-        this.pollingInterval = setInterval(pollConnection, HEARTBEAT_POLLING_INTERVAL)
-        // We can send a connection message immediately since we've just connected
-        this.sendConnectionMessage(true)
     }
 
     onDisconnect() {
         this.cleanUp()
-        this.clearPollingInterval()
         this.sendConnectionMessage(false)
     }
 

@@ -37,9 +37,6 @@ var BRIDGE_URL = 'ws://localhost:8435';
 var TRANSPORT_CHECK_DELAY = 1000;
 var TRANSPORT_CHECK_LIMIT = 120;
 
-// Connection hearbeat polling
-var HEARTBEAT_POLLING_INTERVAL = 5000;
-
 var LedgerBridge = function () {
     function LedgerBridge() {
         _classCallCheck(this, LedgerBridge);
@@ -74,7 +71,6 @@ var LedgerBridge = function () {
                             break;
                         case 'ledger-close-bridge':
                             _this.cleanUp(replyAction, messageId);
-                            _this.clearPollingInterval();
                             break;
                         case 'ledger-update-transport':
                             if (params.transportType === 'ledgerLive' || params.useLedgerLive) {
@@ -148,6 +144,12 @@ var LedgerBridge = function () {
 
             var config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
+            // It's possible that a connection to the device could already exist
+            // at the time a user tries to sign; in that case, simply bail!
+            if (this.transport) {
+                return Promise.resolve(true);
+            }
+
             try {
                 if (this.transportType === 'ledgerLive') {
                     var reestablish = false;
@@ -177,10 +179,33 @@ var LedgerBridge = function () {
                 }
 
                 if (this.transport) {
-                    this.onConnect();
-                    this.transport.on('disconnect', function (event) {
-                        _this3.onDisconnect(event);
-                    });
+                    // Ensure the correct (Ethereum) app is open; if not, immediately kill
+                    // the connection as the wrong app is open and switching apps will call
+                    // a disconnect from within the Ledger API
+                    try {
+                        var sampleSendResult = await this.transport.send(0xb0, 0x01, 0x00, 0x00);
+                        var bufferResult = Buffer.from(sampleSendResult).toString();
+                        // Ensures the correct app is open
+                        if (bufferResult.includes('Ethereum')) {
+                            // Ensure the device is unlocked by requesting an account
+                            // An error of `6b0c` will throw if locked
+                            var _ref = await this.app.getAddress('44\'/60\'/0\'/0', false, true),
+                                address = _ref.address;
+
+                            if (address) {
+                                this.sendConnectionMessage(true);
+
+                                this.transport.on('disconnect', function (event) {
+                                    _this3.onDisconnect();
+                                });
+                            } else {
+                                this.onDisconnect();
+                            }
+                        }
+                    } catch (e) {
+                        this.sendConnectionMessage(false);
+                        this.onDisconnect();
+                    }
                 }
             } catch (e) {
                 console.log('LEDGER:::CREATE APP ERROR', e);
@@ -192,7 +217,6 @@ var LedgerBridge = function () {
         value: function updateTransportTypePreference(replyAction, transportType, messageId) {
             this.transportType = transportType;
             this.cleanUp();
-            this.clearPollingInterval();
             this.sendMessageToExtension({
                 action: replyAction,
                 success: true,
@@ -213,13 +237,6 @@ var LedgerBridge = function () {
                     success: true,
                     messageId: messageId
                 });
-            }
-        }
-    }, {
-        key: 'clearPollingInterval',
-        value: function clearPollingInterval() {
-            if (this.pollingInterval) {
-                clearInterval(this.pollingInterval);
             }
         }
     }, {
@@ -245,7 +262,6 @@ var LedgerBridge = function () {
             } finally {
                 if (this.transportType !== 'ledgerLive') {
                     this.cleanUp();
-                    this.clearPollingInterval();
                 }
             }
         }
@@ -272,7 +288,6 @@ var LedgerBridge = function () {
             } finally {
                 if (this.transportType !== 'ledgerLive') {
                     this.cleanUp();
-                    this.clearPollingInterval();
                 }
             }
         }
@@ -300,7 +315,6 @@ var LedgerBridge = function () {
             } finally {
                 if (this.transportType !== 'ledgerLive') {
                     this.cleanUp();
-                    this.clearPollingInterval();
                 }
             }
         }
@@ -327,60 +341,12 @@ var LedgerBridge = function () {
                 });
             } finally {
                 this.cleanUp();
-                this.clearPollingInterval();
             }
-        }
-    }, {
-        key: 'onConnect',
-        value: function onConnect() {
-            var _this4 = this;
-
-            var pollConnection = async function pollConnection() {
-                // Per the Ledger team, this code tells us that the 
-                // correct application is opened
-                // https://github.com/LedgerHQ/ledger-live-common/blob/master/src/hw/getAppAndVersion.ts
-                try {
-                    var result = await _this4.transport.send(0xb0, 0x01, 0x00, 0x00);
-                    var bufferResult = Buffer.from(result).toString();
-                    // Ensures the correct app is open
-                    if (bufferResult.includes('Ethereum')) {
-                        // Ensure the device is unlocked by requesting an account
-                        // An error of `6b0c` will throw if locked
-                        var _ref = await _this4.app.getAddress('44\'/60\'/0\'/0', false, true),
-                            address = _ref.address;
-
-                        if (address) {
-                            _this4.sendConnectionMessage(true);
-                        } else {
-                            _this4.sendConnectionMessage(false);
-                        }
-                    }
-                    // The incorrect app is open
-                    else {
-                            // What to do?
-                            _this4.sendConnectionMessage(false);
-                        }
-                } catch (e) {
-                    // "An action was already pending on the Ledger device. Please deny or reconnect."
-                    if (e.name === "TransportRaceCondition") {
-                        // Make no change ?
-                        _this4.sendConnectionMessage(false);
-                    } else {
-                        // Error, the Ledger is likely locked
-                        _this4.onDisconnect();
-                    }
-                }
-            };
-
-            this.pollingInterval = setInterval(pollConnection, HEARTBEAT_POLLING_INTERVAL);
-            // We can send a connection message immediately since we've just connected
-            this.sendConnectionMessage(true);
         }
     }, {
         key: 'onDisconnect',
         value: function onDisconnect() {
             this.cleanUp();
-            this.clearPollingInterval();
             this.sendConnectionMessage(false);
         }
     }, {
