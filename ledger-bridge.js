@@ -322,6 +322,8 @@ export default class LedgerBridge {
         };
 
         this.pollingInterval = setInterval(pollConnection, HEARTBEAT_POLLING_INTERVAL)
+        // We can send a connection message immediately since we've just connected
+        this.sendConnectionMessage(true)
     }
 
     onDisconnect() {
