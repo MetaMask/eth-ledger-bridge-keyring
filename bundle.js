@@ -123,12 +123,14 @@ var LedgerBridge = function () {
         value: async function attemptMakeApp(replyAction, messageId) {
             try {
                 await this.makeApp({ openOnly: true });
+                await this.cleanUp();
                 this.sendMessageToExtension({
                     action: replyAction,
                     success: true,
                     messageId: messageId
                 });
             } catch (error) {
+                await this.cleanUp();
                 this.sendMessageToExtension({
                     action: replyAction,
                     success: false,
