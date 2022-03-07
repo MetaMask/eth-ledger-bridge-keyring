@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0]
+### Added
+- Add a new `isConnected` method which allows determining if the device is last known to be connected.  ([#131](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/131))
+### Changed
+- Messaging now runs off of message IDs instead of assuming the response received is from the last message sent, which will not always been true.  ([#132](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/132))
+
 ## [0.10.0]
 ### Added
 - Add a new `attemptMakeApp` method which allows clients to attempt a creation of the Ledger transport for the purposes of detecting/catching potential connection errors.  ([#126](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/126))
