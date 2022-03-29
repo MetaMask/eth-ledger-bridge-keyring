@@ -101,11 +101,9 @@ export default class LedgerBridge {
     async makeApp (config = {}) {
         // It's possible that a connection to the device could already exist
         // at the time a user tries to sign; in that case, simply bail!
-        /*
         if(this.transport) {
             return Promise.resolve(true);
         }
-        */
 
         try {
             if (this.transportType === 'ledgerLive') {
@@ -137,7 +135,6 @@ export default class LedgerBridge {
                 this.app = new LedgerEth(this.transport)
             }
 
-            /*
             if(this.transport) {
                 // Ensure the correct (Ethereum) app is open; if not, immediately kill
                 // the connection as the wrong app is open and switching apps will call
@@ -167,7 +164,6 @@ export default class LedgerBridge {
                     this.onDisconnect()
                 }
             }
-            */
         } catch (e) {
             console.log('LEDGER:::CREATE APP ERROR', e)
             throw e
