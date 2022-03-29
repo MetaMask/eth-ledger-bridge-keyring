@@ -215,7 +215,7 @@ export default class LedgerBridge {
             })
         } finally {
             if (this.transportType !== 'ledgerLive') {
-                this.cleanUp()
+                await this.cleanUp()
             }
         }
     }
@@ -242,7 +242,7 @@ export default class LedgerBridge {
 
         } finally {
             if (this.transportType !== 'ledgerLive') {
-                this.cleanUp()
+                await this.cleanUp()
             }
         }
     }
@@ -269,7 +269,7 @@ export default class LedgerBridge {
 
         } finally {
             if (this.transportType !== 'ledgerLive') {
-                this.cleanUp()
+                await this.cleanUp()
             }
         }
     }
@@ -295,7 +295,7 @@ export default class LedgerBridge {
             })
 
         } finally {
-            this.cleanUp()
+            await this.cleanUp()
         }
     }
 

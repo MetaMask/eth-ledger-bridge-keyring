@@ -263,7 +263,7 @@ var LedgerBridge = function () {
                 });
             } finally {
                 if (this.transportType !== 'ledgerLive') {
-                    this.cleanUp();
+                    await this.cleanUp();
                 }
             }
         }
@@ -289,7 +289,7 @@ var LedgerBridge = function () {
                 });
             } finally {
                 if (this.transportType !== 'ledgerLive') {
-                    this.cleanUp();
+                    await this.cleanUp();
                 }
             }
         }
@@ -316,7 +316,7 @@ var LedgerBridge = function () {
                 });
             } finally {
                 if (this.transportType !== 'ledgerLive') {
-                    this.cleanUp();
+                    await this.cleanUp();
                 }
             }
         }
@@ -342,7 +342,7 @@ var LedgerBridge = function () {
                     messageId: messageId
                 });
             } finally {
-                this.cleanUp();
+                await this.cleanUp();
             }
         }
     }, {
