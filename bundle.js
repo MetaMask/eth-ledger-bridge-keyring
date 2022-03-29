@@ -1,5 +1,4 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
-(function (Buffer){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -180,16 +179,16 @@ var LedgerBridge = function () {
                     this.app = new _hwAppEth2.default(this.transport);
                 }
 
-                if (this.transport) {
+                /*
+                if(this.transport) {
                     // Ensure the correct (Ethereum) app is open; if not, immediately kill
                     // the connection as the wrong app is open and switching apps will call
                     // a disconnect from within the Ledger API
                     try {
-                        var sampleSendResult = await this.transport.send(0xb0, 0x01, 0x00, 0x00);
-                        var bufferResult = Buffer.from(sampleSendResult).toString();
+                        const sampleSendResult = await this.transport.send(0xb0, 0x01, 0x00, 0x00)
+                        const bufferResult = Buffer.from(sampleSendResult).toString()
                         // Ensures the correct app is open
-                        if (bufferResult.includes('Ethereum')) {
-                            /*
+                        if(bufferResult.includes('Ethereum')) {
                             // Ensure the device is unlocked by requesting an account
                             // An error of `6b0c` will throw if locked
                             const { address } = await this.app.getAddress(`44'/60'/0'/0`, false, true)
@@ -202,13 +201,14 @@ var LedgerBridge = function () {
                             else {
                                 this.onDisconnect()
                             }
-                            */
                         }
-                    } catch (e) {
-                        this.sendConnectionMessage(false);
-                        this.onDisconnect();
+                    }
+                    catch(e) {
+                        this.sendConnectionMessage(false)
+                        this.onDisconnect()
                     }
                 }
+                */
             } catch (e) {
                 console.log('LEDGER:::CREATE APP ERROR', e);
                 throw e;
@@ -412,7 +412,6 @@ var LedgerBridge = function () {
 
 exports.default = LedgerBridge;
 
-}).call(this,require("buffer").Buffer)
 },{"@ledgerhq/hw-app-eth":125,"@ledgerhq/hw-transport-http/lib/WebSocketTransport":161,"@ledgerhq/hw-transport-u2f":165,"@ledgerhq/hw-transport-webhid":166,"buffer":226}],2:[function(require,module,exports){
 'use strict';
 

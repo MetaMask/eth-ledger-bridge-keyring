@@ -137,6 +137,7 @@ export default class LedgerBridge {
                 this.app = new LedgerEth(this.transport)
             }
 
+            /*
             if(this.transport) {
                 // Ensure the correct (Ethereum) app is open; if not, immediately kill
                 // the connection as the wrong app is open and switching apps will call
@@ -146,7 +147,6 @@ export default class LedgerBridge {
                     const bufferResult = Buffer.from(sampleSendResult).toString()
                     // Ensures the correct app is open
                     if(bufferResult.includes('Ethereum')) {
-                        /*
                         // Ensure the device is unlocked by requesting an account
                         // An error of `6b0c` will throw if locked
                         const { address } = await this.app.getAddress(`44'/60'/0'/0`, false, true)
@@ -160,7 +160,6 @@ export default class LedgerBridge {
                         else {
                             this.onDisconnect()
                         }
-                        */
                     }
                 }
                 catch(e) {
@@ -168,6 +167,7 @@ export default class LedgerBridge {
                     this.onDisconnect()
                 }
             }
+            */
         } catch (e) {
             console.log('LEDGER:::CREATE APP ERROR', e)
             throw e
