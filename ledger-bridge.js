@@ -80,15 +80,15 @@ export default class LedgerBridge {
 
     async attemptMakeApp (replyAction, messageId) {
         try {
-            await this.makeApp({ openOnly: true })
-            await this.cleanUp()
+            await this.makeApp({ openOnly: true });
+            await this.cleanUp();
             this.sendMessageToExtension({
                 action: replyAction,
                 success: true,
                 messageId,
             })
         } catch (error) {
-            await this.cleanUp()
+            await this.cleanUp();
             this.sendMessageToExtension({
                 action: replyAction,
                 success: false,
@@ -99,21 +99,15 @@ export default class LedgerBridge {
     }
 
     async makeApp (config = {}) {
-        // It's possible that a connection to the device could already exist
-        // at the time a user tries to sign; in that case, simply bail!
-        if(this.transport) {
-            return Promise.resolve(true);
-        }
-
         try {
             if (this.transportType === 'ledgerLive') {
-                let reestablish = false
+                let reestablish = false;
                 try {
                     await WebSocketTransport.check(BRIDGE_URL)
                 } catch (_err) {
                     window.open('ledgerlive://bridge?appName=Ethereum')
                     await this.checkTransportLoop()
-                    reestablish = true
+                    reestablish = true;
                 }
                 if (!this.app || reestablish) {
                     this.transport = await WebSocketTransport.open(BRIDGE_URL)
@@ -124,7 +118,7 @@ export default class LedgerBridge {
                 const nameOfDeviceType = device && device.constructor.name
                 const deviceIsOpen = device && device.opened
                 if (this.app && nameOfDeviceType === 'HIDDevice' && deviceIsOpen) {
-                    return
+                    return;
                 }
                 this.transport = config.openOnly
                 ? await TransportWebHID.openConnected()
@@ -133,36 +127,6 @@ export default class LedgerBridge {
             } else {
                 this.transport = await TransportU2F.create()
                 this.app = new LedgerEth(this.transport)
-            }
-
-            if(this.transport) {
-                // Ensure the correct (Ethereum) app is open; if not, immediately kill
-                // the connection as the wrong app is open and switching apps will call
-                // a disconnect from within the Ledger API
-                try {
-                    const sampleSendResult = await this.transport.send(0xb0, 0x01, 0x00, 0x00)
-                    const bufferResult = Buffer.from(sampleSendResult).toString()
-                    // Ensures the correct app is open
-                    if(bufferResult.includes('Ethereum')) {
-                        // Ensure the device is unlocked by requesting an account
-                        // An error of `6b0c` will throw if locked
-                        const { address } = await this.app.getAddress(`44'/60'/0'/0`, false, true)
-                        if (address) {
-                            this.sendConnectionMessage(true)
-
-                            this.transport.on('disconnect', (event) => {
-                                this.onDisconnect()
-                            })
-                        }
-                        else {
-                            this.onDisconnect()
-                        }
-                    }
-                }
-                catch(e) {
-                    this.sendConnectionMessage(false)
-                    this.onDisconnect()
-                }
             }
         } catch (e) {
             console.log('LEDGER:::CREATE APP ERROR', e)
@@ -297,19 +261,6 @@ export default class LedgerBridge {
         } finally {
             this.cleanUp()
         }
-    }
-
-    onDisconnect() {
-        this.cleanUp()
-        this.sendConnectionMessage(false)
-    }
-
-    sendConnectionMessage(connected) {
-        this.sendMessageToExtension({
-            action: 'ledger-connection-change',
-            success: true,
-            payload: { connected }
-        })
     }
 
     ledgerErrToMessage (err) {
