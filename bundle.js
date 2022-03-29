@@ -142,6 +142,8 @@ var LedgerBridge = function () {
     }, {
         key: 'makeApp',
         value: async function makeApp() {
+            var _this3 = this;
+
             var config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
             // It's possible that a connection to the device could already exist
@@ -178,34 +180,34 @@ var LedgerBridge = function () {
                     this.app = new _hwAppEth2.default(this.transport);
                 }
 
-                if (this.transport) {
-                    // Ensure the correct (Ethereum) app is open; if not, immediately kill
-                    // the connection as the wrong app is open and switching apps will call
-                    // a disconnect from within the Ledger API
-                    try {
-                        var sampleSendResult = await this.transport.send(0xb0, 0x01, 0x00, 0x00);
-                        var bufferResult = Buffer.from(sampleSendResult).toString();
-                        /*
-                        // Ensures the correct app is open
-                        if(bufferResult.includes('Ethereum')) {
-                            // Ensure the device is unlocked by requesting an account
-                            // An error of `6b0c` will throw if locked
-                            const { address } = await this.app.getAddress(`44'/60'/0'/0`, false, true)
-                            if (address) {
-                                this.sendConnectionMessage(true)
-                                 this.transport.on('disconnect', (event) => {
-                                    this.onDisconnect()
-                                })
-                            }
-                            else {
-                                this.onDisconnect()
-                            }
+                // Ensure the correct (Ethereum) app is open; if not, immediately kill
+                // the connection as the wrong app is open and switching apps will call
+                // a disconnect from within the Ledger API
+                try {
+                    var sampleSendResult = await this.transport.send(0xb0, 0x01, 0x00, 0x00);
+                    var bufferResult = Buffer.from(sampleSendResult).toString();
+                    // Ensures the correct app is open
+                    if (bufferResult.includes('Ethereum')) {
+                        // Ensure the device is unlocked by requesting an account
+                        // An error of `6b0c` will throw if locked
+                        var _ref = await this.app.getAddress('44\'/60\'/0\'/0', false, true),
+                            address = _ref.address;
+
+                        if (address) {
+                            this.sendConnectionMessage(true);
+
+                            this.transport.on('disconnect', function (event) {
+                                _this3.onDisconnect();
+                            });
+                        } else {
+                            this.onDisconnect();
                         }
-                        */
-                    } catch (e) {
-                        this.sendConnectionMessage(false);
-                        this.onDisconnect();
                     }
+                } catch (e) {
+                    console.log('LEDGER:::Transport check error', e);
+                    this.sendConnectionMessage(false);
+                    this.onDisconnect();
+                    throw e;
                 }
             } catch (e) {
                 console.log('LEDGER:::CREATE APP ERROR', e);

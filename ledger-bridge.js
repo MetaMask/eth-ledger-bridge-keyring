@@ -135,36 +135,34 @@ export default class LedgerBridge {
                 this.app = new LedgerEth(this.transport)
             }
 
-            if(this.transport) {
-                // Ensure the correct (Ethereum) app is open; if not, immediately kill
-                // the connection as the wrong app is open and switching apps will call
-                // a disconnect from within the Ledger API
-                try {
-                    const sampleSendResult = await this.transport.send(0xb0, 0x01, 0x00, 0x00)
-                    const bufferResult = Buffer.from(sampleSendResult).toString()
-                    /*
-                    // Ensures the correct app is open
-                    if(bufferResult.includes('Ethereum')) {
-                        // Ensure the device is unlocked by requesting an account
-                        // An error of `6b0c` will throw if locked
-                        const { address } = await this.app.getAddress(`44'/60'/0'/0`, false, true)
-                        if (address) {
-                            this.sendConnectionMessage(true)
+            // Ensure the correct (Ethereum) app is open; if not, immediately kill
+            // the connection as the wrong app is open and switching apps will call
+            // a disconnect from within the Ledger API
+            try {
+                const sampleSendResult = await this.transport.send(0xb0, 0x01, 0x00, 0x00)
+                const bufferResult = Buffer.from(sampleSendResult).toString()
+                // Ensures the correct app is open
+                if(bufferResult.includes('Ethereum')) {
+                    // Ensure the device is unlocked by requesting an account
+                    // An error of `6b0c` will throw if locked
+                    const { address } = await this.app.getAddress(`44'/60'/0'/0`, false, true)
+                    if (address) {
+                        this.sendConnectionMessage(true)
 
-                            this.transport.on('disconnect', (event) => {
-                                this.onDisconnect()
-                            })
-                        }
-                        else {
+                        this.transport.on('disconnect', (event) => {
                             this.onDisconnect()
-                        }
+                        })
                     }
-                    */
+                    else {
+                        this.onDisconnect()
+                    }
                 }
-                catch(e) {
-                    this.sendConnectionMessage(false)
-                    this.onDisconnect()
-                }
+            }
+            catch(e) {
+                console.log('LEDGER:::Transport check error', e)
+                this.sendConnectionMessage(false)
+                this.onDisconnect()
+                throw e
             }
         } catch (e) {
             console.log('LEDGER:::CREATE APP ERROR', e)
