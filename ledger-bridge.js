@@ -147,21 +147,23 @@ export default class LedgerBridge {
                     // An error of `6b0c` will throw if locked
                     const { address } = await this.app.getAddress(`44'/60'/0'/0`, false, true)
                     if (address) {
+                        /*
                         this.sendConnectionMessage(true)
 
                         this.transport.on('disconnect', (event) => {
                             this.onDisconnect()
                         })
+                        */
                     }
                     else {
-                        this.onDisconnect()
+                        //this.onDisconnect()
                     }
                 }
             }
             catch(e) {
                 console.log('LEDGER:::Transport check error', e)
-                this.sendConnectionMessage(false)
-                this.onDisconnect()
+                //this.sendConnectionMessage(false)
+                //this.onDisconnect()
                 throw e
             }
         } catch (e) {
@@ -305,11 +307,13 @@ export default class LedgerBridge {
     }
 
     sendConnectionMessage(connected) {
+        /*
         this.sendMessageToExtension({
             action: 'ledger-connection-change',
             success: true,
             payload: { connected }
         })
+        */
     }
 
     ledgerErrToMessage (err) {

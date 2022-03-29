@@ -142,8 +142,6 @@ var LedgerBridge = function () {
     }, {
         key: 'makeApp',
         value: async function makeApp() {
-            var _this3 = this;
-
             var config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
             // It's possible that a connection to the device could already exist
@@ -194,19 +192,20 @@ var LedgerBridge = function () {
                             address = _ref.address;
 
                         if (address) {
-                            this.sendConnectionMessage(true);
-
-                            this.transport.on('disconnect', function (event) {
-                                _this3.onDisconnect();
-                            });
+                            /*
+                            this.sendConnectionMessage(true)
+                             this.transport.on('disconnect', (event) => {
+                                this.onDisconnect()
+                            })
+                            */
                         } else {
-                            this.onDisconnect();
-                        }
+                                //this.onDisconnect()
+                            }
                     }
                 } catch (e) {
                     console.log('LEDGER:::Transport check error', e);
-                    this.sendConnectionMessage(false);
-                    this.onDisconnect();
+                    //this.sendConnectionMessage(false)
+                    //this.onDisconnect()
                     throw e;
                 }
             } catch (e) {
@@ -354,11 +353,13 @@ var LedgerBridge = function () {
     }, {
         key: 'sendConnectionMessage',
         value: function sendConnectionMessage(connected) {
+            /*
             this.sendMessageToExtension({
                 action: 'ledger-connection-change',
                 success: true,
-                payload: { connected: connected }
-            });
+                payload: { connected }
+            })
+            */
         }
     }, {
         key: 'ledgerErrToMessage',
