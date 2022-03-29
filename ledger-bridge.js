@@ -101,9 +101,11 @@ export default class LedgerBridge {
     async makeApp (config = {}) {
         // It's possible that a connection to the device could already exist
         // at the time a user tries to sign; in that case, simply bail!
+        /*
         if(this.transport) {
             return Promise.resolve(true);
         }
+        */
 
         try {
             if (this.transportType === 'ledgerLive') {
