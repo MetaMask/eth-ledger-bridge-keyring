@@ -142,8 +142,6 @@ var LedgerBridge = function () {
     }, {
         key: 'makeApp',
         value: async function makeApp() {
-            var _this3 = this;
-
             var config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
             // It's possible that a connection to the device could already exist
@@ -191,20 +189,20 @@ var LedgerBridge = function () {
                         var bufferResult = Buffer.from(sampleSendResult).toString();
                         // Ensures the correct app is open
                         if (bufferResult.includes('Ethereum')) {
+                            /*
                             // Ensure the device is unlocked by requesting an account
                             // An error of `6b0c` will throw if locked
-                            var _ref = await this.app.getAddress('44\'/60\'/0\'/0', false, true),
-                                address = _ref.address;
-
+                            const { address } = await this.app.getAddress(`44'/60'/0'/0`, false, true)
                             if (address) {
-                                this.sendConnectionMessage(true);
-
-                                this.transport.on('disconnect', function (event) {
-                                    _this3.onDisconnect();
-                                });
-                            } else {
-                                this.onDisconnect();
+                                this.sendConnectionMessage(true)
+                                 this.transport.on('disconnect', (event) => {
+                                    this.onDisconnect()
+                                })
                             }
+                            else {
+                                this.onDisconnect()
+                            }
+                            */
                         }
                     } catch (e) {
                         this.sendConnectionMessage(false);
