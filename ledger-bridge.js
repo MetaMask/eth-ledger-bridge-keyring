@@ -215,7 +215,7 @@ export default class LedgerBridge {
             })
         } finally {
             if (this.transportType !== 'ledgerLive') {
-                await this.cleanUp()
+                // await this.cleanUp()
             }
         }
     }

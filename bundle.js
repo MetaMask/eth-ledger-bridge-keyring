@@ -263,7 +263,7 @@ var LedgerBridge = function () {
                 });
             } finally {
                 if (this.transportType !== 'ledgerLive') {
-                    await this.cleanUp();
+                    // await this.cleanUp()
                 }
             }
         }
