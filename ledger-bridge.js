@@ -142,6 +142,7 @@ export default class LedgerBridge {
                 try {
                     const sampleSendResult = await this.transport.send(0xb0, 0x01, 0x00, 0x00)
                     const bufferResult = Buffer.from(sampleSendResult).toString()
+                    /*
                     // Ensures the correct app is open
                     if(bufferResult.includes('Ethereum')) {
                         // Ensure the device is unlocked by requesting an account
@@ -158,6 +159,7 @@ export default class LedgerBridge {
                             this.onDisconnect()
                         }
                     }
+                    */
                 }
                 catch(e) {
                     this.sendConnectionMessage(false)
