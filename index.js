@@ -131,15 +131,15 @@ class LedgerBridgeKeyring extends EventEmitter {
           hdPath: path,
         },
       },
-      ({ success, payload }) => {
-        if (success) {
-          this.hdk.publicKey = Buffer.from(payload.publicKey, 'hex')
-          this.hdk.chainCode = Buffer.from(payload.chainCode, 'hex')
-          resolve(payload.address)
-        } else {
-          reject(payload.error || new Error('Unknown error'))
-        }
-      })
+        ({ success, payload }) => {
+          if (success) {
+            this.hdk.publicKey = Buffer.from(payload.publicKey, 'hex')
+            this.hdk.chainCode = Buffer.from(payload.chainCode, 'hex')
+            resolve(payload.address)
+          } else {
+            reject(payload.error || new Error('Unknown error'))
+          }
+        })
     })
   }
 
@@ -187,6 +187,16 @@ class LedgerBridgeKeyring extends EventEmitter {
 
   getPreviousPage () {
     return this.__getPage(-1)
+  }
+
+  /**
+  * Returns specific page of accounts.
+  * @param {number} page: The page to get.
+  * @returns accounts on the page.
+  */
+  getPage (page) {
+    this.page = page
+    return this.__getPage(0)
   }
 
   getAccounts () {
@@ -310,20 +320,20 @@ class LedgerBridgeKeyring extends EventEmitter {
               hdPath,
             },
           },
-          ({ success, payload }) => {
-            if (success) {
+            ({ success, payload }) => {
+              if (success) {
 
-              const newOrMutatedTx = handleSigning(payload)
-              const valid = newOrMutatedTx.verifySignature()
-              if (valid) {
-                resolve(newOrMutatedTx)
+                const newOrMutatedTx = handleSigning(payload)
+                const valid = newOrMutatedTx.verifySignature()
+                if (valid) {
+                  resolve(newOrMutatedTx)
+                } else {
+                  reject(new Error('Ledger: The transaction signature is not valid'))
+                }
               } else {
-                reject(new Error('Ledger: The transaction signature is not valid'))
+                reject(payload.error || new Error('Ledger: Unknown error while signing transaction'))
               }
-            } else {
-              reject(payload.error || new Error('Ledger: Unknown error while signing transaction'))
-            }
-          })
+            })
         })
         .catch(reject)
     })
@@ -345,23 +355,23 @@ class LedgerBridgeKeyring extends EventEmitter {
               message: ethUtil.stripHexPrefix(message),
             },
           },
-          ({ success, payload }) => {
-            if (success) {
-              let v = payload.v - 27
-              v = v.toString(16)
-              if (v.length < 2) {
-                v = `0${v}`
+            ({ success, payload }) => {
+              if (success) {
+                let v = payload.v - 27
+                v = v.toString(16)
+                if (v.length < 2) {
+                  v = `0${v}`
+                }
+                const signature = `0x${payload.r}${payload.s}${v}`
+                const addressSignedWith = sigUtil.recoverPersonalSignature({ data: message, sig: signature })
+                if (ethUtil.toChecksumAddress(addressSignedWith) !== ethUtil.toChecksumAddress(withAccount)) {
+                  reject(new Error('Ledger: The signature doesnt match the right address'))
+                }
+                resolve(signature)
+              } else {
+                reject(payload.error || new Error('Ledger: Unknown error while signing message'))
               }
-              const signature = `0x${payload.r}${payload.s}${v}`
-              const addressSignedWith = sigUtil.recoverPersonalSignature({ data: message, sig: signature })
-              if (ethUtil.toChecksumAddress(addressSignedWith) !== ethUtil.toChecksumAddress(withAccount)) {
-                reject(new Error('Ledger: The signature doesnt match the right address'))
-              }
-              resolve(signature)
-            } else {
-              reject(payload.error || new Error('Ledger: Unknown error while signing message'))
-            }
-          })
+            })
         })
         .catch(reject)
     })
@@ -408,7 +418,7 @@ class LedgerBridgeKeyring extends EventEmitter {
           hashStructMessageHex,
         },
       },
-      (result) => resolve(result))
+        (result) => resolve(result))
     })
 
     if (success) {
