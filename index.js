@@ -478,10 +478,11 @@ class LedgerBridgeKeyring extends EventEmitter {
   _sendMessage (msg, cb) {
     msg.target = 'LEDGER-IFRAME'
 
-    this.currentMessageId += 1
-    msg.messageId = this.currentMessageId
+    const messageId = this.currentMessageId + 1;
+    this.currentMessageId = messageId
+    msg.messageId = messageId
 
-    this.messageCallbacks[this.currentMessageId] = cb
+    this.messageCallbacks[messageId] = cb
     this.iframe.contentWindow.postMessage(msg, '*')
   }
 
