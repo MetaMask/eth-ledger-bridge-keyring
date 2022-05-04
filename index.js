@@ -486,7 +486,7 @@ class LedgerBridgeKeyring extends EventEmitter {
   }
 
   _setupListener () {
-    const eventListener = ({ origin, data }) => {
+    this._eventListener = ({ origin, data }) => {
       if (origin !== this._getOrigin()) {
         return false
       }
@@ -501,7 +501,13 @@ class LedgerBridgeKeyring extends EventEmitter {
 
       return undefined
     }
-    window.addEventListener('message', eventListener)
+    window.addEventListener('message', this._eventListener)
+  }
+
+  destroy () {
+    window.removeEventListener('message', this._eventListener)
+    this.currentMessageId = 0
+    this.messageCallbacks = {}
   }
 
   async __getPage (increment) {
