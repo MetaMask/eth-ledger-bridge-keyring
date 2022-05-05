@@ -506,8 +506,6 @@ class LedgerBridgeKeyring extends EventEmitter {
 
   destroy () {
     window.removeEventListener('message', this._eventListener)
-    this.currentMessageId = 0
-    this.messageCallbacks = {}
   }
 
   async __getPage (increment) {
