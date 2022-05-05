@@ -650,4 +650,14 @@ describe('LedgerBridgeKeyring', function () {
       assert.rejects(keyring.signTypedData(fakeAccounts[15], fixtureData, options), new Error('Ledger: The signature doesnt match the right address'))
     })
   })
+
+  describe('destroy', function () {
+    it('should remove the message event listener', function () {
+      sandbox.on(global.window, 'removeEventListener', () => true)
+      keyring.destroy()
+      expect(global.window.removeEventListener).to.have.been.called()
+      expect(global.window.removeEventListener)
+        .to.have.been.called.with('message', keyring._eventListener)
+    })
+  })
 })
