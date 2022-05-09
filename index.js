@@ -146,7 +146,7 @@ class LedgerBridgeKeyring extends EventEmitter {
   addAccounts (n = 1) {
 
     return new Promise((resolve, reject) => {
-      this.unlock()
+      this.unlock(this.hdPath)
         .then(async (_) => {
           const from = this.unlockedAccount
           const to = from + n
@@ -514,7 +514,7 @@ class LedgerBridgeKeyring extends EventEmitter {
     const from = (this.page - 1) * this.perPage
     const to = from + this.perPage
 
-    await this.unlock()
+    await this.unlock(this.hdPath)
     let accounts
     if (this._isLedgerLiveHdPath()) {
       accounts = await this._getAccountsBIP44(from, to)

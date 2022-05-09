@@ -79,8 +79,8 @@ describe('LedgerBridgeKeyring', function () {
 
   async function basicSetupToUnlockOneAccount (accountIndex = 0) {
     keyring.setAccountToUnlock(accountIndex)
-    await keyring.addAccounts()
     sandbox.on(keyring, 'unlock', (_) => Promise.resolve(fakeAccounts[accountIndex]))
+    await keyring.addAccounts()
   }
 
   beforeEach(function () {
@@ -242,6 +242,7 @@ describe('LedgerBridgeKeyring', function () {
   describe('addAccounts', function () {
     describe('with no arguments', function () {
       it('returns a single account', function (done) {
+        sandbox.on(keyring, 'unlock', (_) => Promise.resolve(fakeAccounts[0]))
         keyring.setAccountToUnlock(0)
         keyring.addAccounts()
           .then((accounts) => {
@@ -253,6 +254,7 @@ describe('LedgerBridgeKeyring', function () {
 
     describe('with a numeric argument', function () {
       it('returns that number of accounts', function (done) {
+        sandbox.on(keyring, 'unlock', (_) => Promise.resolve(fakeAccounts[0]))
         keyring.setAccountToUnlock(0)
         keyring.addAccounts(5)
           .then((accounts) => {
@@ -262,6 +264,7 @@ describe('LedgerBridgeKeyring', function () {
       })
 
       it('returns the expected accounts', function (done) {
+        sandbox.on(keyring, 'unlock', (_) => Promise.resolve(fakeAccounts[0]))
         keyring.setAccountToUnlock(0)
         keyring.addAccounts(3)
           .then((accounts) => {
@@ -287,6 +290,7 @@ describe('LedgerBridgeKeyring', function () {
     })
 
     it('stores account details for non-bip44 accounts', function () {
+      sandbox.on(keyring, 'unlock', (_) => Promise.resolve(fakeAccounts[0]))
       keyring.setHdPath(`m/44'/60'/0'`)
       keyring.setAccountToUnlock(2)
       return keyring.addAccounts(1)
@@ -300,6 +304,7 @@ describe('LedgerBridgeKeyring', function () {
 
     describe('when called multiple times', function () {
       it('should not remove existing accounts', function (done) {
+        sandbox.on(keyring, 'unlock', (_) => Promise.resolve(fakeAccounts[0]))
         keyring.setAccountToUnlock(0)
         keyring.addAccounts(1)
           .then(function () {
@@ -319,6 +324,7 @@ describe('LedgerBridgeKeyring', function () {
   describe('removeAccount', function () {
     describe('if the account exists', function () {
       it('should remove that account', function (done) {
+        sandbox.on(keyring, 'unlock', (_) => Promise.resolve(fakeAccounts[0]))
         keyring.setAccountToUnlock(0)
         keyring.addAccounts()
           .then(async (accounts) => {
@@ -343,12 +349,14 @@ describe('LedgerBridgeKeyring', function () {
 
   describe('getFirstPage', function () {
     it('should set the currentPage to 1', async function () {
+      sandbox.on(keyring, 'unlock', (_) => Promise.resolve(fakeAccounts[0]))
       await keyring.getFirstPage()
       assert.equal(keyring.page, 1)
     })
 
     it('should return the list of accounts for current page', async function () {
 
+      sandbox.on(keyring, 'unlock', (_) => Promise.resolve(fakeAccounts[0]))
       const accounts = await keyring.getFirstPage()
 
       expect(accounts.length, keyring.perPage)
@@ -363,6 +371,7 @@ describe('LedgerBridgeKeyring', function () {
   describe('getNextPage', function () {
 
     it('should return the list of accounts for current page', async function () {
+      sandbox.on(keyring, 'unlock', (_) => Promise.resolve(fakeAccounts[0]))
       const accounts = await keyring.getNextPage()
       expect(accounts.length, keyring.perPage)
       expect(accounts[0].address, fakeAccounts[0])
@@ -376,6 +385,7 @@ describe('LedgerBridgeKeyring', function () {
   describe('getPreviousPage', function () {
 
     it('should return the list of accounts for current page', async function () {
+      sandbox.on(keyring, 'unlock', (_) => Promise.resolve(fakeAccounts[0]))
       // manually advance 1 page
       await keyring.getNextPage()
       const accounts = await keyring.getPreviousPage()
@@ -389,6 +399,7 @@ describe('LedgerBridgeKeyring', function () {
     })
 
     it('should be able to go back to the previous page', async function () {
+      sandbox.on(keyring, 'unlock', (_) => Promise.resolve(fakeAccounts[0]))
       // manually advance 1 page
       await keyring.getNextPage()
       const accounts = await keyring.getPreviousPage()
@@ -406,6 +417,7 @@ describe('LedgerBridgeKeyring', function () {
     const accountIndex = 5
     let accounts = []
     beforeEach(async function () {
+      sandbox.on(keyring, 'unlock', (_) => Promise.resolve(fakeAccounts[accountIndex]))
       keyring.setAccountToUnlock(accountIndex)
       await keyring.addAccounts()
       accounts = await keyring.getAccounts()
@@ -432,6 +444,7 @@ describe('LedgerBridgeKeyring', function () {
 
   describe('forgetDevice', function () {
     it('should clear the content of the keyring', async function () {
+      sandbox.on(keyring, 'unlock', (_) => Promise.resolve(fakeAccounts[0]))
       // Add an account
       keyring.setAccountToUnlock(0)
       await keyring.addAccounts()
@@ -565,9 +578,9 @@ describe('LedgerBridgeKeyring', function () {
     it('should reject if the account is not found on device', async function () {
       const requestedAccount = fakeAccounts[0]
       const incorrectAccount = fakeAccounts[1]
+      sandbox.on(keyring, 'unlock', (_) => Promise.resolve(incorrectAccount))
       keyring.setAccountToUnlock(0)
       await keyring.addAccounts()
-      sandbox.on(keyring, 'unlock', (_) => Promise.resolve(incorrectAccount))
 
       assert.rejects(() => keyring.unlockAccountByAddress(requestedAccount), new Error(`Ledger: Account ${fakeAccounts[0]} does not belong to the connected device`))
     })
