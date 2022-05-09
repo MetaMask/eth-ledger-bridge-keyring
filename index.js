@@ -478,7 +478,7 @@ class LedgerBridgeKeyring extends EventEmitter {
   _sendMessage (msg, cb) {
     msg.target = 'LEDGER-IFRAME'
 
-    const messageId = this.currentMessageId + 1;
+    const messageId = this.currentMessageId + 1
     this.currentMessageId = messageId
     msg.messageId = messageId
 
