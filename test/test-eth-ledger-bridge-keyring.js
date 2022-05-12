@@ -274,9 +274,9 @@ describe('LedgerBridgeKeyring', function () {
     })
 
     it('stores account details for bip44 accounts', function () {
-      sandbox.on(keyring, 'unlock', (_) => Promise.resolve(fakeAccounts[0]))
       keyring.setHdPath(`m/44'/60'/0'/0/0`)
       keyring.setAccountToUnlock(1)
+      sandbox.on(keyring, 'unlock', (_) => Promise.resolve(fakeAccounts[0]))
       return keyring.addAccounts(1)
         .then((accounts) => {
           assert.deepEqual(keyring.accountDetails[accounts[0]], {
@@ -564,8 +564,10 @@ describe('LedgerBridgeKeyring', function () {
 
     it('should reject if the account is not found on device', async function () {
       const requestedAccount = fakeAccounts[0]
+      const incorrectAccount = fakeAccounts[1]
       keyring.setAccountToUnlock(0)
       await keyring.addAccounts()
+      sandbox.on(keyring, 'unlock', (_) => Promise.resolve(incorrectAccount))
 
       assert.rejects(() => keyring.unlockAccountByAddress(requestedAccount), new Error(`Ledger: Account ${fakeAccounts[0]} does not belong to the connected device`))
     })
