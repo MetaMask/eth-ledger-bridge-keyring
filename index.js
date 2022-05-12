@@ -119,7 +119,7 @@ class LedgerBridgeKeyring extends EventEmitter {
     this.hdPath = hdPath
   }
 
-  unlock (hdPath) {
+  unlock (hdPath, updateHdk = true) {
     if (this.isUnlocked() && !hdPath) {
       return Promise.resolve('already unlocked')
     }
@@ -133,8 +133,10 @@ class LedgerBridgeKeyring extends EventEmitter {
       },
       ({ success, payload }) => {
         if (success) {
-          this.hdk.publicKey = Buffer.from(payload.publicKey, 'hex')
-          this.hdk.chainCode = Buffer.from(payload.chainCode, 'hex')
+          if (updateHdk) {
+            this.hdk.publicKey = Buffer.from(payload.publicKey, 'hex')
+            this.hdk.chainCode = Buffer.from(payload.chainCode, 'hex')
+          }
           resolve(payload.address)
         } else {
           reject(payload.error || new Error('Unknown error'))
@@ -146,7 +148,7 @@ class LedgerBridgeKeyring extends EventEmitter {
   addAccounts (n = 1) {
 
     return new Promise((resolve, reject) => {
-      this.unlock(this.hdPath)
+      this.unlock()
         .then(async (_) => {
           const from = this.unlockedAccount
           const to = from + n
@@ -373,7 +375,7 @@ class LedgerBridgeKeyring extends EventEmitter {
       throw new Error(`Ledger: Account for address '${checksummedAddress}' not found`)
     }
     const { hdPath } = this.accountDetails[checksummedAddress]
-    const unlockedAddress = await this.unlock(hdPath)
+    const unlockedAddress = await this.unlock(hdPath, false)
 
     // unlock resolves to the address for the given hdPath as reported by the ledger device
     // if that address is not the requested address, then this account belongs to a different device or seed
@@ -514,7 +516,7 @@ class LedgerBridgeKeyring extends EventEmitter {
     const from = (this.page - 1) * this.perPage
     const to = from + this.perPage
 
-    await this.unlock(this.hdPath)
+    await this.unlock()
     let accounts
     if (this._isLedgerLiveHdPath()) {
       accounts = await this._getAccountsBIP44(from, to)
