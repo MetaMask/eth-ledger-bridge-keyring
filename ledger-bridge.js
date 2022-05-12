@@ -212,7 +212,7 @@ export default class LedgerBridge {
             })
         } finally {
             if (this._shouldCleanupTransport()) {
-                await this.cleanUp()
+                // await this.cleanUp()
             }
         }
     }
@@ -239,7 +239,7 @@ export default class LedgerBridge {
 
         } finally {
             if (this._shouldCleanupTransport()) {
-                await this.cleanUp()
+                // await this.cleanUp()
             }
         }
     }
@@ -266,7 +266,7 @@ export default class LedgerBridge {
 
         } finally {
             if (this._shouldCleanupTransport()) {
-                await this.cleanUp()
+                // await this.cleanUp()
             }
         }
     }
@@ -293,7 +293,7 @@ export default class LedgerBridge {
 
         } finally {
             if (this._shouldCleanupTransport()) {
-                await this.cleanUp()
+                // await this.cleanUp()
             }
         }
     }
@@ -312,7 +312,8 @@ export default class LedgerBridge {
     }
 
     _shouldCleanupTransport() {
-        return this.transportType === 'u2f';
+        // return this.transportType === 'u2f';
+        return false;
     }
 
     ledgerErrToMessage (err) {
