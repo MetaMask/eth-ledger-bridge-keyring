@@ -364,8 +364,7 @@ var LedgerBridge = function () {
     }, {
         key: '_shouldCleanupTransport',
         value: function _shouldCleanupTransport() {
-            // return this.transportType === 'u2f';
-            return false;
+            return this.transportType === 'u2f';
         }
     }, {
         key: 'ledgerErrToMessage',
@@ -429,7 +428,9 @@ var _ledgerBridge2 = _interopRequireDefault(_ledgerBridge);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-new _ledgerBridge2.default();
+(async function () {
+    var bridge = new _ledgerBridge2.default();
+})();
 console.log('MetaMask < = > Ledger Bridge initialized from ' + window.location + '!');
 
 },{"./ledger-bridge":1}],3:[function(require,module,exports){

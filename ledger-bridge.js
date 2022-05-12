@@ -80,15 +80,15 @@ export default class LedgerBridge {
 
     async attemptMakeApp (replyAction, messageId) {
         try {
-            await this.makeApp({ openOnly: true })
-            await this.cleanUp()
+            await this.makeApp({ openOnly: true });
+            await this.cleanUp();
             this.sendMessageToExtension({
                 action: replyAction,
                 success: true,
                 messageId,
             })
         } catch (error) {
-            await this.cleanUp()
+            await this.cleanUp();
             this.sendMessageToExtension({
                 action: replyAction,
                 success: false,
@@ -102,18 +102,18 @@ export default class LedgerBridge {
         // It's possible that a connection to the device could already exist
         // at the time a user tries to sign; in that case, simply bail!
         if(this.transport) {
-            return Promise.resolve(true);
+            return Promise.resolve(true)
         }
 
         try {
             if (this.transportType === 'ledgerLive') {
-                let reestablish = false
+                let reestablish = false;
                 try {
                     await WebSocketTransport.check(BRIDGE_URL)
                 } catch (_err) {
                     window.open('ledgerlive://bridge?appName=Ethereum')
                     await this.checkTransportLoop()
-                    reestablish = true
+                    reestablish = true;
                 }
                 if (!this.app || reestablish) {
                     this.transport = await WebSocketTransport.open(BRIDGE_URL)
@@ -124,7 +124,7 @@ export default class LedgerBridge {
                 const nameOfDeviceType = device && device.constructor.name
                 const deviceIsOpen = device && device.opened
                 if (this.app && nameOfDeviceType === 'HIDDevice' && deviceIsOpen) {
-                    return
+                    return;
                 }
                 this.transport = config.openOnly
                 ? await TransportWebHID.openConnected()
@@ -312,8 +312,7 @@ export default class LedgerBridge {
     }
 
     _shouldCleanupTransport() {
-        // return this.transportType === 'u2f';
-        return false;
+        return this.transportType === 'u2f';
     }
 
     ledgerErrToMessage (err) {
