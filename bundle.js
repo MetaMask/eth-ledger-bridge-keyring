@@ -262,7 +262,7 @@ var LedgerBridge = function () {
                 });
             } finally {
                 if (this._shouldCleanupTransport()) {
-                    // await this.cleanUp()
+                    await this.cleanUp();
                 }
             }
         }
@@ -288,7 +288,7 @@ var LedgerBridge = function () {
                 });
             } finally {
                 if (this._shouldCleanupTransport()) {
-                    // await this.cleanUp()
+                    await this.cleanUp();
                 }
             }
         }
@@ -315,7 +315,7 @@ var LedgerBridge = function () {
                 });
             } finally {
                 if (this._shouldCleanupTransport()) {
-                    // await this.cleanUp()
+                    await this.cleanUp();
                 }
             }
         }
@@ -342,7 +342,7 @@ var LedgerBridge = function () {
                 });
             } finally {
                 if (this._shouldCleanupTransport()) {
-                    // await this.cleanUp()
+                    await this.cleanUp();
                 }
             }
         }
