@@ -195,17 +195,16 @@ var LedgerBridge = function () {
 
                         if (address) {
                             this.sendConnectionMessage(true);
-
-                            this.transport.on('disconnect', function (event) {
-                                _this3.onDisconnect();
+                            this.transport.on('disconnect', function () {
+                                return _this3.onDisconnect();
                             });
                         } else {
                             this.onDisconnect();
+                            throw Error('LEDGER:::Device appears to be locked');
                         }
                     }
                 } catch (e) {
                     console.log('LEDGER:::Transport check error', e);
-                    this.sendConnectionMessage(false);
                     this.onDisconnect();
                     throw e;
                 }
@@ -262,8 +261,8 @@ var LedgerBridge = function () {
                     messageId: messageId
                 });
             } finally {
-                if (this.transportType !== 'ledgerLive') {
-                    // await this.cleanUp()
+                if (this._shouldCleanupTransport()) {
+                    await this.cleanUp();
                 }
             }
         }
@@ -288,7 +287,7 @@ var LedgerBridge = function () {
                     messageId: messageId
                 });
             } finally {
-                if (this.transportType !== 'ledgerLive') {
+                if (this._shouldCleanupTransport()) {
                     await this.cleanUp();
                 }
             }
@@ -315,7 +314,7 @@ var LedgerBridge = function () {
                     messageId: messageId
                 });
             } finally {
-                if (this.transportType !== 'ledgerLive') {
+                if (this._shouldCleanupTransport()) {
                     await this.cleanUp();
                 }
             }
@@ -342,7 +341,9 @@ var LedgerBridge = function () {
                     messageId: messageId
                 });
             } finally {
-                await this.cleanUp();
+                if (this._shouldCleanupTransport()) {
+                    await this.cleanUp();
+                }
             }
         }
     }, {
@@ -359,6 +360,11 @@ var LedgerBridge = function () {
                 success: true,
                 payload: { connected: connected }
             });
+        }
+    }, {
+        key: '_shouldCleanupTransport',
+        value: function _shouldCleanupTransport() {
+            return this.transportType === 'u2f';
         }
     }, {
         key: 'ledgerErrToMessage',

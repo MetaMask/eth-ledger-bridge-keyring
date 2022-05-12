@@ -148,19 +148,16 @@ export default class LedgerBridge {
                     const { address } = await this.app.getAddress(`44'/60'/0'/0`, false, true)
                     if (address) {
                         this.sendConnectionMessage(true)
-
-                        this.transport.on('disconnect', (event) => {
-                            this.onDisconnect()
-                        })
+                        this.transport.on('disconnect', () => this.onDisconnect())
                     }
                     else {
                         this.onDisconnect()
+                        throw Error('LEDGER:::Device appears to be locked')
                     }
                 }
             }
             catch(e) {
                 console.log('LEDGER:::Transport check error', e)
-                this.sendConnectionMessage(false)
                 this.onDisconnect()
                 throw e
             }
@@ -214,8 +211,8 @@ export default class LedgerBridge {
                 messageId,
             })
         } finally {
-            if (this.transportType !== 'ledgerLive') {
-                // await this.cleanUp()
+            if (this._shouldCleanupTransport()) {
+                await this.cleanUp()
             }
         }
     }
@@ -241,7 +238,7 @@ export default class LedgerBridge {
             })
 
         } finally {
-            if (this.transportType !== 'ledgerLive') {
+            if (this._shouldCleanupTransport()) {
                 await this.cleanUp()
             }
         }
@@ -268,7 +265,7 @@ export default class LedgerBridge {
             })
 
         } finally {
-            if (this.transportType !== 'ledgerLive') {
+            if (this._shouldCleanupTransport()) {
                 await this.cleanUp()
             }
         }
@@ -295,7 +292,9 @@ export default class LedgerBridge {
             })
 
         } finally {
-            await this.cleanUp()
+            if (this._shouldCleanupTransport()) {
+                await this.cleanUp()
+            }
         }
     }
 
@@ -310,6 +309,10 @@ export default class LedgerBridge {
             success: true,
             payload: { connected }
         })
+    }
+
+    _shouldCleanupTransport() {
+        return this.transportType === 'u2f';
     }
 
     ledgerErrToMessage (err) {
