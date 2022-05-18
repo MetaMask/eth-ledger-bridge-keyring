@@ -216,8 +216,7 @@ describe('LedgerBridgeKeyring', function () {
     })
     it('should update hdk.publicKey if updateHdk is true', function (done) {
       const ledgerKeyring = new LedgerBridgeKeyring()
-      const newFakeHDkey = HDKey.fromExtendedKey(fakeXPubKey)
-      ledgerKeyring.hdk = newFakeHDkey
+      ledgerKeyring.hdk = { publicKey: 'ABC' }
 
       sandbox.on(ledgerKeyring, '_sendMessage', (_, cb) => {
         cb({
@@ -233,12 +232,15 @@ describe('LedgerBridgeKeyring', function () {
       })
 
       ledgerKeyring.unlock(`m/44'/60'/0'/1`).then((_) => {
-        assert.notDeepEqual(ledgerKeyring.hdk.publicKey, newFakeHDkey.publicKey)
+        assert.notDeepEqual(ledgerKeyring.hdk.publicKey, 'ABC')
         done()
       })
     })
     it('should not update hdk.publicKey if updateHdk is false', function (done) {
-      sandbox.on(keyring, '_sendMessage', (_, cb) => {
+      const ledgerKeyring = new LedgerBridgeKeyring()
+      ledgerKeyring.hdk = { publicKey: 'ABC' }
+
+      sandbox.on(ledgerKeyring, '_sendMessage', (_, cb) => {
         cb({
           success: true,
           payload: {
@@ -246,12 +248,13 @@ describe('LedgerBridgeKeyring', function () {
               '04197ced33b63059074b90ddecb9400c45cbc86210a20317b539b8cae84e573342149c3384ae45f27db68e75823323e97e03504b73ecbc47f5922b9b8144345e5a',
             chainCode:
               'ba0fb16e01c463d1635ec36f5adeb93a838adcd1526656c55f828f1e34002a8b',
-            address: fakeAccounts[0],
+            address: fakeAccounts[1],
           },
         })
       })
-      keyring.unlock(`m/44'/60'/0'/1`, false).then((_) => {
-        assert.deepEqual(keyring.hdk.publicKey, fakeHdKey.publicKey)
+
+      ledgerKeyring.unlock(`m/44'/60'/0'/1`, false).then((_) => {
+        assert.deepEqual(ledgerKeyring.hdk.publicKey, 'ABC')
         done()
       })
     })
