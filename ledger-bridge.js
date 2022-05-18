@@ -19,6 +19,8 @@ const BRIDGE_URL = 'ws://localhost:8435'
 const TRANSPORT_CHECK_DELAY = 1000
 const TRANSPORT_CHECK_LIMIT = 120
 
+const POLLING_INTERVAL = 5000
+
 export default class LedgerBridge {
     constructor () {
         this.addEventListeners()
@@ -145,37 +147,55 @@ export default class LedgerBridge {
             // throw an error in Firefox, so we cannot detect true 
             // connection status with U2F
             if (this.transportType != SUPPORTED_TRANSPORT_TYPES.U2F) {
-                // Ensure the correct (Ethereum) app is open; if not, immediately kill
-                // the connection as the wrong app is open and switching apps will call
-                // a disconnect from within the Ledger API
-                try {
-                    const sampleSendResult = await this.transport.send(0xb0, 0x01, 0x00, 0x00)
-                    const bufferResult = Buffer.from(sampleSendResult).toString()
-                    // Ensures the correct app is open
-                    if(bufferResult.includes('Ethereum')) {
-                        // Ensure the device is unlocked by requesting an account
-                        // An error of `6b0c` will throw if locked
-                        const { address } = await this.app.getAddress(`44'/60'/0'/0`, false, true)
-                        if (address) {
-                            this.sendConnectionMessage(true)
-                            this.transport.on('disconnect', () => this.onDisconnect())
-                        }
-                        else {
-                            this.onDisconnect()
-                            throw Error('LEDGER:::Device appears to be locked')
-                        }
-                    }
-                }
-                catch(e) {
-                    console.log('LEDGER:::Transport check error', e)
-                    this.onDisconnect()
-                    throw e
-                }
+                // Upon Ledger disconnect from user's machine, signal disconnect
+                this.transport.on('disconnect', () => this.onDisconnect())
+
+                // We need to poll for connection status because going into 
+                // sleep mode doesn't trigger the "disconnect" event
+                const connected = await this.checkConnectionStatus()
+                this.pollingInterval = setInterval(() => {
+                    this.checkConnectionStatus()
+                }, POLLING_INTERVAL);
             }
         } catch (e) {
             console.log('LEDGER:::CREATE APP ERROR', e)
             throw e
         }
+    }
+
+    async checkConnectionStatus() {
+        // Ensure the correct (Ethereum) app is open; if not, immediately kill
+        // the connection as the wrong app is open and switching apps will call
+        // a disconnect from within the Ledger API
+        try {
+            const sampleSendResult = await this.transport.send(0xb0, 0x01, 0x00, 0x00)
+            const bufferResult = Buffer.from(sampleSendResult).toString()
+            // Ensures the correct app is open
+            if(bufferResult.includes('Ethereum')) {
+                // Ensure the device is unlocked by requesting an account
+                // An error of `6b0c` will throw if locked
+                const { address } = await this.app.getAddress(`44'/60'/0'/0`, false, true)
+                if (address) {
+                    this.sendConnectionMessage(true)
+                    return true
+                }
+                else {
+                    this.onDisconnect()
+                    throw Error('LEDGER:::Device appears to be locked')
+                }
+            }
+            else {
+                // Wrong app
+                this.onDisconnect()
+            }
+        }
+        catch(e) {
+            console.log('LEDGER:::Transport check error', e)
+            this.onDisconnect()
+            throw e
+        }
+
+        return false
     }
 
     updateTransportTypePreference (replyAction, transportType, messageId) {
@@ -311,6 +331,9 @@ export default class LedgerBridge {
 
     onDisconnect() {
         this.cleanUp()
+        if (this.pollingInterval) {
+            clearInterval(this.pollingInterval)
+        }
         this.sendConnectionMessage(false)
     }
 

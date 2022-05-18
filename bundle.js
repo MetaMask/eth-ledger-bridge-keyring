@@ -42,6 +42,8 @@ var SUPPORTED_TRANSPORT_TYPES = {
 var TRANSPORT_CHECK_DELAY = 1000;
 var TRANSPORT_CHECK_LIMIT = 120;
 
+var POLLING_INTERVAL = 5000;
+
 var LedgerBridge = function () {
     function LedgerBridge() {
         _classCallCheck(this, LedgerBridge);
@@ -189,39 +191,57 @@ var LedgerBridge = function () {
                 // throw an error in Firefox, so we cannot detect true 
                 // connection status with U2F
                 if (this.transportType != SUPPORTED_TRANSPORT_TYPES.U2F) {
-                    // Ensure the correct (Ethereum) app is open; if not, immediately kill
-                    // the connection as the wrong app is open and switching apps will call
-                    // a disconnect from within the Ledger API
-                    try {
-                        var sampleSendResult = await this.transport.send(0xb0, 0x01, 0x00, 0x00);
-                        var bufferResult = Buffer.from(sampleSendResult).toString();
-                        // Ensures the correct app is open
-                        if (bufferResult.includes('Ethereum')) {
-                            // Ensure the device is unlocked by requesting an account
-                            // An error of `6b0c` will throw if locked
-                            var _ref = await this.app.getAddress('44\'/60\'/0\'/0', false, true),
-                                address = _ref.address;
+                    // Upon Ledger disconnect from user's machine, signal disconnect
+                    this.transport.on('disconnect', function () {
+                        return _this3.onDisconnect();
+                    });
 
-                            if (address) {
-                                this.sendConnectionMessage(true);
-                                this.transport.on('disconnect', function () {
-                                    return _this3.onDisconnect();
-                                });
-                            } else {
-                                this.onDisconnect();
-                                throw Error('LEDGER:::Device appears to be locked');
-                            }
-                        }
-                    } catch (e) {
-                        console.log('LEDGER:::Transport check error', e);
-                        this.onDisconnect();
-                        throw e;
-                    }
+                    // We need to poll for connection status because going into 
+                    // sleep mode doesn't trigger the "disconnect" event
+                    var connected = await this.checkConnectionStatus();
+                    this.pollingInterval = setInterval(function () {
+                        _this3.checkConnectionStatus();
+                    }, POLLING_INTERVAL);
                 }
             } catch (e) {
                 console.log('LEDGER:::CREATE APP ERROR', e);
                 throw e;
             }
+        }
+    }, {
+        key: 'checkConnectionStatus',
+        value: async function checkConnectionStatus() {
+            // Ensure the correct (Ethereum) app is open; if not, immediately kill
+            // the connection as the wrong app is open and switching apps will call
+            // a disconnect from within the Ledger API
+            try {
+                var sampleSendResult = await this.transport.send(0xb0, 0x01, 0x00, 0x00);
+                var bufferResult = Buffer.from(sampleSendResult).toString();
+                // Ensures the correct app is open
+                if (bufferResult.includes('Ethereum')) {
+                    // Ensure the device is unlocked by requesting an account
+                    // An error of `6b0c` will throw if locked
+                    var _ref = await this.app.getAddress('44\'/60\'/0\'/0', false, true),
+                        address = _ref.address;
+
+                    if (address) {
+                        this.sendConnectionMessage(true);
+                        return true;
+                    } else {
+                        this.onDisconnect();
+                        throw Error('LEDGER:::Device appears to be locked');
+                    }
+                } else {
+                    // Wrong app
+                    this.onDisconnect();
+                }
+            } catch (e) {
+                console.log('LEDGER:::Transport check error', e);
+                this.onDisconnect();
+                throw e;
+            }
+
+            return false;
         }
     }, {
         key: 'updateTransportTypePreference',
@@ -360,6 +380,9 @@ var LedgerBridge = function () {
         key: 'onDisconnect',
         value: function onDisconnect() {
             this.cleanUp();
+            if (this.pollingInterval) {
+                clearInterval(this.pollingInterval);
+            }
             this.sendConnectionMessage(false);
         }
     }, {
