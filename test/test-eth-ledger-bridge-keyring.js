@@ -214,6 +214,50 @@ describe('LedgerBridgeKeyring', function () {
         done()
       })
     })
+    it('should update hdk.publicKey if updateHdk is true', function (done) {
+      const ledgerKeyring = new LedgerBridgeKeyring()
+      ledgerKeyring.hdk = { publicKey: 'ABC' }
+
+      sandbox.on(ledgerKeyring, '_sendMessage', (_, cb) => {
+        cb({
+          success: true,
+          payload: {
+            publicKey:
+              '04197ced33b63059074b90ddecb9400c45cbc86210a20317b539b8cae84e573342149c3384ae45f27db68e75823323e97e03504b73ecbc47f5922b9b8144345e5a',
+            chainCode:
+              'ba0fb16e01c463d1635ec36f5adeb93a838adcd1526656c55f828f1e34002a8b',
+            address: fakeAccounts[1],
+          },
+        })
+      })
+
+      ledgerKeyring.unlock(`m/44'/60'/0'/1`).then((_) => {
+        assert.notDeepEqual(ledgerKeyring.hdk.publicKey, 'ABC')
+        done()
+      })
+    })
+    it('should not update hdk.publicKey if updateHdk is false', function (done) {
+      const ledgerKeyring = new LedgerBridgeKeyring()
+      ledgerKeyring.hdk = { publicKey: 'ABC' }
+
+      sandbox.on(ledgerKeyring, '_sendMessage', (_, cb) => {
+        cb({
+          success: true,
+          payload: {
+            publicKey:
+              '04197ced33b63059074b90ddecb9400c45cbc86210a20317b539b8cae84e573342149c3384ae45f27db68e75823323e97e03504b73ecbc47f5922b9b8144345e5a',
+            chainCode:
+              'ba0fb16e01c463d1635ec36f5adeb93a838adcd1526656c55f828f1e34002a8b',
+            address: fakeAccounts[1],
+          },
+        })
+      })
+
+      ledgerKeyring.unlock(`m/44'/60'/0'/1`, false).then((_) => {
+        assert.deepEqual(ledgerKeyring.hdk.publicKey, 'ABC')
+        done()
+      })
+    })
   })
 
   describe('setHdPath', function () {
@@ -276,7 +320,7 @@ describe('LedgerBridgeKeyring', function () {
     it('stores account details for bip44 accounts', function () {
       keyring.setHdPath(`m/44'/60'/0'/0/0`)
       keyring.setAccountToUnlock(1)
-      sandbox.on(keyring, 'unlock', (_) => Promise.resolve(fakeAccounts[1]))
+      sandbox.on(keyring, 'unlock', (_) => Promise.resolve(fakeAccounts[0]))
       return keyring.addAccounts(1)
         .then((accounts) => {
           assert.deepEqual(keyring.accountDetails[accounts[0]], {
