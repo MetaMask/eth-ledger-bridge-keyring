@@ -119,7 +119,7 @@ class LedgerBridgeKeyring extends EventEmitter {
     this.hdPath = hdPath
   }
 
-  unlock (hdPath) {
+  unlock (hdPath, updateHdk = true) {
     if (this.isUnlocked() && !hdPath) {
       return Promise.resolve('already unlocked')
     }
@@ -131,15 +131,17 @@ class LedgerBridgeKeyring extends EventEmitter {
           hdPath: path,
         },
       },
-        ({ success, payload }) => {
-          if (success) {
+      ({ success, payload }) => {
+        if (success) {
+          if (updateHdk) {
             this.hdk.publicKey = Buffer.from(payload.publicKey, 'hex')
             this.hdk.chainCode = Buffer.from(payload.chainCode, 'hex')
-            resolve(payload.address)
-          } else {
-            reject(payload.error || new Error('Unknown error'))
           }
-        })
+          resolve(payload.address)
+        } else {
+          reject(payload.error || new Error('Unknown error'))
+        }
+      })
     })
   }
 
@@ -383,7 +385,7 @@ class LedgerBridgeKeyring extends EventEmitter {
       throw new Error(`Ledger: Account for address '${checksummedAddress}' not found`)
     }
     const { hdPath } = this.accountDetails[checksummedAddress]
-    const unlockedAddress = await this.unlock(hdPath)
+    const unlockedAddress = await this.unlock(hdPath, false)
 
     // unlock resolves to the address for the given hdPath as reported by the ledger device
     // if that address is not the requested address, then this account belongs to a different device or seed
@@ -496,7 +498,7 @@ class LedgerBridgeKeyring extends EventEmitter {
   }
 
   _setupListener () {
-    const eventListener = ({ origin, data }) => {
+    this._eventListener = ({ origin, data }) => {
       if (origin !== this._getOrigin()) {
         return false
       }
@@ -511,7 +513,11 @@ class LedgerBridgeKeyring extends EventEmitter {
 
       return undefined
     }
-    window.addEventListener('message', eventListener)
+    window.addEventListener('message', this._eventListener)
+  }
+
+  destroy () {
+    window.removeEventListener('message', this._eventListener)
   }
 
   async __getPage (increment) {
