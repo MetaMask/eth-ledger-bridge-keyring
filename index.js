@@ -145,6 +145,21 @@ class LedgerBridgeKeyring extends EventEmitter {
     })
   }
 
+  checkIfReady () {
+    return new Promise((resolve, reject) => {
+      this._sendMessage({
+        action: 'ledger-unlock',
+        params: {
+          hdPath: this.hdPath,
+        },
+      },
+      ({ success, payload }) => {
+        success ? 
+          resolve() : reject(payload.error || new Error('Unknown error'))
+      })
+    })
+  }
+
   addAccounts (n = 1) {
 
     return new Promise((resolve, reject) => {
