@@ -214,6 +214,9 @@ export default class LedgerBridge {
             await this.transport.close()
             this.transport = null
         }
+        if (this.pollingInterval) {
+            clearInterval(this.pollingInterval)
+        }
         if (replyAction) {
             this.sendMessageToExtension({
                 action: replyAction,
@@ -331,9 +334,6 @@ export default class LedgerBridge {
 
     onDisconnect() {
         this.cleanUp()
-        if (this.pollingInterval) {
-            clearInterval(this.pollingInterval)
-        }
         this.sendConnectionMessage(false)
     }
 

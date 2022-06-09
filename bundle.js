@@ -262,6 +262,9 @@ var LedgerBridge = function () {
                 await this.transport.close();
                 this.transport = null;
             }
+            if (this.pollingInterval) {
+                clearInterval(this.pollingInterval);
+            }
             if (replyAction) {
                 this.sendMessageToExtension({
                     action: replyAction,
@@ -380,9 +383,6 @@ var LedgerBridge = function () {
         key: 'onDisconnect',
         value: function onDisconnect() {
             this.cleanUp();
-            if (this.pollingInterval) {
-                clearInterval(this.pollingInterval);
-            }
             this.sendConnectionMessage(false);
         }
     }, {
