@@ -61,6 +61,12 @@ export default class LedgerBridge {
                     case 'ledger-sign-typed-data':
                         this.signTypedData(replyAction, params.hdPath, params.domainSeparatorHex, params.hashStructMessageHex, messageId)
                         break
+                    case 'ledger-start-polling':
+                        this.startConnectionPolling(replyAction, messageId)
+                        break
+                    case 'ledger-stop-polling':
+                        this.stopConnectionPolling(replyAction, messageId)
+                        break
                 }
             }
         }, false)
@@ -143,27 +149,48 @@ export default class LedgerBridge {
                 this.app = new LedgerEth(this.transport)
             }
 
-            // The U2F transport is deprecated and the following block will
-            // throw an error in Firefox, so we cannot detect true 
-            // connection status with U2F
-            if (this.transportType != SUPPORTED_TRANSPORT_TYPES.U2F) {
-                // Upon Ledger disconnect from user's machine, signal disconnect
-                this.transport.on('disconnect', () => this.onDisconnect())
-
-                // We need to poll for connection status because going into 
-                // sleep mode doesn't trigger the "disconnect" event
-                const connected = await this.checkConnectionStatus()
-                this.pollingInterval = setInterval(() => {
-                    this.checkConnectionStatus()
-                }, POLLING_INTERVAL);
-            }
+            // Upon Ledger disconnect from user's machine, signal disconnect
+            this.transport.on('disconnect', () => this.onDisconnect())
         } catch (e) {
             console.log('LEDGER:::CREATE APP ERROR', e)
             throw e
         }
     }
 
+    async startConnectionPolling(replyAction, messageId) {
+        // Prevent the possibility that there could be more than one 
+        // polling interval if stopConnectionPolling hasn't been called
+        if(this.pollingInterval) {
+            return false
+        }
+
+        // The U2F transport is deprecated and the following block will
+        // throw an error in Firefox, so we cannot detect true
+        // connection status with U2F
+        if (this.transportType !== SUPPORTED_TRANSPORT_TYPES.U2F) {
+            // We need to poll for connection status because going into
+            // sleep mode doesn't trigger the "disconnect" event
+            const connected = await this.checkConnectionStatus()
+            this.pollingInterval = setInterval(() => {
+                this.checkConnectionStatus()
+            }, POLLING_INTERVAL);
+        }
+    }
+
+    stopConnectionPolling(replyAction, messageId) {
+        if (this.pollingInterval) {
+            clearInterval(this.pollingInterval)
+        }
+    }
+
     async checkConnectionStatus() {
+        // If there's no app or transport, leave and signal disconnect
+        if(!this.app || !this.transport) {
+            this.onDisconnect();
+            return false;
+        }
+
+
         // Ensure the correct (Ethereum) app is open; if not, immediately kill
         // the connection as the wrong app is open and switching apps will call
         // a disconnect from within the Ledger API
@@ -187,20 +214,25 @@ export default class LedgerBridge {
             else {
                 // Wrong app
                 this.onDisconnect()
+                return false
             }
         }
         catch(e) {
             console.log('LEDGER:::Transport check error', e)
-            this.onDisconnect()
+            // A race condition for checking connection status isn't a sign that
+            // connection status has changed, so don't disconnect on this type of error
+            if (e.name !== 'TransportRaceCondition') {
+                this.onDisconnect()
+            }
             throw e
         }
-
-        return false
     }
 
     updateTransportTypePreference (replyAction, transportType, messageId) {
-        this.transportType = transportType
-        this.cleanUp()
+        if (transportType !== this.transportType) {
+            this.transportType = transportType
+            this.cleanUp()
+        }
         this.sendMessageToExtension({
             action: replyAction,
             success: true,
@@ -213,9 +245,6 @@ export default class LedgerBridge {
         if (this.transport) {
             await this.transport.close()
             this.transport = null
-        }
-        if (this.pollingInterval) {
-            clearInterval(this.pollingInterval)
         }
         if (replyAction) {
             this.sendMessageToExtension({
