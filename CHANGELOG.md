@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.0]
+### Added
+- hdk.publicKey and hdk.chainCode should not be updated when unlocking using hdPath for an account.  ([#146](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/146))
+
+## [0.12.0]
+### Added
+- Add a new `destroy` method which will remove the `message` event listener from window.  ([#145](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/145))
+
 ## [0.11.0]
 ### Added
 - Add a new `isConnected` method which allows determining if the device is last known to be connected.  ([#131](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/131))
