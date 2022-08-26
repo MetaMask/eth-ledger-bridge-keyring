@@ -691,7 +691,7 @@ describe('LedgerBridgeKeyring', function () {
       })
 
       const result = await keyring.signTypedData(fakeAccounts[15], fixtureData, options)
-      assert.strictEqual(result, '0x72d4e38a0e582e09a620fd38e236fe687a1ec782206b56d576f579c026a7e5b946759735981cd0c3efb02d36df28bb2feedfec3d90e408efc93f45b894946e3200')
+      assert.strictEqual(result, '0x72d4e38a0e582e09a620fd38e236fe687a1ec782206b56d576f579c026a7e5b946759735981cd0c3efb02d36df28bb2feedfec3d90e408efc93f45b894946e321b')
     })
 
     it('should error when address does not match', async function () {
