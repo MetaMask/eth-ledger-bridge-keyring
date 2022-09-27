@@ -6,7 +6,8 @@ const chai = require('chai')
 const spies = require('chai-spies')
 const EthereumTx = require('ethereumjs-tx')
 const HDKey = require('hdkey')
-const ethUtil = require('ethereumjs-util')
+const ethUtil = require('@ethereumjs/util')
+const ethUtilRlp = require('@ethereumjs/rlp')
 const { TransactionFactory } = require('@ethereumjs/tx')
 const Common = require('@ethereumjs/common').default
 const sigUtil = require('eth-sig-util')
@@ -527,7 +528,7 @@ describe('LedgerBridgeKeyring', function () {
         sandbox.on(keyring, '_sendMessage', (msg, cb) => {
           assert.deepStrictEqual(msg.params, {
             hdPath: "m/44'/60'/0'/0",
-            tx: ethUtil.rlp.encode(newFakeTx.getMessageToSign(false)).toString('hex'),
+            tx: Buffer.from(ethUtilRlp.encode(newFakeTx.getMessageToSign(false))).toString('hex'),
           })
           cb({ success: true, payload: expectedRSV })
         })

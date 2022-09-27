@@ -1,6 +1,7 @@
 const { EventEmitter } = require('events')
 const HDKey = require('hdkey')
-const ethUtil = require('ethereumjs-util')
+const ethUtil = require('@ethereumjs/util')
+const ethUtilRlp = require('@ethereumjs/rlp')
 const sigUtil = require('eth-sig-util')
 const { TransactionFactory } = require('@ethereumjs/tx')
 
@@ -282,7 +283,7 @@ class LedgerBridgeKeyring extends EventEmitter {
 
     rawTxHex = Buffer.isBuffer(messageToSign)
       ? messageToSign.toString('hex')
-      : ethUtil.rlp.encode(messageToSign).toString('hex')
+      : Buffer.from(ethUtilRlp.encode(messageToSign)).toString('hex')
 
     return this._signTransaction(address, rawTxHex, (payload) => {
       // Because tx will be immutable, first get a plain javascript object that
