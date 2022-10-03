@@ -1,6 +1,6 @@
 {
   "name": "@metamask/eth-ledger-bridge-keyring",
-  "version": "0.14.0",
+  "version": "0.13.1",
   "description": "A MetaMask compatible keyring, for ledger hardware wallets",
   "main": "index.js",
   "files": [
