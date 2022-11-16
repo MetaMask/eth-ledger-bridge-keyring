@@ -171,19 +171,20 @@ class LedgerKeyring extends EventEmitter {
     }
     const path = hdPath ? this._toLedgerPath(hdPath) : this.hdPath
 
-    const { success, payload } = await this._getPublicKey({
-      hdPath: path,
-    })
-
-    if (success) {
-      if (updateHdk) {
-        this.hdk.publicKey = Buffer.from(payload.publicKey, 'hex')
-        this.hdk.chainCode = Buffer.from(payload.chainCode, 'hex')
-      }
-      return payload.address
+    let payload
+    try {
+      payload = await this._getPublicKey({
+        hdPath: path,
+      })
+    } catch (error) {
+      throw error || new Error('Unknown error')
     }
-    throw payload.error || new Error('Unknown error')
 
+    if (updateHdk) {
+      this.hdk.publicKey = Buffer.from(payload.publicKey, 'hex')
+      this.hdk.chainCode = Buffer.from(payload.chainCode, 'hex')
+    }
+    return payload.address
   }
 
   addAccounts (n = 1) {
@@ -251,10 +252,6 @@ class LedgerKeyring extends EventEmitter {
     throw new Error('Method attemptMakeApp not implemented')
   }
 
-  updateTransportMethod (_transportType) {
-    throw new Error('Method transportType not implemented')
-  }
-
   // tx is an instance of the ethereumjs-transaction class.
   signTransaction (address, tx) {
     let rawTxHex
@@ -319,25 +316,24 @@ class LedgerKeyring extends EventEmitter {
   async _signTransaction (address, rawTxHex, handleSigning) {
     const hdPath = await this.unlockAccountByAddress(address)
 
-    const { success, payload } = await this._deviceSignTransaction({
-      tx: rawTxHex,
-      hdPath,
-    })
-
-    if (success) {
-      const newOrMutatedTx = handleSigning(payload)
-      const valid = newOrMutatedTx.verifySignature()
-      if (valid) {
-        return newOrMutatedTx
-      }
-      throw new Error('Ledger: The transaction signature is not valid')
-
+    let payload
+    try {
+      payload = await this._deviceSignTransaction({
+        tx: rawTxHex,
+        hdPath,
+      })
+    } catch (error) {
+      throw (
+        error || new Error('Ledger: Unknown error while signing transaction')
+      )
     }
 
-    throw (
-      payload.error ||
-      new Error('Ledger: Unknown error while signing transaction')
-    )
+    const newOrMutatedTx = handleSigning(payload)
+    const valid = newOrMutatedTx.verifySignature()
+    if (valid) {
+      return newOrMutatedTx
+    }
+    throw new Error('Ledger: The transaction signature is not valid')
   }
 
   signMessage (withAccount, data) {
@@ -348,34 +344,35 @@ class LedgerKeyring extends EventEmitter {
   async signPersonalMessage (withAccount, message) {
     const hdPath = await this.unlockAccountByAddress(withAccount)
 
-    const { success, payload } = await this._deviceSignMessage({
-      hdPath,
-      message: ethUtil.stripHexPrefix(message),
-    })
-
-    if (success) {
-      let v = payload.v - 27
-      v = v.toString(16)
-      if (v.length < 2) {
-        v = `0${v}`
-      }
-      const signature = `0x${payload.r}${payload.s}${v}`
-      const addressSignedWith = sigUtil.recoverPersonalSignature({
-        data: message,
-        sig: signature,
+    let payload
+    try {
+      payload = await this._deviceSignMessage({
+        hdPath,
+        message: ethUtil.stripHexPrefix(message),
       })
-      if (
-        ethUtil.toChecksumAddress(addressSignedWith) !==
-        ethUtil.toChecksumAddress(withAccount)
-      ) {
-        throw new Error('Ledger: The signature doesnt match the right address')
-      }
-      return signature
+    } catch (error) {
+      throw (
+        error || new Error('Ledger: Unknown error while signing message')
+      )
     }
 
-    throw (
-      payload.error || new Error('Ledger: Unknown error while signing message')
-    )
+    let v = payload.v - 27
+    v = v.toString(16)
+    if (v.length < 2) {
+      v = `0${v}`
+    }
+    const signature = `0x${payload.r}${payload.s}${v}`
+    const addressSignedWith = sigUtil.recoverPersonalSignature({
+      data: message,
+      sig: signature,
+    })
+    if (
+      ethUtil.toChecksumAddress(addressSignedWith) !==
+      ethUtil.toChecksumAddress(withAccount)
+    ) {
+      throw new Error('Ledger: The signature doesnt match the right address')
+    }
+    return signature
   }
 
   async unlockAccountByAddress (address) {
@@ -422,34 +419,37 @@ class LedgerKeyring extends EventEmitter {
     ).toString('hex')
 
     const hdPath = await this.unlockAccountByAddress(withAccount)
-    const { success, payload } = await this._deviceSignTypedData({
-      hdPath,
-      domainSeparatorHex,
-      hashStructMessageHex,
-    })
 
-    if (success) {
-      let v = parseInt(payload.v, 10)
-      v = v.toString(16)
-      if (v.length < 2) {
-        v = `0${v}`
-      }
-      const signature = `0x${payload.r}${payload.s}${v}`
-      const addressSignedWith = sigUtil.recoverTypedSignature_v4({
-        data,
-        sig: signature,
+    let payload
+    try {
+      payload = await this._deviceSignTypedData({
+        hdPath,
+        domainSeparatorHex,
+        hashStructMessageHex,
       })
-      if (
-        ethUtil.toChecksumAddress(addressSignedWith) !==
-        ethUtil.toChecksumAddress(withAccount)
-      ) {
-        throw new Error('Ledger: The signature doesnt match the right address')
-      }
-      return signature
+    } catch (error) {
+      throw (
+        error || new Error('Ledger: Unknown error while signing message')
+      )
     }
-    throw (
-      payload.error || new Error('Ledger: Unknown error while signing message')
-    )
+
+    let v = parseInt(payload.v, 10)
+    v = v.toString(16)
+    if (v.length < 2) {
+      v = `0${v}`
+    }
+    const signature = `0x${payload.r}${payload.s}${v}`
+    const addressSignedWith = sigUtil.recoverTypedSignature_v4({
+      data,
+      sig: signature,
+    })
+    if (
+      ethUtil.toChecksumAddress(addressSignedWith) !==
+      ethUtil.toChecksumAddress(withAccount)
+    ) {
+      throw new Error('Ledger: The signature doesnt match the right address')
+    }
+    return signature
   }
 
   exportAccount () {

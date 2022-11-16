@@ -71,16 +71,6 @@ class LedgerKeyringMv2 extends LedgerKeyring {
     window.addEventListener('message', this._eventListener)
   }
 
-  _sendMessage (msg, cb) {
-    msg.target = 'LEDGER-IFRAME'
-
-    this.currentMessageId += 1
-    msg.messageId = this.currentMessageId
-
-    this.messageCallbacks[this.currentMessageId] = cb
-    this.iframe.contentWindow.postMessage(msg, '*')
-  }
-
   attemptMakeApp () {
     return new Promise((resolve, reject) => {
       this._sendMessage(
@@ -128,51 +118,85 @@ class LedgerKeyringMv2 extends LedgerKeyring {
   }
 
   _getPublicKey (params) {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       this._sendMessage(
         {
           action: 'ledger-unlock',
           params,
         },
-        (result) => resolve(result),
+        ({ success, payload }) => {
+          if (success) {
+            resolve(payload)
+          }
+          // eslint-disable-next-line prefer-promise-reject-errors
+          reject(payload && payload.error)
+        },
       )
     })
   }
 
   _deviceSignTransaction (params) {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       this._sendMessage(
         {
           action: 'ledger-sign-transaction',
           params,
         },
-        (result) => resolve(result),
+        ({ success, payload }) => {
+          if (success) {
+            resolve(payload)
+          }
+          // eslint-disable-next-line prefer-promise-reject-errors
+          reject(payload && payload.error)
+        },
       )
     })
   }
 
   _deviceSignMessage (params) {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       this._sendMessage(
         {
           action: 'ledger-sign-personal-message',
           params,
         },
-        (result) => resolve(result),
+        ({ success, payload }) => {
+          if (success) {
+            resolve(payload)
+          }
+          // eslint-disable-next-line prefer-promise-reject-errors
+          reject(payload && payload.error)
+        },
       )
     })
   }
 
   _deviceSignTypedData (params) {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       this._sendMessage(
         {
           action: 'ledger-sign-typed-data',
           params,
         },
-        (result) => resolve(result),
+        ({ success, payload }) => {
+          if (success) {
+            resolve(payload)
+          }
+          // eslint-disable-next-line prefer-promise-reject-errors
+          reject(payload && payload.error)
+        },
       )
     })
+  }
+
+  _sendMessage (msg, cb) {
+    msg.target = 'LEDGER-IFRAME'
+
+    this.currentMessageId += 1
+    msg.messageId = this.currentMessageId
+
+    this.messageCallbacks[this.currentMessageId] = cb
+    this.iframe.contentWindow.postMessage(msg, '*')
   }
 }
 
