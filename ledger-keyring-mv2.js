@@ -1,8 +1,6 @@
-const {
-  BaseLedgerKeyring,
-  KEYRING_TYPE,
-  CONNECTION_EVENT,
-} = require('./base-ledger-keyring')
+const { BaseLedgerKeyring } = require('./base-ledger-keyring')
+
+const CONNECTION_EVENT = 'ledger-connection-change'
 
 class LedgerKeyringMv2 extends BaseLedgerKeyring {
   init () {
@@ -194,5 +192,4 @@ class LedgerKeyringMv2 extends BaseLedgerKeyring {
   }
 }
 
-LedgerKeyringMv2.type = KEYRING_TYPE
 module.exports = LedgerKeyringMv2

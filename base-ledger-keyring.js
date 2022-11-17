@@ -18,8 +18,6 @@ const NETWORK_API_URLS = {
   mainnet: 'https://api.etherscan.io',
 }
 
-const CONNECTION_EVENT = 'ledger-connection-change'
-
 class BaseLedgerKeyring extends EventEmitter {
   constructor (opts = {}) {
     super()
@@ -618,6 +616,4 @@ BaseLedgerKeyring.type = type
 
 module.exports = {
   BaseLedgerKeyring,
-  KEYRING_TYPE: type,
-  CONNECTION_EVENT,
 }

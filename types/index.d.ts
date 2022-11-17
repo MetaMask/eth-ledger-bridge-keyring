@@ -1,5 +1,3 @@
-export const KEYRING_TYPE: string;
-
 export type GetPublicKeyPayload = { hdPath: string };
 export type GetPublicKeyResponse = {
   publicKey: string;
@@ -7,25 +5,32 @@ export type GetPublicKeyResponse = {
   chainCode?: string | undefined;
 };
 
-export type LedgerSignatureResponse = {
-  v: string;
+export type LedgerSignTransactionPayload = { hdPath: string; rawTxHex: string };
+export type LedgerSignTransactionResponse = {
   s: string;
+  v: string;
   r: string;
 };
 
-export type LedgerSignTransactionPayload = { hdPath: string; rawTxHex: string };
-
 export type LedgerSignMessagePayload = { hdPath: string; message: string };
+export type LedgerSignMessageResponse = {
+  v: number;
+  s: string;
+  r: string;
+};
 
 export type LedgerSignTypedDataPayload = {
   hdPath: string;
   domainSeparatorHex: string;
   hashStructMessageHex: string;
 };
+export type LedgerSignTypedDataResponse = {
+  v: number;
+  s: string;
+  r: string;
+};
 
 export class BaseLedgerKeyring {
-  static type: string;
-
   public constructor(opts: Record<string, unknown>);
 
   public init(): Promise<void>;
@@ -38,13 +43,13 @@ export class BaseLedgerKeyring {
 
   protected _deviceSignTransaction(
     payload: LedgerSignTransactionPayload
-  ): Promise<LedgerSignatureResponse>;
+  ): Promise<LedgerSignTransactionResponse>;
 
   protected _deviceSignMessage(
     payload: LedgerSignMessagePayload
-  ): Promise<LedgerSignatureResponse>;
+  ): Promise<LedgerSignMessageResponse>;
 
   protected _deviceSignTypedData(
     payload: LedgerSignTypedDataPayload
-  ): Promise<LedgerSignatureResponse>;
+  ): Promise<LedgerSignTypedDataResponse>;
 }
