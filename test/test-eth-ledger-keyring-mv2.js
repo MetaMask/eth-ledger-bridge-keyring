@@ -11,7 +11,7 @@ const { TransactionFactory } = require('@ethereumjs/tx')
 const Common = require('@ethereumjs/common').default
 const sigUtil = require('eth-sig-util')
 
-const LedgerBridgeKeyring = require('..')
+const { LedgerKeyringMv2 } = require('..')
 
 const { expect } = chai
 
@@ -85,7 +85,7 @@ describe('LedgerBridgeKeyring', function () {
 
   beforeEach(function () {
     sandbox = chai.spy.sandbox()
-    keyring = new LedgerBridgeKeyring()
+    keyring = new LedgerKeyringMv2()
     keyring.hdk = fakeHdKey
   })
 
@@ -95,20 +95,20 @@ describe('LedgerBridgeKeyring', function () {
 
   describe('Keyring.type', function () {
     it('is a class property that returns the type string.', function () {
-      const { type } = LedgerBridgeKeyring
+      const { type } = LedgerKeyringMv2
       assert.equal(typeof type, 'string')
     })
 
     it('returns the correct value', function () {
       const { type } = keyring
-      const correct = LedgerBridgeKeyring.type
+      const correct = LedgerKeyringMv2.type
       assert.equal(type, correct)
     })
   })
 
   describe('constructor', function () {
     it('constructs', function (done) {
-      const t = new LedgerBridgeKeyring({ hdPath: `m/44'/60'/0'` })
+      const t = new LedgerKeyringMv2({ hdPath: `m/44'/60'/0'` })
       assert.equal(typeof t, 'object')
       t.getAccounts()
         .then((accounts) => {
@@ -215,7 +215,7 @@ describe('LedgerBridgeKeyring', function () {
       })
     })
     it('should update hdk.publicKey if updateHdk is true', function (done) {
-      const ledgerKeyring = new LedgerBridgeKeyring()
+      const ledgerKeyring = new LedgerKeyringMv2()
       ledgerKeyring.hdk = { publicKey: 'ABC' }
 
       sandbox.on(ledgerKeyring, '_sendMessage', (_, cb) => {
@@ -237,7 +237,7 @@ describe('LedgerBridgeKeyring', function () {
       })
     })
     it('should not update hdk.publicKey if updateHdk is false', function (done) {
-      const ledgerKeyring = new LedgerBridgeKeyring()
+      const ledgerKeyring = new LedgerKeyringMv2()
       ledgerKeyring.hdk = { publicKey: 'ABC' }
 
       sandbox.on(ledgerKeyring, '_sendMessage', (_, cb) => {

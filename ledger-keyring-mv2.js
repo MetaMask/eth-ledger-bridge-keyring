@@ -1,16 +1,10 @@
 const {
-  LedgerKeyring,
+  BaseLedgerKeyring,
   KEYRING_TYPE,
   CONNECTION_EVENT,
-} = require('./ledger-keyring')
+} = require('./base-ledger-keyring')
 
-class LedgerKeyringMv2 extends LedgerKeyring {
-  constructor (opts = {}) {
-    super(opts)
-
-    this.iframe = null
-  }
-
+class LedgerKeyringMv2 extends BaseLedgerKeyring {
   init () {
     this.iframeLoaded = false
     this._setupIframe()
