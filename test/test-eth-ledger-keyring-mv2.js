@@ -118,6 +118,29 @@ describe('LedgerBridgeKeyring', function () {
     })
   })
 
+  describe('init', function () {
+    it('should set up the iFrame', function () {
+      const iframeMock = {}
+      sandbox.on(global.document, 'createElement', () => iframeMock)
+      sandbox.on(global.document.head, 'appendChild', () => true)
+      sandbox.on(global.window, 'addEventListener', () => true)
+
+      keyring.init()
+
+      expect(global.document.createElement).to.have.been.called()
+      expect(global.document.createElement)
+        .to.have.been.called.with('iframe')
+
+      expect(global.document.head.appendChild).to.have.been.called()
+      expect(global.document.head.appendChild)
+        .to.have.been.called.with(iframeMock)
+
+      expect(global.window.addEventListener).to.have.been.called()
+      expect(global.window.addEventListener)
+        .to.have.been.called.with('message', keyring._eventListener)
+    })
+  })
+
   describe('serialize', function () {
     it('serializes an instance', function (done) {
       keyring.serialize()
