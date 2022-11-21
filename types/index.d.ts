@@ -2,7 +2,7 @@ export type GetPublicKeyPayload = { hdPath: string };
 export type GetPublicKeyResponse = {
   publicKey: string;
   address: string;
-  chainCode?: string | undefined;
+  chainCode?: string;
 };
 
 export type LedgerSignTransactionPayload = { hdPath: string; rawTxHex: string };
