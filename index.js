@@ -423,7 +423,7 @@ class LedgerBridgeKeyring extends EventEmitter {
       const addressSignedWith = recoverTypedSignature({
         data,
         signature,
-        version: SignTypedDataVersion.V4
+        version: SignTypedDataVersion.V4,
       })
       if (ethUtil.toChecksumAddress(addressSignedWith) !== ethUtil.toChecksumAddress(withAccount)) {
         throw new Error('Ledger: The signature doesnt match the right address')
