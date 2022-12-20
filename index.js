@@ -1,7 +1,7 @@
 const { EventEmitter } = require('events')
 const HDKey = require('hdkey')
 const ethUtil = require('ethereumjs-util')
-const sigUtil = require('eth-sig-util')
+const { SignTypedDataVersion, recoverPersonalSignature, TypedDataUtils, recoverTypedSignature } = require('@metamask/eth-sig-util')
 const { TransactionFactory } = require('@ethereumjs/tx')
 
 const pathBase = 'm'
@@ -355,7 +355,7 @@ class LedgerBridgeKeyring extends EventEmitter {
                 v = `0${v}`
               }
               const signature = `0x${payload.r}${payload.s}${v}`
-              const addressSignedWith = sigUtil.recoverPersonalSignature({ data: message, sig: signature })
+              const addressSignedWith = recoverPersonalSignature({ data: message, signature, version: SignTypedDataVersion.V4 })
               if (ethUtil.toChecksumAddress(addressSignedWith) !== ethUtil.toChecksumAddress(withAccount)) {
                 reject(new Error('Ledger: The signature doesnt match the right address'))
               }
@@ -396,9 +396,9 @@ class LedgerBridgeKeyring extends EventEmitter {
       types,
       primaryType,
       message,
-    } = sigUtil.TypedDataUtils.sanitizeData(data)
-    const domainSeparatorHex = sigUtil.TypedDataUtils.hashStruct('EIP712Domain', domain, types, isV4).toString('hex')
-    const hashStructMessageHex = sigUtil.TypedDataUtils.hashStruct(primaryType, message, types, isV4).toString('hex')
+    } = TypedDataUtils.sanitizeData(data)
+    const domainSeparatorHex = TypedDataUtils.hashStruct('EIP712Domain', domain, types, isV4).toString('hex')
+    const hashStructMessageHex = TypedDataUtils.hashStruct(primaryType, message, types, isV4).toString('hex')
 
     const hdPath = await this.unlockAccountByAddress(withAccount)
     const { success, payload } = await new Promise((resolve) => {
@@ -420,9 +420,9 @@ class LedgerBridgeKeyring extends EventEmitter {
         v = `0${v}`
       }
       const signature = `0x${payload.r}${payload.s}${v}`
-      const addressSignedWith = sigUtil.recoverTypedSignature_v4({
+      const addressSignedWith = recoverTypedSignature({
         data,
-        sig: signature,
+        signature,
       })
       if (ethUtil.toChecksumAddress(addressSignedWith) !== ethUtil.toChecksumAddress(withAccount)) {
         throw new Error('Ledger: The signature doesnt match the right address')

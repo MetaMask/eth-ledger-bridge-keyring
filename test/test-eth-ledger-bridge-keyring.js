@@ -9,7 +9,7 @@ const HDKey = require('hdkey')
 const ethUtil = require('ethereumjs-util')
 const { TransactionFactory } = require('@ethereumjs/tx')
 const Common = require('@ethereumjs/common').default
-const sigUtil = require('eth-sig-util')
+const sigUtil = require('@metamask/eth-sig-util')
 
 const LedgerBridgeKeyring = require('..')
 
