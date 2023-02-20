@@ -45,7 +45,7 @@ class LedgerKeyring extends EventEmitter {
    * @returns {Promise<void>}
    */
   init () {
-    return this.bridge.init(this.bridgeUrl)
+    return this.bridge.init(this.bridgeUrl || BRIDGE_URL)
   }
 
   /**
@@ -224,6 +224,10 @@ class LedgerKeyring extends EventEmitter {
     return this.bridge.attemptMakeApp()
   }
 
+  updateTransportMethod (transportType) {
+    return this.bridge.updateTransportMethod(transportType)
+  }
+
   // tx is an instance of the ethereumjs-transaction class.
   signTransaction (address, tx) {
     let rawTxHex
@@ -323,9 +327,7 @@ class LedgerKeyring extends EventEmitter {
         message: ethUtil.stripHexPrefix(message),
       })
     } catch (error) {
-      throw (
-        error || new Error('Ledger: Unknown error while signing message')
-      )
+      throw error || new Error('Ledger: Unknown error while signing message')
     }
 
     let v = payload.v - 27
@@ -400,9 +402,7 @@ class LedgerKeyring extends EventEmitter {
         hashStructMessageHex,
       })
     } catch (error) {
-      throw (
-        error || new Error('Ledger: Unknown error while signing message')
-      )
+      throw error || new Error('Ledger: Unknown error while signing message')
     }
 
     let v = parseInt(payload.v, 10)
@@ -581,7 +581,6 @@ class LedgerKeyring extends EventEmitter {
 }
 
 LedgerKeyring.type = type
-
 module.exports = {
   LedgerKeyring,
 }

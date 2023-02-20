@@ -19,55 +19,6 @@ class LedgerBridgeIframe {
     return Promise.resolve()
   }
 
-  _setupIframe () {
-    this.iframe = document.createElement('iframe')
-    this.iframe.src = this.bridgeUrl
-    this.iframe.allow = `hid 'src'`
-    this.iframe.onload = async () => {
-      // If the ledger live preference was set before the iframe is loaded,
-      // set it after the iframe has loaded
-      this.iframeLoaded = true
-      if (this.delayedPromise) {
-        try {
-          const result = await this.updateTransportMethod(
-            this.delayedPromise.transportType,
-          )
-          this.delayedPromise.resolve(result)
-        } catch (e) {
-          this.delayedPromise.reject(e)
-        } finally {
-          delete this.delayedPromise
-        }
-      }
-    }
-    document.head.appendChild(this.iframe)
-  }
-
-  _getOrigin () {
-    const tmp = this.bridgeUrl.split('/')
-    tmp.splice(-1, 1)
-    return tmp.join('/')
-  }
-
-  _setupListener () {
-    this._eventListener = ({ origin, data }) => {
-      if (origin !== this._getOrigin()) {
-        return false
-      }
-
-      if (data) {
-        if (this.messageCallbacks[data.messageId]) {
-          this.messageCallbacks[data.messageId](data)
-        } else if (data.action === CONNECTION_EVENT) {
-          this.isDeviceConnected = data.payload.connected
-        }
-      }
-
-      return undefined
-    }
-    window.addEventListener('message', this._eventListener)
-  }
-
   attemptMakeApp () {
     return new Promise((resolve, reject) => {
       this._sendMessage(
@@ -186,6 +137,55 @@ class LedgerBridgeIframe {
     })
   }
 
+  _setupIframe () {
+    this.iframe = document.createElement('iframe')
+    this.iframe.src = this.bridgeUrl
+    this.iframe.allow = `hid 'src'`
+    this.iframe.onload = async () => {
+      // If the ledger live preference was set before the iframe is loaded,
+      // set it after the iframe has loaded
+      this.iframeLoaded = true
+      if (this.delayedPromise) {
+        try {
+          const result = await this.updateTransportMethod(
+            this.delayedPromise.transportType,
+          )
+          this.delayedPromise.resolve(result)
+        } catch (e) {
+          this.delayedPromise.reject(e)
+        } finally {
+          delete this.delayedPromise
+        }
+      }
+    }
+    document.head.appendChild(this.iframe)
+  }
+
+  _getOrigin () {
+    const tmp = this.bridgeUrl.split('/')
+    tmp.splice(-1, 1)
+    return tmp.join('/')
+  }
+
+  _setupListener () {
+    this._eventListener = ({ origin, data }) => {
+      if (origin !== this._getOrigin()) {
+        return false
+      }
+
+      if (data) {
+        if (this.messageCallbacks[data.messageId]) {
+          this.messageCallbacks[data.messageId](data)
+        } else if (data.action === CONNECTION_EVENT) {
+          this.isDeviceConnected = data.payload.connected
+        }
+      }
+
+      return undefined
+    }
+    window.addEventListener('message', this._eventListener)
+  }
+
   _sendMessage (msg, cb) {
     msg.target = 'LEDGER-IFRAME'
 
@@ -197,4 +197,6 @@ class LedgerBridgeIframe {
   }
 }
 
-module.exports = LedgerBridgeIframe
+module.exports = {
+  LedgerBridgeIframe,
+}
