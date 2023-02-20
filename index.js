@@ -1,6 +1,6 @@
-const { BaseLedgerKeyring } = require('./base-ledger-keyring')
-const LedgerKeyringMv2 = require('./ledger-keyring-mv2')
+const { LedgerKeyring } = require('./ledger-keyring')
+const LedgerBridgeIframe = require('./ledger-bridge-iframe')
 
-module.exports.LedgerKeyringMv2 = LedgerKeyringMv2
+module.exports.LedgerBridgeIframe = LedgerBridgeIframe
 
-module.exports.BaseLedgerKeyring = BaseLedgerKeyring
+module.exports.LedgerKeyring = LedgerKeyring

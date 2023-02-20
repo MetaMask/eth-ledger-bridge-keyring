@@ -30,26 +30,26 @@ export type LedgerSignTypedDataResponse = {
   r: string;
 };
 
-export class BaseLedgerKeyring {
-  public constructor(opts: Record<string, unknown>);
+export interface LedgerBridge {
+  init(): Promise<void>;
 
-  public init(): Promise<void>;
+  destroy(): Promise<void>;
 
-  public dispose(): Promise<void>;
+  attemptMakeApp(): Promise<boolean>;
 
-  protected _getPublicKey(
+  getPublicKey(
     payload: GetPublicKeyPayload
   ): Promise<GetPublicKeyResponse>;
 
-  protected _deviceSignTransaction(
+  deviceSignTransaction(
     payload: LedgerSignTransactionPayload
   ): Promise<LedgerSignTransactionResponse>;
 
-  protected _deviceSignMessage(
+  deviceSignMessage(
     payload: LedgerSignMessagePayload
   ): Promise<LedgerSignMessageResponse>;
 
-  protected _deviceSignTypedData(
+  deviceSignTypedData(
     payload: LedgerSignTypedDataPayload
   ): Promise<LedgerSignTypedDataResponse>;
 }

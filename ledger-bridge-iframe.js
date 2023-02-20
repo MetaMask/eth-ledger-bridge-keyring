@@ -1,11 +1,10 @@
-const { BaseLedgerKeyring } = require('./base-ledger-keyring')
-
 const CONNECTION_EVENT = 'ledger-connection-change'
 
-class LedgerKeyringMv2 extends BaseLedgerKeyring {
-  init () {
+class LedgerBridgeIframe {
+  init (bridgeUrl) {
+    this.bridgeUrl = bridgeUrl
     this.iframeLoaded = false
-    this._setupIframe()
+    this._setupIframe(bridgeUrl)
 
     this.currentMessageId = 0
     this.messageCallbacks = {}
@@ -42,6 +41,12 @@ class LedgerKeyringMv2 extends BaseLedgerKeyring {
       }
     }
     document.head.appendChild(this.iframe)
+  }
+
+  _getOrigin () {
+    const tmp = this.bridgeUrl.split('/')
+    tmp.splice(-1, 1)
+    return tmp.join('/')
   }
 
   _setupListener () {
@@ -109,7 +114,7 @@ class LedgerKeyringMv2 extends BaseLedgerKeyring {
     })
   }
 
-  _getPublicKey (params) {
+  getPublicKey (params) {
     return new Promise((resolve, reject) => {
       this._sendMessage(
         {
@@ -127,7 +132,7 @@ class LedgerKeyringMv2 extends BaseLedgerKeyring {
     })
   }
 
-  _deviceSignTransaction (params) {
+  deviceSignTransaction (params) {
     return new Promise((resolve, reject) => {
       this._sendMessage(
         {
@@ -145,7 +150,7 @@ class LedgerKeyringMv2 extends BaseLedgerKeyring {
     })
   }
 
-  _deviceSignMessage (params) {
+  deviceSignMessage (params) {
     return new Promise((resolve, reject) => {
       this._sendMessage(
         {
@@ -163,7 +168,7 @@ class LedgerKeyringMv2 extends BaseLedgerKeyring {
     })
   }
 
-  _deviceSignTypedData (params) {
+  deviceSignTypedData (params) {
     return new Promise((resolve, reject) => {
       this._sendMessage(
         {
@@ -192,4 +197,4 @@ class LedgerKeyringMv2 extends BaseLedgerKeyring {
   }
 }
 
-module.exports = LedgerKeyringMv2
+module.exports = LedgerBridgeIframe

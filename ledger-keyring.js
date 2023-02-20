@@ -18,8 +18,8 @@ const NETWORK_API_URLS = {
   mainnet: 'https://api.etherscan.io',
 }
 
-class BaseLedgerKeyring extends EventEmitter {
-  constructor (opts = {}) {
+class LedgerKeyring extends EventEmitter {
+  constructor ({ bridge } = {}) {
     super()
     this.accountDetails = {}
     this.bridgeUrl = null
@@ -31,7 +31,12 @@ class BaseLedgerKeyring extends EventEmitter {
     this.paths = {}
     this.network = 'mainnet'
     this.implementFullBIP44 = false
-    this.deserialize(opts)
+
+    if (!bridge) {
+      throw new Error('Bridge is a required dependency for the keyring')
+    }
+
+    this.bridge = bridge
   }
 
   /**
@@ -40,47 +45,16 @@ class BaseLedgerKeyring extends EventEmitter {
    * @returns {Promise<void>}
    */
   init () {
-    throw new Error('Method init not implemented')
+    return this.bridge.init(this.bridgeUrl)
   }
 
+  /**
+   * Performs any asynchronous cleaning
+   *
+   * @returns {Promise<void>}
+   */
   destroy () {
-    throw new Error('Method destroy not implemented')
-  }
-
-  /**
-   * Gets public key from device
-   *
-   * @returns {Promise}
-   */
-  _getPublicKey (_params) {
-    throw new Error('Method _getPublicKey not implemented')
-  }
-
-  /**
-   * Signs transaction using the device
-   *
-   * @returns {Promise}
-   */
-  _deviceSignTransaction (_params) {
-    throw new Error('Method _deviceSignTransaction not implemented')
-  }
-
-  /**
-   * Signs message using the device
-   *
-   * @returns {Promise}
-   */
-  _deviceSignMessage (_params) {
-    throw new Error('Method _deviceSignMessage not implemented')
-  }
-
-  /**
-   * Signs typed data using the device
-   *
-   * @returns {Promise}
-   */
-  _deviceSignTypedData (_params) {
-    throw new Error('Method _deviceSignTypedData not implemented')
+    return this.bridge.destroy()
   }
 
   serialize () {
@@ -148,7 +122,7 @@ class BaseLedgerKeyring extends EventEmitter {
   }
 
   isConnected () {
-    return this.isDeviceConnected
+    return this.bridge.isDeviceConnected
   }
 
   setAccountToUnlock (index) {
@@ -171,7 +145,7 @@ class BaseLedgerKeyring extends EventEmitter {
 
     let payload
     try {
-      payload = await this._getPublicKey({
+      payload = await this.bridge.getPublicKey({
         hdPath: path,
       })
     } catch (error) {
@@ -247,7 +221,7 @@ class BaseLedgerKeyring extends EventEmitter {
   }
 
   attemptMakeApp () {
-    throw new Error('Method attemptMakeApp not implemented')
+    return this.bridge.attemptMakeApp()
   }
 
   // tx is an instance of the ethereumjs-transaction class.
@@ -316,7 +290,7 @@ class BaseLedgerKeyring extends EventEmitter {
 
     let payload
     try {
-      payload = await this._deviceSignTransaction({
+      payload = await this.bridge.deviceSignTransaction({
         tx: rawTxHex,
         hdPath,
       })
@@ -344,7 +318,7 @@ class BaseLedgerKeyring extends EventEmitter {
 
     let payload
     try {
-      payload = await this._deviceSignMessage({
+      payload = await this.bridge.deviceSignMessage({
         hdPath,
         message: ethUtil.stripHexPrefix(message),
       })
@@ -420,7 +394,7 @@ class BaseLedgerKeyring extends EventEmitter {
 
     let payload
     try {
-      payload = await this._deviceSignTypedData({
+      payload = await this.bridge.deviceSignTypedData({
         hdPath,
         domainSeparatorHex,
         hashStructMessageHex,
@@ -464,12 +438,6 @@ class BaseLedgerKeyring extends EventEmitter {
   }
 
   /* PRIVATE METHODS */
-
-  _getOrigin () {
-    const tmp = this.bridgeUrl.split('/')
-    tmp.splice(-1, 1)
-    return tmp.join('/')
-  }
 
   async __getPage (increment) {
     this.page += increment
@@ -612,8 +580,8 @@ class BaseLedgerKeyring extends EventEmitter {
   }
 }
 
-BaseLedgerKeyring.type = type
+LedgerKeyring.type = type
 
 module.exports = {
-  BaseLedgerKeyring,
+  LedgerKeyring,
 }
