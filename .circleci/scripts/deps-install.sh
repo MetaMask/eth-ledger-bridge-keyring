@@ -5,4 +5,4 @@ set -e
 set -u
 set -o pipefail
 
-yarn --frozen-lockfile --har
+yarn --immutable
