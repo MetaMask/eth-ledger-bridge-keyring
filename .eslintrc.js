@@ -13,24 +13,27 @@ module.exports = {
     ecmaVersion: 2017,
   },
 
-  plugins: [
-    'json',
-    'import',
-  ],
+  plugins: ['json', 'import'],
 
   globals: {
     document: 'readonly',
     window: 'readonly',
   },
 
-  overrides: [{
-    files: [
-      '.eslintrc.js',
-    ],
-    parserOptions: {
-      sourceType: 'script',
+  overrides: [
+    {
+      files: ['.eslintrc.js'],
+      parserOptions: {
+        sourceType: 'script',
+      },
     },
-  }],
+  ],
 
-  ignorePatterns: ['dist'],
+  ignorePatterns: [
+    '!.eslintrc.js',
+    '!.prettierrc.js',
+    'dist/',
+    'docs/',
+    '.yarn/',
+  ],
 }
