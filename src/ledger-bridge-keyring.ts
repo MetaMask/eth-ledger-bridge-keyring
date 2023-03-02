@@ -1,32 +1,32 @@
-import { EventEmitter } from "events";
-import HDKey from "hdkey";
-import * as ethUtil from "ethereumjs-util";
-import * as sigUtil from "eth-sig-util";
-import { TransactionFactory, TxData, TypedTransaction } from "@ethereumjs/tx";
-import type OldEthJsTransaction from "ethereumjs-tx";
+import { EventEmitter } from 'events';
+import HDKey from 'hdkey';
+import * as ethUtil from 'ethereumjs-util';
+import * as sigUtil from 'eth-sig-util';
+import { TransactionFactory, TxData, TypedTransaction } from '@ethereumjs/tx';
+import type OldEthJsTransaction from 'ethereumjs-tx';
 
-const pathBase = "m";
+const pathBase = 'm';
 const hdPathString = `${pathBase}/44'/60'/0'`;
-const keyringType = "Ledger Hardware";
+const keyringType = 'Ledger Hardware';
 
-const BRIDGE_URL = "https://metamask.github.io/eth-ledger-bridge-keyring";
+const BRIDGE_URL = 'https://metamask.github.io/eth-ledger-bridge-keyring';
 
 const MAX_INDEX = 1000;
 const NETWORK_API_URLS: Record<string, string> = {
-  ropsten: "http://api-ropsten.etherscan.io",
-  kovan: "http://api-kovan.etherscan.io",
-  rinkeby: "https://api-rinkeby.etherscan.io",
-  mainnet: "https://api.etherscan.io",
+  ropsten: 'http://api-ropsten.etherscan.io',
+  kovan: 'http://api-kovan.etherscan.io',
+  rinkeby: 'https://api-rinkeby.etherscan.io',
+  mainnet: 'https://api.etherscan.io',
 };
 
 enum IFrameMessageAction {
-  LedgerConnectionChange = "ledger-connection-change",
-  LedgerUnlock = "ledger-unlock",
-  LedgerMakeApp = "ledger-make-app",
-  LedgerUpdateTransport = "ledger-update-transport",
-  LedgerSignTransaction = "ledger-sign-transaction",
-  LedgerSignPersonalMessage = "ledger-sign-personal-message",
-  LedgerSignTypedData = "ledger-sign-typed-data",
+  LedgerConnectionChange = 'ledger-connection-change',
+  LedgerUnlock = 'ledger-unlock',
+  LedgerMakeApp = 'ledger-make-app',
+  LedgerUpdateTransport = 'ledger-update-transport',
+  LedgerSignTransaction = 'ledger-sign-transaction',
+  LedgerSignPersonalMessage = 'ledger-sign-personal-message',
+  LedgerSignTypedData = 'ledger-sign-typed-data',
 }
 
 interface IFrameMessage {
@@ -97,32 +97,32 @@ export interface LedgerBridgeKeyringOptions {
  * @returns Returns `true` if tx is an old-style ethereumjs-tx transaction.
  */
 function isOldStyleEthereumjsTx(
-  tx: TypedTransaction | OldEthJsTransaction
+  tx: TypedTransaction | OldEthJsTransaction,
 ): tx is OldEthJsTransaction {
-  return typeof (tx as OldEthJsTransaction).getChainId === "function";
+  return typeof (tx as OldEthJsTransaction).getChainId === 'function';
 }
 
 function isSignMessageResponse(
-  payload: IFrameMessageResponsePayload
+  payload: IFrameMessageResponsePayload,
 ): payload is IFrameMessageSignResponsePayload {
-  return typeof (payload as IFrameMessageSignResponsePayload).v === "string";
+  return typeof (payload as IFrameMessageSignResponsePayload).v === 'string';
 }
 
 function isGetAddressMessageResponse(
-  payload: IFrameMessageResponsePayload
+  payload: IFrameMessageResponsePayload,
 ): payload is IFrameMessageGetAddressResponsePayload {
   return (
     typeof (payload as IFrameMessageGetAddressResponsePayload).publicKey ===
-    "string"
+    'string'
   );
 }
 
 function isConnectionChangedResponse(
-  payload: IFrameMessageResponsePayload
+  payload: IFrameMessageResponsePayload,
 ): payload is IFrameMessageConnectionResponsePayload {
   return (
     typeof (payload as IFrameMessageConnectionResponsePayload).connected ===
-    "boolean"
+    'boolean'
   );
 }
 
@@ -137,7 +137,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
 
   unlockedAccount = 0;
 
-  accounts: ReadonlyArray<string> = [];
+  accounts: readonly string[] = [];
 
   accountDetails: Record<string, AccountDetails> = {};
 
@@ -147,7 +147,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
 
   paths: Record<string, number> = {};
 
-  network = "mainnet";
+  network = 'mainnet';
 
   implementFullBIP44 = false;
 
@@ -208,8 +208,8 @@ export class LedgerBridgeKeyring extends EventEmitter {
     // Remove accounts that don't have corresponding account details
     this.accounts = this.accounts.filter((account) =>
       Object.keys(this.accountDetails).includes(
-        ethUtil.toChecksumAddress(account)
-      )
+        ethUtil.toChecksumAddress(account),
+      ),
     );
 
     return Promise.resolve();
@@ -220,7 +220,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
       for (const account of Object.keys(opts.accountIndexes)) {
         this.accountDetails[account] = {
           bip44: true,
-          hdPath: this._getPathForIndex(opts.accountIndexes[account]!),
+          hdPath: this._getPathForIndex(opts.accountIndexes[account] as number),
         };
       }
     }
@@ -231,8 +231,8 @@ export class LedgerBridgeKeyring extends EventEmitter {
         .filter(
           (account) =>
             !Object.keys(this.accountDetails).includes(
-              ethUtil.toChecksumAddress(account)
-            )
+              ethUtil.toChecksumAddress(account),
+            ),
         )
         .forEach((account) => {
           try {
@@ -248,7 +248,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
   }
 
   isUnlocked() {
-    return Boolean(this.hdk && this.hdk.publicKey);
+    return Boolean(this.hdk?.publicKey);
   }
 
   isConnected() {
@@ -269,7 +269,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
 
   unlock(hdPath?: string, updateHdk = true): Promise<string> {
     if (this.isUnlocked() && !hdPath) {
-      return Promise.resolve("already unlocked");
+      return Promise.resolve('already unlocked');
     }
     const path = hdPath ? this._toLedgerPath(hdPath) : this.hdPath;
     return new Promise((resolve, reject) => {
@@ -283,14 +283,14 @@ export class LedgerBridgeKeyring extends EventEmitter {
         ({ success, payload }) => {
           if (success && isGetAddressMessageResponse(payload)) {
             if (updateHdk) {
-              this.hdk.publicKey = Buffer.from(payload.publicKey, "hex");
-              this.hdk.chainCode = Buffer.from(payload.chainCode, "hex");
+              this.hdk.publicKey = Buffer.from(payload.publicKey, 'hex');
+              this.hdk.chainCode = Buffer.from(payload.chainCode, 'hex');
             }
             resolve(payload.address);
           } else {
-            reject(payload.error || new Error("Unknown error"));
+            reject(payload.error || new Error('Unknown error'));
           }
-        }
+        },
       );
     });
   }
@@ -309,6 +309,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
             } else {
               address = this._addressFromIndex(pathBase, i);
             }
+
             this.accountDetails[ethUtil.toChecksumAddress(address)] = {
               // TODO: consider renaming this property, as the current name is misleading
               // It's currently used to represent whether an account uses the Ledger Live path.
@@ -350,8 +351,9 @@ export class LedgerBridgeKeyring extends EventEmitter {
     ) {
       throw new Error(`Address ${address} not found in this keyring`);
     }
+
     this.accounts = this.accounts.filter(
-      (a) => a.toLowerCase() !== address.toLowerCase()
+      (a) => a.toLowerCase() !== address.toLowerCase(),
     );
     delete this.accountDetails[ethUtil.toChecksumAddress(address)];
   }
@@ -368,7 +370,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
           } else {
             reject(error);
           }
-        }
+        },
       );
     });
   }
@@ -395,9 +397,9 @@ export class LedgerBridgeKeyring extends EventEmitter {
           if (success) {
             resolve(true);
           } else {
-            reject(new Error("Ledger transport could not be updated"));
+            reject(new Error('Ledger transport could not be updated'));
           }
-        }
+        },
       );
     });
   }
@@ -405,7 +407,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
   // tx is an instance of the ethereumjs-transaction class.
   signTransaction(
     address: string,
-    tx: TypedTransaction | OldEthJsTransaction
+    tx: TypedTransaction | OldEthJsTransaction,
   ): Promise<TypedTransaction | OldEthJsTransaction> {
     let rawTxHex;
     // transactions built with older versions of ethereumjs-tx have a
@@ -418,21 +420,24 @@ export class LedgerBridgeKeyring extends EventEmitter {
       // transaction which is only communicated to ethereumjs-tx in this
       // value. In newer versions the chainId is communicated via the 'Common'
       // object.
-      // TODO: Understand why we where passing strings here 
+      // TODO: Understand why we where passing strings here
       // moreover, getChainId should return a number.
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore next-line
       tx.v = ethUtil.bufferToHex(tx.getChainId());
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore next-line
-      tx.r = "0x00";
+      tx.r = '0x00';
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore next-line
-      tx.s = "0x00";
+      tx.s = '0x00';
 
-      rawTxHex = tx.serialize().toString("hex");
+      rawTxHex = tx.serialize().toString('hex');
 
       return this._signTransaction(address, rawTxHex, (payload) => {
-        tx.v = Buffer.from(payload.v, "hex");
-        tx.r = Buffer.from(payload.r, "hex");
-        tx.s = Buffer.from(payload.s, "hex");
+        tx.v = Buffer.from(payload.v, 'hex');
+        tx.r = Buffer.from(payload.r, 'hex');
+        tx.s = Buffer.from(payload.s, 'hex');
         return tx;
       });
     }
@@ -448,8 +453,8 @@ export class LedgerBridgeKeyring extends EventEmitter {
     const messageToSign = tx.getMessageToSign(false);
 
     rawTxHex = Buffer.isBuffer(messageToSign)
-      ? messageToSign.toString("hex")
-      : ethUtil.rlp.encode(messageToSign).toString("hex");
+      ? messageToSign.toString('hex')
+      : ethUtil.rlp.encode(messageToSign).toString('hex');
 
     return this._signTransaction(address, rawTxHex, (payload) => {
       // Because tx will be immutable, first get a plain javascript object that
@@ -475,8 +480,8 @@ export class LedgerBridgeKeyring extends EventEmitter {
     address: string,
     rawTxHex: string,
     handleSigning: (
-      payload: IFrameMessageSignResponsePayload
-    ) => TypedTransaction | OldEthJsTransaction
+      payload: IFrameMessageSignResponsePayload,
+    ) => TypedTransaction | OldEthJsTransaction,
   ): Promise<TypedTransaction | OldEthJsTransaction> {
     return new Promise((resolve, reject) => {
       this.unlockAccountByAddress(address)
@@ -497,16 +502,18 @@ export class LedgerBridgeKeyring extends EventEmitter {
                   resolve(newOrMutatedTx);
                 } else {
                   reject(
-                    new Error("Ledger: The transaction signature is not valid")
+                    new Error('Ledger: The transaction signature is not valid'),
                   );
                 }
               } else {
                 reject(
                   payload.error ||
-                    new Error("Ledger: Unknown error while signing transaction")
+                    new Error(
+                      'Ledger: Unknown error while signing transaction',
+                    ),
                 );
               }
-            }
+            },
           );
         })
         .catch(reject);
@@ -547,18 +554,18 @@ export class LedgerBridgeKeyring extends EventEmitter {
                 ) {
                   reject(
                     new Error(
-                      "Ledger: The signature doesnt match the right address"
-                    )
+                      'Ledger: The signature doesnt match the right address',
+                    ),
                   );
                 }
                 resolve(signature);
               } else {
                 reject(
                   payload.error ||
-                    new Error("Ledger: Unknown error while signing message")
+                    new Error('Ledger: Unknown error while signing message'),
                 );
               }
-            }
+            },
           );
         })
         .catch(reject);
@@ -569,17 +576,19 @@ export class LedgerBridgeKeyring extends EventEmitter {
     const checksummedAddress = ethUtil.toChecksumAddress(address);
     if (!Object.keys(this.accountDetails).includes(checksummedAddress)) {
       throw new Error(
-        `Ledger: Account for address '${checksummedAddress}' not found`
+        `Ledger: Account for address '${checksummedAddress}' not found`,
       );
     }
-    const { hdPath } = this.accountDetails[checksummedAddress]!;
+    const { hdPath } = this.accountDetails[
+      checksummedAddress
+    ] as AccountDetails;
     const unlockedAddress = await this.unlock(hdPath, false);
 
     // unlock resolves to the address for the given hdPath as reported by the ledger device
     // if that address is not the requested address, then this account belongs to a different device or seed
     if (unlockedAddress.toLowerCase() !== address.toLowerCase()) {
       throw new Error(
-        `Ledger: Account ${address} does not belong to the connected device`
+        `Ledger: Account ${address} does not belong to the connected device`,
       );
     }
     return hdPath;
@@ -588,33 +597,35 @@ export class LedgerBridgeKeyring extends EventEmitter {
   async signTypedData(
     withAccount: string,
     data: sigUtil.EIP712TypedData,
-    options: { version?: string } = {}
+    options: { version?: string } = {},
   ) {
-    const isV4 = options.version === "V4";
+    const isV4 = options.version === 'V4';
     if (!isV4) {
       throw new Error(
-        "Ledger: Only version 4 of typed data signing is supported"
+        'Ledger: Only version 4 of typed data signing is supported',
       );
     }
 
     const { domain, types, primaryType, message } =
       sigUtil.TypedDataUtils.sanitizeData(data);
     const domainSeparatorHex = sigUtil.TypedDataUtils.hashStruct(
-      "EIP712Domain",
+      'EIP712Domain',
       domain,
       types,
       // @types/eth-sig-util seems to be wrong
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore next-line
-      isV4
-    ).toString("hex");
+      isV4,
+    ).toString('hex');
     const hashStructMessageHex = sigUtil.TypedDataUtils.hashStruct(
       primaryType,
       message,
       types,
       // @types/eth-sig-util seems to be wrong
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore next-line
-      isV4
-    ).toString("hex");
+      isV4,
+    ).toString('hex');
 
     const hdPath = await this.unlockAccountByAddress(withAccount);
     const { success, payload }: IFrameMessageResponse = await new Promise(
@@ -628,9 +639,9 @@ export class LedgerBridgeKeyring extends EventEmitter {
               hashStructMessageHex,
             },
           },
-          (result) => resolve(result)
+          (result) => resolve(result),
         );
-      }
+      },
     );
 
     if (success && isSignMessageResponse(payload)) {
@@ -640,6 +651,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
       }
       const signature = `0x${payload.r}${payload.s}${v}`;
       // @types/eth-sig-util seems to be wrong
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore next-line
       const addressSignedWith = sigUtil.recoverTypedSignature_v4({
         data,
@@ -649,17 +661,17 @@ export class LedgerBridgeKeyring extends EventEmitter {
         ethUtil.toChecksumAddress(addressSignedWith) !==
         ethUtil.toChecksumAddress(withAccount)
       ) {
-        throw new Error("Ledger: The signature doesnt match the right address");
+        throw new Error('Ledger: The signature doesnt match the right address');
       }
       return signature;
     }
     throw (
-      payload.error || new Error("Ledger: Unknown error while signing message")
+      payload.error || new Error('Ledger: Unknown error while signing message')
     );
   }
 
   exportAccount() {
-    throw new Error("Not supported on this device");
+    throw new Error('Not supported on this device');
   }
 
   forgetDevice() {
@@ -674,7 +686,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
   /* PRIVATE METHODS */
 
   _setupIframe() {
-    this.iframe = document.createElement("iframe");
+    this.iframe = document.createElement('iframe');
     this.iframe.src = this.bridgeUrl;
     this.iframe.allow = `hid 'src'`;
     this.iframe.onload = async () => {
@@ -684,7 +696,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
       if (this.delayedPromise) {
         try {
           const result = await this.updateTransportMethod(
-            this.delayedPromise.transportType
+            this.delayedPromise.transportType,
           );
           this.delayedPromise.resolve(result);
         } catch (e) {
@@ -698,22 +710,22 @@ export class LedgerBridgeKeyring extends EventEmitter {
   }
 
   _getOrigin() {
-    const tmp = this.bridgeUrl.split("/");
+    const tmp = this.bridgeUrl.split('/');
     tmp.splice(-1, 1);
-    return tmp.join("/");
+    return tmp.join('/');
   }
 
   _sendMessage(
     msg: Partial<IFrameMessage>,
-    cb: (response: IFrameMessageResponse) => void
+    cb: (response: IFrameMessageResponse) => void,
   ) {
-    msg.target = "LEDGER-IFRAME";
+    msg.target = 'LEDGER-IFRAME';
 
     this.currentMessageId += 1;
     msg.messageId = this.currentMessageId;
 
     this.messageCallbacks[this.currentMessageId] = cb;
-    this.iframe?.contentWindow?.postMessage(msg, "*");
+    this.iframe?.contentWindow?.postMessage(msg, '*');
   }
 
   _setupListener() {
@@ -735,12 +747,13 @@ export class LedgerBridgeKeyring extends EventEmitter {
 
       return undefined;
     };
-    window.addEventListener("message", this._eventListener);
+    window.addEventListener('message', this._eventListener);
   }
 
   destroy() {
-    if (this._eventListener)
-      window.removeEventListener("message", this._eventListener);
+    if (this._eventListener) {
+      window.removeEventListener('message', this._eventListener);
+    }
   }
 
   async __getPage(increment: number) {
@@ -763,7 +776,11 @@ export class LedgerBridgeKeyring extends EventEmitter {
   }
 
   async _getAccountsBIP44(from: number, to: number) {
-    const accounts = [];
+    const accounts: {
+      address: string;
+      balance: number | null;
+      index: number;
+    }[] = [];
 
     for (let i = from; i < to; i++) {
       const path = this._getPathForIndex(i);
@@ -776,6 +793,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
         balance: null,
         index: i,
       });
+
       // PER BIP44
       // "Software should prevent a creation of an account if
       // a previous account does not have a transaction history
@@ -788,7 +806,11 @@ export class LedgerBridgeKeyring extends EventEmitter {
   }
 
   _getAccountsLegacy(from: number, to: number) {
-    const accounts = [];
+    const accounts: {
+      address: string;
+      balance: number | null;
+      index: number;
+    }[] = [];
 
     for (let i = from; i < to; i++) {
       const address = this._addressFromIndex(pathBase, i);
@@ -811,18 +833,18 @@ export class LedgerBridgeKeyring extends EventEmitter {
   }
 
   // eslint-disable-next-line no-shadow
-  _addressFromIndex(pathBase: string, i: number) {
-    const dkey = this.hdk.derive(`${pathBase}/${i}`);
+  _addressFromIndex(basePath: string, i: number) {
+    const dkey = this.hdk.derive(`${basePath}/${i}`);
     const address = ethUtil
       .publicToAddress(dkey.publicKey, true)
-      .toString("hex");
+      .toString('hex');
     return ethUtil.toChecksumAddress(`0x${address}`);
   }
 
   _pathFromAddress(address: string) {
     const checksummedAddress = ethUtil.toChecksumAddress(address);
     let index = this.paths[checksummedAddress];
-    if (typeof index === "undefined") {
+    if (typeof index === 'undefined') {
       for (let i = 0; i < MAX_INDEX; i++) {
         if (checksummedAddress === this._addressFromIndex(pathBase, i)) {
           index = i;
@@ -831,19 +853,20 @@ export class LedgerBridgeKeyring extends EventEmitter {
       }
     }
 
-    if (typeof index === "undefined") {
-      throw new Error("Unknown address");
+    if (typeof index === 'undefined') {
+      throw new Error('Unknown address');
     }
     return this._getPathForIndex(index);
   }
 
   _toAscii(hex: string) {
-    let str = "";
+    let str = '';
     let i = 0;
     const l = hex.length;
-    if (hex.substring(0, 2) === "0x") {
+    if (hex.substring(0, 2) === '0x') {
       i = 2;
     }
+
     for (; i < l; i += 2) {
       const code = parseInt(hex.substr(i, 2), 16);
       str += String.fromCharCode(code);
@@ -864,16 +887,16 @@ export class LedgerBridgeKeyring extends EventEmitter {
   }
 
   _toLedgerPath(path: string) {
-    return path.toString().replace("m/", "");
+    return path.toString().replace('m/', '');
   }
 
   async _hasPreviousTransactions(address: string) {
     const apiUrl = this._getApiUrl();
     const response = await window.fetch(
-      `${apiUrl}/api?module=account&action=txlist&address=${address}&tag=latest&page=1&offset=1`
+      `${apiUrl}/api?module=account&action=txlist&address=${address}&tag=latest&page=1&offset=1`,
     );
     const parsedResponse = await response.json();
-    if (parsedResponse.status !== "0" && parsedResponse.result.length > 0) {
+    if (parsedResponse.status !== '0' && parsedResponse.result.length > 0) {
       return true;
     }
     return false;

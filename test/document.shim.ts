@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/no-mutable-exports
 let documentShim: any;
 
 try {
@@ -12,7 +13,7 @@ try {
       },
     }),
     addEventListener: () => false,
-  }
+  };
 } catch (e) {
   documentShim = {
     head: {
@@ -25,7 +26,7 @@ try {
       },
     }),
     addEventListener: () => false,
-  }
+  };
 }
 
 export default documentShim;

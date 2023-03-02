@@ -33,9 +33,9 @@ jobs:
       - persist_to_workspace:
           root: .
           paths:
-          - node_modules
-          - build-artifacts
-  
+            - node_modules
+            - build-artifacts
+
   build:
     docker:
       - image: circleci/node:14
@@ -50,7 +50,7 @@ jobs:
       - persist_to_workspace:
           root: .
           paths:
-          - dist
+            - dist
 
   test-lint:
     docker:
