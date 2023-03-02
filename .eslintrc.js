@@ -1,31 +1,25 @@
 module.exports = {
   root: true,
 
-  extends: [
-    '@metamask/eslint-config',
-    '@metamask/eslint-config/config/mocha',
-    '@metamask/eslint-config/config/nodejs',
-  ],
-
-  parser: 'babel-eslint',
-
-  parserOptions: {
-    ecmaVersion: 2017,
-  },
-
-  plugins: ['json', 'import'],
-
-  globals: {
-    document: 'readonly',
-    window: 'readonly',
-  },
+  extends: ['@metamask/eslint-config'],
 
   overrides: [
     {
-      files: ['.eslintrc.js'],
+      files: ['*.ts'],
+      extends: ['@metamask/eslint-config-typescript'],
+    },
+
+    {
+      files: ['*.js'],
       parserOptions: {
         sourceType: 'script',
       },
+      extends: ['@metamask/eslint-config-nodejs'],
+    },
+
+    {
+      files: ['*.test.ts'],
+      extends: ['@metamask/eslint-config-mocha'],
     },
   ],
 
@@ -36,4 +30,4 @@ module.exports = {
     'docs/',
     '.yarn/',
   ],
-}
+};
