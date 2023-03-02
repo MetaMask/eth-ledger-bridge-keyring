@@ -25,10 +25,6 @@ jobs:
           name: Install deps
           command: |
             .circleci/scripts/deps-install.sh
-      - run:
-          name: Collect yarn install HAR logs
-          command: |
-            .circleci/scripts/collect-har-artifact.sh
       - persist_to_workspace:
           root: .
           paths:
