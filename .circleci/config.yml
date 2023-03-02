@@ -41,6 +41,8 @@ jobs:
       - image: circleci/node:14
     steps:
       - checkout
+      - attach_workspace:
+          at: .
       - run:
           name: Build
           command: |
