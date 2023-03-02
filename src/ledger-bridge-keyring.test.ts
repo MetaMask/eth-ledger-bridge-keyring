@@ -1,17 +1,19 @@
-global.document = require('./document.shim')
-global.window = require('./window.shim')
+import documentShim from '../test/document.shim';
+import windowShim from '../test/window.shim';
+import { strict as assert } from 'assert';
+import chai from 'chai';
+import spies from 'chai-spies';
+import EthereumTx from 'ethereumjs-tx';
+import HDKey from 'hdkey';
+import * as ethUtil from 'ethereumjs-util';
+import { TransactionFactory } from '@ethereumjs/tx';
+import { Common, Chain, Hardfork } from '@ethereumjs/common';
+import sigUtil from 'eth-sig-util';
 
-const assert = require('assert')
-const chai = require('chai')
-const spies = require('chai-spies')
-const EthereumTx = require('ethereumjs-tx')
-const HDKey = require('hdkey')
-const ethUtil = require('ethereumjs-util')
-const { TransactionFactory } = require('@ethereumjs/tx')
-const { Common, Chain, Hardfork } = require('@ethereumjs/common')
-const sigUtil = require('eth-sig-util')
+import { AccountDetails, LedgerBridgeKeyring } from './ledger-bridge-keyring';
 
-const LedgerBridgeKeyring = require('..')
+global.document = documentShim;
+global.window = windowShim;
 
 const { expect } = chai
 
@@ -32,7 +34,7 @@ const fakeAccounts = [
   '0x6772C4B1E841b295960Bb4662dceD9bb71726357',
   '0x41bEAD6585eCA6c79B553Ca136f0DFA78A006899',
   '0xf37559520757223264ee707d4e3fdfaa118db9bd',
-]
+] as const;
 
 const fakeXPubKey = 'xpub6FnCn6nSzZAw5Tw7cgR9bi15UV96gLZhjDstkXXxvCLsUXBGXPdSnLFbdpq8p9HmGsApME5hQTZ3emM2rnY5agb9rXpVGyy3bdW6EEgAtqt'
 const fakeHdKey = HDKey.fromExtendedKey(fakeXPubKey)
@@ -74,13 +76,13 @@ chai.use(spies)
 
 describe('LedgerBridgeKeyring', function () {
 
-  let keyring
-  let sandbox
+  let keyring: LedgerBridgeKeyring;
+  let sandbox: ChaiSpies.Sandbox;
 
   async function basicSetupToUnlockOneAccount (accountIndex = 0) {
     keyring.setAccountToUnlock(accountIndex)
     await keyring.addAccounts()
-    sandbox.on(keyring, 'unlock', (_) => Promise.resolve(fakeAccounts[accountIndex]))
+    sandbox.on(keyring, 'unlock', () => Promise.resolve(fakeAccounts[accountIndex]))
   }
 
   beforeEach(function () {
@@ -137,13 +139,12 @@ describe('LedgerBridgeKeyring', function () {
       const account = fakeAccounts[0]
       const checksum = ethUtil.toChecksumAddress(account)
       const someHdPath = `m/44'/60'/0'/1`
-      const accountDetails = {}
+      const accountDetails: Record<string, AccountDetails> = {}
       accountDetails[checksum] = {
         index: 0,
         hdPath: someHdPath,
       }
       return keyring.deserialize({
-        page: 10,
         hdPath: someHdPath,
         accounts: [account],
         accountDetails,
@@ -163,7 +164,7 @@ describe('LedgerBridgeKeyring', function () {
       const someHdPath = `m/44'/60'/0'/0/0`
       const account = fakeAccounts[1]
       const checksum = ethUtil.toChecksumAddress(account)
-      const accountIndexes = {}
+      const accountIndexes: Record<string, number> = {}
       accountIndexes[checksum] = 1
       return keyring.deserialize({
         accounts: [account],
@@ -216,6 +217,7 @@ describe('LedgerBridgeKeyring', function () {
     })
     it('should update hdk.publicKey if updateHdk is true', function (done) {
       const ledgerKeyring = new LedgerBridgeKeyring()
+      // @ts-ignore next-line
       ledgerKeyring.hdk = { publicKey: 'ABC' }
 
       sandbox.on(ledgerKeyring, '_sendMessage', (_, cb) => {
@@ -238,6 +240,7 @@ describe('LedgerBridgeKeyring', function () {
     })
     it('should not update hdk.publicKey if updateHdk is false', function (done) {
       const ledgerKeyring = new LedgerBridgeKeyring()
+      // @ts-ignore next-line
       ledgerKeyring.hdk = { publicKey: 'ABC' }
 
       sandbox.on(ledgerKeyring, '_sendMessage', (_, cb) => {
@@ -320,10 +323,10 @@ describe('LedgerBridgeKeyring', function () {
     it('stores account details for bip44 accounts', function () {
       keyring.setHdPath(`m/44'/60'/0'/0/0`)
       keyring.setAccountToUnlock(1)
-      sandbox.on(keyring, 'unlock', (_) => Promise.resolve(fakeAccounts[0]))
+      sandbox.on(keyring, 'unlock', () => Promise.resolve(fakeAccounts[0]))
       return keyring.addAccounts(1)
         .then((accounts) => {
-          assert.deepEqual(keyring.accountDetails[accounts[0]], {
+          assert.deepEqual(keyring.accountDetails[accounts[0]!], {
             bip44: true,
             hdPath: `m/44'/60'/1'/0/0`,
           })
@@ -335,7 +338,7 @@ describe('LedgerBridgeKeyring', function () {
       keyring.setAccountToUnlock(2)
       return keyring.addAccounts(1)
         .then((accounts) => {
-          assert.deepEqual(keyring.accountDetails[accounts[0]], {
+          assert.deepEqual(keyring.accountDetails[accounts[0]!], {
             bip44: false,
             hdPath: `m/44'/60'/0'/2`,
           })
@@ -378,7 +381,7 @@ describe('LedgerBridgeKeyring', function () {
     describe('if the account does not exist', function () {
       it('should throw an error', function () {
         const unexistingAccount = '0x0000000000000000000000000000000000000000'
-        expect((_) => {
+        expect(() => {
           keyring.removeAccount(unexistingAccount)
         }).to.throw(`Address ${unexistingAccount} not found in this keyring`)
       })
@@ -395,12 +398,12 @@ describe('LedgerBridgeKeyring', function () {
 
       const accounts = await keyring.getFirstPage()
 
-      expect(accounts.length, keyring.perPage)
-      expect(accounts[0].address, fakeAccounts[0])
-      expect(accounts[1].address, fakeAccounts[1])
-      expect(accounts[2].address, fakeAccounts[2])
-      expect(accounts[3].address, fakeAccounts[3])
-      expect(accounts[4].address, fakeAccounts[4])
+      assert.equal(accounts.length, keyring.perPage)
+      expect(accounts[0]?.address, fakeAccounts[0])
+      expect(accounts[1]?.address, fakeAccounts[1])
+      expect(accounts[2]?.address, fakeAccounts[2])
+      expect(accounts[3]?.address, fakeAccounts[3])
+      expect(accounts[4]?.address, fakeAccounts[4])
     })
   })
 
@@ -408,12 +411,12 @@ describe('LedgerBridgeKeyring', function () {
 
     it('should return the list of accounts for current page', async function () {
       const accounts = await keyring.getNextPage()
-      expect(accounts.length, keyring.perPage)
-      expect(accounts[0].address, fakeAccounts[0])
-      expect(accounts[1].address, fakeAccounts[1])
-      expect(accounts[2].address, fakeAccounts[2])
-      expect(accounts[3].address, fakeAccounts[3])
-      expect(accounts[4].address, fakeAccounts[4])
+      assert.equal(accounts.length, keyring.perPage)
+      expect(accounts[0]?.address, fakeAccounts[0])
+      expect(accounts[1]?.address, fakeAccounts[1])
+      expect(accounts[2]?.address, fakeAccounts[2])
+      expect(accounts[3]?.address, fakeAccounts[3])
+      expect(accounts[4]?.address, fakeAccounts[4])
     })
   })
 
@@ -424,12 +427,12 @@ describe('LedgerBridgeKeyring', function () {
       await keyring.getNextPage()
       const accounts = await keyring.getPreviousPage()
 
-      expect(accounts.length, keyring.perPage)
-      expect(accounts[0].address, fakeAccounts[0])
-      expect(accounts[1].address, fakeAccounts[1])
-      expect(accounts[2].address, fakeAccounts[2])
-      expect(accounts[3].address, fakeAccounts[3])
-      expect(accounts[4].address, fakeAccounts[4])
+      assert.equal(accounts.length, keyring.perPage)
+      expect(accounts[0]?.address, fakeAccounts[0])
+      expect(accounts[1]?.address, fakeAccounts[1])
+      expect(accounts[2]?.address, fakeAccounts[2])
+      expect(accounts[3]?.address, fakeAccounts[3])
+      expect(accounts[4]?.address, fakeAccounts[4])
     })
 
     it('should be able to go back to the previous page', async function () {
@@ -437,18 +440,18 @@ describe('LedgerBridgeKeyring', function () {
       await keyring.getNextPage()
       const accounts = await keyring.getPreviousPage()
 
-      expect(accounts.length, keyring.perPage)
-      expect(accounts[0].address, fakeAccounts[0])
-      expect(accounts[1].address, fakeAccounts[1])
-      expect(accounts[2].address, fakeAccounts[2])
-      expect(accounts[3].address, fakeAccounts[3])
-      expect(accounts[4].address, fakeAccounts[4])
+      assert.equal(accounts.length, keyring.perPage)
+      expect(accounts[0]?.address, fakeAccounts[0])
+      expect(accounts[1]?.address, fakeAccounts[1])
+      expect(accounts[2]?.address, fakeAccounts[2])
+      expect(accounts[3]?.address, fakeAccounts[3])
+      expect(accounts[4]?.address, fakeAccounts[4])
     })
   })
 
   describe('getAccounts', function () {
     const accountIndex = 5
-    let accounts = []
+    let accounts: string[] = []
     beforeEach(async function () {
       keyring.setAccountToUnlock(accountIndex)
       await keyring.addAccounts()
@@ -468,7 +471,7 @@ describe('LedgerBridgeKeyring', function () {
 
   describe('exportAccount', function () {
     it('should throw an error because it is not supported', function () {
-      expect((_) => {
+      expect(() => {
         keyring.exportAccount()
       }).to.throw('Not supported on this device')
     })
@@ -536,7 +539,7 @@ describe('LedgerBridgeKeyring', function () {
           cb({ success: true, payload: expectedRSV })
         })
 
-        const returnedTx = await keyring.signTransaction(fakeAccounts[0], newFakeTx, common)
+        const returnedTx = await keyring.signTransaction(fakeAccounts[0], newFakeTx)
         expect(keyring._sendMessage).to.have.been.called()
         expect(returnedTx.toJSON()).to.deep.equal(signedNewFakeTx.toJSON())
       })
@@ -568,7 +571,7 @@ describe('LedgerBridgeKeyring', function () {
           cb({ success: true, payload: expectedRSV })
         })
 
-        const returnedTx = await keyring.signTransaction(fakeAccounts[0], fakeTypeTwoTx, commonEIP1559)
+        const returnedTx = await keyring.signTransaction(fakeAccounts[0], fakeTypeTwoTx)
         expect(keyring._sendMessage).to.have.been.called()
         expect(returnedTx.toJSON()).to.deep.equal(signedFakeTypeTwoTx.toJSON())
       })

@@ -1,5 +1,7 @@
+let documentShim: any;
+
 try {
-  module.exports = document || {
+  documentShim = document || {
     head: {
       appendChild: () => false,
     },
@@ -12,7 +14,7 @@ try {
     addEventListener: () => false,
   }
 } catch (e) {
-  module.exports = {
+  documentShim = {
     head: {
       appendChild: () => false,
     },
@@ -25,3 +27,5 @@ try {
     addEventListener: () => false,
   }
 }
+
+export default documentShim;

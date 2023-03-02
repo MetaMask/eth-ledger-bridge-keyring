@@ -69,6 +69,7 @@ interface IFrameMessageResponse {
 }
 
 export interface AccountDetails {
+  index?: number;
   bip44?: boolean;
   hdPath?: string;
 }
@@ -294,7 +295,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
     });
   }
 
-  addAccounts(n = 1) {
+  addAccounts(n = 1): Promise<string[]> {
     return new Promise((resolve, reject) => {
       this.unlock()
         .then(async (_) => {
@@ -320,7 +321,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
             }
             this.page = 0;
           }
-          resolve(this.accounts);
+          resolve(this.accounts.slice());
         })
         .catch(reject);
     });
@@ -402,7 +403,10 @@ export class LedgerBridgeKeyring extends EventEmitter {
   }
 
   // tx is an instance of the ethereumjs-transaction class.
-  signTransaction(address: string, tx: TypedTransaction | OldEthJsTransaction) {
+  signTransaction(
+    address: string,
+    tx: TypedTransaction | OldEthJsTransaction
+  ): Promise<TypedTransaction | OldEthJsTransaction> {
     let rawTxHex;
     // transactions built with older versions of ethereumjs-tx have a
     // getChainId method that newer versions do not. Older versions are mutable
@@ -414,10 +418,14 @@ export class LedgerBridgeKeyring extends EventEmitter {
       // transaction which is only communicated to ethereumjs-tx in this
       // value. In newer versions the chainId is communicated via the 'Common'
       // object.
-      // TODO: Understand why we where passing strings here (getChainId should return a number).
-      tx.v = Buffer.from(ethUtil.bufferToHex(tx.getChainId()));
-      tx.r = Buffer.from("0x00");
-      tx.s = Buffer.from("0x00");
+      // TODO: Understand why we where passing strings here 
+      // moreover, getChainId should return a number.
+      // @ts-ignore next-line
+      tx.v = ethUtil.bufferToHex(tx.getChainId());
+      // @ts-ignore next-line
+      tx.r = "0x00";
+      // @ts-ignore next-line
+      tx.s = "0x00";
 
       rawTxHex = tx.serialize().toString("hex");
 
@@ -469,7 +477,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
     handleSigning: (
       payload: IFrameMessageSignResponsePayload
     ) => TypedTransaction | OldEthJsTransaction
-  ) {
+  ): Promise<TypedTransaction | OldEthJsTransaction> {
     return new Promise((resolve, reject) => {
       this.unlockAccountByAddress(address)
         .then((hdPath) => {
