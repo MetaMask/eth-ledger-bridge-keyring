@@ -592,7 +592,7 @@ describe('LedgerBridgeKeyring', function () {
           hdPath: "m/44'/60'/0'/0",
           message: 'some msg',
         });
-        cb({ success: true, payload: { v: '0x1', r: '0x0', s: '0x0' } });
+        cb({ success: true, payload: { v: 1, r: '0x0', s: '0x0' } });
       });
 
       sandbox.on(sigUtil, 'recoverPersonalSignature', () => fakeAccounts[0]);
@@ -609,7 +609,7 @@ describe('LedgerBridgeKeyring', function () {
           hdPath: "m/44'/60'/0'/0",
           message: 'some msg',
         });
-        cb({ success: true, payload: { v: '0x1', r: '0x0', s: '0x0' } });
+        cb({ success: true, payload: { v: 1, r: '0x0', s: '0x0' } });
       });
 
       sandbox.on(sigUtil, 'recoverPersonalSignature', () => fakeAccounts[0]);
@@ -708,7 +708,7 @@ describe('LedgerBridgeKeyring', function () {
         cb({
           success: true,
           payload: {
-            v: '27',
+            v: 27,
             r: '72d4e38a0e582e09a620fd38e236fe687a1ec782206b56d576f579c026a7e5b9',
             s: '46759735981cd0c3efb02d36df28bb2feedfec3d90e408efc93f45b894946e32',
           },
@@ -732,7 +732,7 @@ describe('LedgerBridgeKeyring', function () {
         cb({
           success: true,
           payload: {
-            v: '28',
+            v: 28,
             r: '72d4e38a0e582e09a620fd38e236fe687a1ec782206b56d576f579c026a7e5b9',
             s: '46759735981cd0c3efb02d36df28bb2feedfec3d90e408efc93f45b894946e32',
           },

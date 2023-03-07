@@ -4,6 +4,7 @@ import * as ethUtil from 'ethereumjs-util';
 import * as sigUtil from 'eth-sig-util';
 import { TransactionFactory, TxData, TypedTransaction } from '@ethereumjs/tx';
 import type OldEthJsTransaction from 'ethereumjs-tx';
+import type LedgerHwAppEth from '@ledgerhq/hw-app-eth';
 
 const pathBase = 'm';
 const hdPathString = `${pathBase}/44'/60'/0'`;
@@ -36,29 +37,26 @@ interface IFrameMessage {
   messageId: number;
 }
 
-interface IFrameMessageGetAddressResponsePayload {
-  publicKey: string;
-  address: string;
-  chainCode: string;
-  error?: string;
-}
+type GetAddressPayload = Awaited<ReturnType<LedgerHwAppEth['getAddress']>>;
 
-interface IFrameMessageSignResponsePayload {
-  v: string;
-  r: string;
-  s: string;
-  error?: unknown;
-}
+type SignMessagePayload = Awaited<
+  ReturnType<LedgerHwAppEth['signEIP712HashedMessage']>
+>;
 
-interface IFrameMessageConnectionResponsePayload {
+type SignTransactionPayload = Awaited<
+  ReturnType<LedgerHwAppEth['signTransaction']>
+>;
+
+interface ConnectionChangedPayload {
   connected: boolean;
-  error?: unknown;
 }
 
-type IFrameMessageResponsePayload =
-  | IFrameMessageGetAddressResponsePayload
-  | IFrameMessageSignResponsePayload
-  | IFrameMessageConnectionResponsePayload;
+type IFrameMessageResponsePayload = { error?: unknown } & (
+  | GetAddressPayload
+  | SignTransactionPayload
+  | SignMessagePayload
+  | ConnectionChangedPayload
+);
 
 interface IFrameMessageResponse {
   success: boolean;
@@ -102,28 +100,28 @@ function isOldStyleEthereumjsTx(
   return typeof (tx as OldEthJsTransaction).getChainId === 'function';
 }
 
+function isSignTransactionResponse(
+  payload: IFrameMessageResponsePayload,
+): payload is SignTransactionPayload {
+  return typeof (payload as SignTransactionPayload).v === 'string';
+}
+
 function isSignMessageResponse(
   payload: IFrameMessageResponsePayload,
-): payload is IFrameMessageSignResponsePayload {
-  return typeof (payload as IFrameMessageSignResponsePayload).v === 'string';
+): payload is SignMessagePayload {
+  return typeof (payload as SignMessagePayload).v === 'number';
 }
 
 function isGetAddressMessageResponse(
   payload: IFrameMessageResponsePayload,
-): payload is IFrameMessageGetAddressResponsePayload {
-  return (
-    typeof (payload as IFrameMessageGetAddressResponsePayload).publicKey ===
-    'string'
-  );
+): payload is GetAddressPayload {
+  return typeof (payload as GetAddressPayload).publicKey === 'string';
 }
 
 function isConnectionChangedResponse(
   payload: IFrameMessageResponsePayload,
-): payload is IFrameMessageConnectionResponsePayload {
-  return (
-    typeof (payload as IFrameMessageConnectionResponsePayload).connected ===
-    'boolean'
-  );
+): payload is ConnectionChangedPayload {
+  return typeof (payload as ConnectionChangedPayload).connected === 'boolean';
 }
 
 export class LedgerBridgeKeyring extends EventEmitter {
@@ -284,7 +282,10 @@ export class LedgerBridgeKeyring extends EventEmitter {
           if (success && isGetAddressMessageResponse(payload)) {
             if (updateHdk) {
               this.hdk.publicKey = Buffer.from(payload.publicKey, 'hex');
-              this.hdk.chainCode = Buffer.from(payload.chainCode, 'hex');
+              this.hdk.chainCode = Buffer.from(
+                payload.chainCode as string,
+                'hex',
+              );
             }
             resolve(payload.address);
           } else {
@@ -480,7 +481,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
     address: string,
     rawTxHex: string,
     handleSigning: (
-      payload: IFrameMessageSignResponsePayload,
+      payload: SignTransactionPayload,
     ) => TypedTransaction | OldEthJsTransaction,
   ): Promise<TypedTransaction | OldEthJsTransaction> {
     return new Promise((resolve, reject) => {
@@ -495,7 +496,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
               },
             },
             ({ success, payload }) => {
-              if (success && isSignMessageResponse(payload)) {
+              if (success && isSignTransactionResponse(payload)) {
                 const newOrMutatedTx = handleSigning(payload);
                 const valid = newOrMutatedTx.verifySignature();
                 if (valid) {
@@ -539,7 +540,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
             },
             ({ success, payload }) => {
               if (success && isSignMessageResponse(payload)) {
-                let v = parseInt(payload.v, 10).toString(16);
+                let v = parseInt(String(payload.v), 10).toString(16);
                 if (v.length < 2) {
                   v = `0${v}`;
                 }
@@ -645,7 +646,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
     );
 
     if (success && isSignMessageResponse(payload)) {
-      let v = parseInt(payload.v, 10).toString(16);
+      let v = parseInt(String(payload.v), 10).toString(16);
       if (v.length < 2) {
         v = `0${v}`;
       }
