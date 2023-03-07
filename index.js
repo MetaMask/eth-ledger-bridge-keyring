@@ -1,7 +1,7 @@
 const { LedgerKeyring } = require('./ledger-keyring')
-const { LedgerBridgeIframe } = require('./ledger-bridge-iframe')
+const { LedgerIframeBridge } = require('./ledger-iframe-bridge')
 
 module.exports = {
   LedgerKeyring,
-  LedgerBridgeIframe,
+  LedgerIframeBridge,
 }

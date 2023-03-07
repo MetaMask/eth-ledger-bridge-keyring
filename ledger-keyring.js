@@ -22,7 +22,6 @@ class LedgerKeyring extends EventEmitter {
   constructor ({ bridge } = {}) {
     super()
     this.accountDetails = {}
-    this.bridgeUrl = null
     this.type = type
     this.page = 0
     this.perPage = 5
@@ -45,7 +44,7 @@ class LedgerKeyring extends EventEmitter {
    * @returns {Promise<void>}
    */
   init () {
-    return this.bridge.init(this.bridgeUrl || BRIDGE_URL)
+    return this.bridge.init()
   }
 
   /**
@@ -62,14 +61,12 @@ class LedgerKeyring extends EventEmitter {
       hdPath: this.hdPath,
       accounts: this.accounts,
       accountDetails: this.accountDetails,
-      bridgeUrl: this.bridgeUrl,
       implementFullBIP44: false,
     })
   }
 
   deserialize (opts = {}) {
     this.hdPath = opts.hdPath || hdPathString
-    this.bridgeUrl = opts.bridgeUrl || BRIDGE_URL
     this.accounts = opts.accounts || []
     this.accountDetails = opts.accountDetails || {}
     if (!opts.accountDetails) {
@@ -582,5 +579,6 @@ class LedgerKeyring extends EventEmitter {
 
 LedgerKeyring.type = type
 module.exports = {
+  BRIDGE_URL,
   LedgerKeyring,
 }

@@ -1,10 +1,11 @@
+const { BRIDGE_URL } = require('./ledger-keyring')
+
 const CONNECTION_EVENT = 'ledger-connection-change'
 
-class LedgerBridgeIframe {
-  init (bridgeUrl) {
-    this.bridgeUrl = bridgeUrl
+class LedgerIframeBridge {
+  init () {
     this.iframeLoaded = false
-    this._setupIframe(bridgeUrl)
+    this._setupIframe()
 
     this.currentMessageId = 0
     this.messageCallbacks = {}
@@ -66,64 +67,26 @@ class LedgerBridgeIframe {
   }
 
   getPublicKey (params) {
-    return new Promise((resolve, reject) => {
-      this._sendMessage(
-        {
-          action: 'ledger-unlock',
-          params,
-        },
-        ({ success, payload }) => {
-          if (success) {
-            resolve(payload)
-          }
-          // eslint-disable-next-line prefer-promise-reject-errors
-          reject(payload && payload.error)
-        },
-      )
-    })
+    return this._deviceActionMessage('ledger-unlock', params)
   }
 
   deviceSignTransaction (params) {
-    return new Promise((resolve, reject) => {
-      this._sendMessage(
-        {
-          action: 'ledger-sign-transaction',
-          params,
-        },
-        ({ success, payload }) => {
-          if (success) {
-            resolve(payload)
-          }
-          // eslint-disable-next-line prefer-promise-reject-errors
-          reject(payload && payload.error)
-        },
-      )
-    })
+    return this._deviceActionMessage('ledger-sign-transaction', params)
   }
 
   deviceSignMessage (params) {
-    return new Promise((resolve, reject) => {
-      this._sendMessage(
-        {
-          action: 'ledger-sign-personal-message',
-          params,
-        },
-        ({ success, payload }) => {
-          if (success) {
-            resolve(payload)
-          }
-          // eslint-disable-next-line prefer-promise-reject-errors
-          reject(payload && payload.error)
-        },
-      )
-    })
+    return this._deviceActionMessage('ledger-sign-personal-message', params)
   }
 
   deviceSignTypedData (params) {
+    return this._deviceActionMessage('ledger-sign-typed-data', params)
+  }
+
+  _deviceActionMessage (action, params) {
     return new Promise((resolve, reject) => {
       this._sendMessage(
         {
-          action: 'ledger-sign-typed-data',
+          action,
           params,
         },
         ({ success, payload }) => {
@@ -139,7 +102,7 @@ class LedgerBridgeIframe {
 
   _setupIframe () {
     this.iframe = document.createElement('iframe')
-    this.iframe.src = this.bridgeUrl
+    this.iframe.src = BRIDGE_URL
     this.iframe.allow = `hid 'src'`
     this.iframe.onload = async () => {
       // If the ledger live preference was set before the iframe is loaded,
@@ -198,5 +161,5 @@ class LedgerBridgeIframe {
 }
 
 module.exports = {
-  LedgerBridgeIframe,
+  LedgerIframeBridge,
 }

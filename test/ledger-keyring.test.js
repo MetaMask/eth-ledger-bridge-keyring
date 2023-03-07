@@ -1,6 +1,3 @@
-global.document = require('./document.shim')
-global.window = require('./window.shim')
-
 const assert = require('assert')
 const chai = require('chai')
 const spies = require('chai-spies')
@@ -11,7 +8,7 @@ const { TransactionFactory } = require('@ethereumjs/tx')
 const Common = require('@ethereumjs/common').default
 const sigUtil = require('eth-sig-util')
 
-const { LedgerKeyringMv2 } = require('..')
+const { LedgerKeyring } = require('../ledger-keyring')
 
 const { expect } = chai
 
@@ -72,9 +69,9 @@ const fakeTypeTwoTx = TransactionFactory.fromTxData({
 
 chai.use(spies)
 
-describe('LedgerBridgeKeyring', function () {
-
+describe('LedgerKeyring', function () {
   let keyring
+  let bridge
   let sandbox
 
   async function basicSetupToUnlockOneAccount (accountIndex = 0) {
@@ -84,9 +81,23 @@ describe('LedgerBridgeKeyring', function () {
   }
 
   beforeEach(function () {
+    // eslint-disable-next-line no-empty-function
+    const noop = () => {}
+    bridge = {
+      init: noop,
+      destroy: noop,
+      attemptMakeApp: noop,
+      updateTransportMethod: noop,
+      getPublicKey: noop,
+      deviceSignTransaction: noop,
+      deviceSignMessage: noop,
+      deviceSignTypedData: noop,
+    }
+
     sandbox = chai.spy.sandbox()
-    keyring = new LedgerKeyringMv2()
+    keyring = new LedgerKeyring({ bridge })
     keyring.hdk = fakeHdKey
+    keyring.deserialize()
   })
 
   afterEach(function () {
@@ -95,49 +106,37 @@ describe('LedgerBridgeKeyring', function () {
 
   describe('Keyring.type', function () {
     it('is a class property that returns the type string.', function () {
-      const { type } = LedgerKeyringMv2
+      const { type } = LedgerKeyring
       assert.equal(typeof type, 'string')
     })
 
     it('returns the correct value', function () {
       const { type } = keyring
-      const correct = LedgerKeyringMv2.type
+      const correct = LedgerKeyring.type
       assert.equal(type, correct)
     })
   })
 
   describe('constructor', function () {
-    it('constructs', function (done) {
-      const t = new LedgerKeyringMv2({ hdPath: `m/44'/60'/0'` })
-      assert.equal(typeof t, 'object')
-      t.getAccounts()
-        .then((accounts) => {
-          assert.equal(Array.isArray(accounts), true)
-          done()
-        })
+    it('throws if a bridge is not provided', function () {
+      try {
+        // eslint-disable-next-line no-unused-vars
+        const _ = new LedgerKeyring({ hdPath: `m/44'/60'/0'`, bridge })
+      } catch (error) {
+        expect(error).to.be.an('error')
+        expect(error.name).to.be.equal('Error')
+        expect(error.message).to.be.equal('Bridge is a required dependency for the keyring')
+      }
     })
   })
 
   describe('init', function () {
-    it('should set up the iFrame', function () {
-      const iframeMock = {}
-      sandbox.on(global.document, 'createElement', () => iframeMock)
-      sandbox.on(global.document.head, 'appendChild', () => true)
-      sandbox.on(global.window, 'addEventListener', () => true)
+    it('should call bridge init', async function () {
+      sandbox.on(bridge, 'init', () => Promise.resolve())
 
-      keyring.init()
+      await keyring.init()
 
-      expect(global.document.createElement).to.have.been.called()
-      expect(global.document.createElement)
-        .to.have.been.called.with('iframe')
-
-      expect(global.document.head.appendChild).to.have.been.called()
-      expect(global.document.head.appendChild)
-        .to.have.been.called.with(iframeMock)
-
-      expect(global.window.addEventListener).to.have.been.called()
-      expect(global.window.addEventListener)
-        .to.have.been.called.with('message', keyring._eventListener)
+      expect(bridge.init).to.have.been.called()
     })
   })
 
@@ -145,7 +144,6 @@ describe('LedgerBridgeKeyring', function () {
     it('serializes an instance', function (done) {
       keyring.serialize()
         .then((output) => {
-          assert.equal(output.bridgeUrl, 'https://metamask.github.io/eth-ledger-bridge-keyring')
           assert.equal(output.hdPath, `m/44'/60'/0'`)
           assert.equal(Array.isArray(output.accounts), true)
           assert.equal(output.accounts.length, 0)
@@ -175,7 +173,6 @@ describe('LedgerBridgeKeyring', function () {
           return keyring.serialize()
         }).then((serialized) => {
           assert.equal(serialized.accounts.length, 1, 'restores 1 account')
-          assert.equal(serialized.bridgeUrl, 'https://metamask.github.io/eth-ledger-bridge-keyring', 'restores bridgeUrl')
           assert.equal(serialized.hdPath, someHdPath, 'restores hdPath')
           assert.deepEqual(serialized.accountDetails, accountDetails, 'restores accountDetails')
         })
@@ -238,46 +235,38 @@ describe('LedgerBridgeKeyring', function () {
       })
     })
     it('should update hdk.publicKey if updateHdk is true', function (done) {
-      const ledgerKeyring = new LedgerKeyringMv2()
-      ledgerKeyring.hdk = { publicKey: 'ABC' }
+      keyring.hdk = { publicKey: 'ABC' }
 
-      sandbox.on(ledgerKeyring, '_sendMessage', (_, cb) => {
-        cb({
-          success: true,
-          payload: {
-            publicKey:
-              '04197ced33b63059074b90ddecb9400c45cbc86210a20317b539b8cae84e573342149c3384ae45f27db68e75823323e97e03504b73ecbc47f5922b9b8144345e5a',
-            chainCode:
-              'ba0fb16e01c463d1635ec36f5adeb93a838adcd1526656c55f828f1e34002a8b',
-            address: fakeAccounts[1],
-          },
-        })
+      sandbox.on(bridge, 'getPublicKey', (_) => {
+        return {
+          publicKey:
+            '04197ced33b63059074b90ddecb9400c45cbc86210a20317b539b8cae84e573342149c3384ae45f27db68e75823323e97e03504b73ecbc47f5922b9b8144345e5a',
+          chainCode:
+            'ba0fb16e01c463d1635ec36f5adeb93a838adcd1526656c55f828f1e34002a8b',
+          address: fakeAccounts[1],
+        }
       })
 
-      ledgerKeyring.unlock(`m/44'/60'/0'/1`).then((_) => {
-        assert.notDeepEqual(ledgerKeyring.hdk.publicKey, 'ABC')
+      keyring.unlock(`m/44'/60'/0'/1`).then((_) => {
+        assert.notDeepEqual(keyring.hdk.publicKey, 'ABC')
         done()
       })
     })
     it('should not update hdk.publicKey if updateHdk is false', function (done) {
-      const ledgerKeyring = new LedgerKeyringMv2()
-      ledgerKeyring.hdk = { publicKey: 'ABC' }
+      keyring.hdk = { publicKey: 'ABC' }
 
-      sandbox.on(ledgerKeyring, '_sendMessage', (_, cb) => {
-        cb({
-          success: true,
-          payload: {
-            publicKey:
-              '04197ced33b63059074b90ddecb9400c45cbc86210a20317b539b8cae84e573342149c3384ae45f27db68e75823323e97e03504b73ecbc47f5922b9b8144345e5a',
-            chainCode:
-              'ba0fb16e01c463d1635ec36f5adeb93a838adcd1526656c55f828f1e34002a8b',
-            address: fakeAccounts[1],
-          },
-        })
+      sandbox.on(bridge, 'getPublicKey', (_) => {
+        return {
+          publicKey:
+            '04197ced33b63059074b90ddecb9400c45cbc86210a20317b539b8cae84e573342149c3384ae45f27db68e75823323e97e03504b73ecbc47f5922b9b8144345e5a',
+          chainCode:
+            'ba0fb16e01c463d1635ec36f5adeb93a838adcd1526656c55f828f1e34002a8b',
+          address: fakeAccounts[1],
+        }
       })
 
-      ledgerKeyring.unlock(`m/44'/60'/0'/1`, false).then((_) => {
-        assert.deepEqual(ledgerKeyring.hdk.publicKey, 'ABC')
+      keyring.unlock(`m/44'/60'/0'/1`, false).then((_) => {
+        assert.deepEqual(keyring.hdk.publicKey, 'ABC')
         done()
       })
     })
@@ -517,18 +506,18 @@ describe('LedgerBridgeKeyring', function () {
     describe('using old versions of ethereumjs/tx', function () {
       it('should pass serialized transaction to ledger and return signed tx', async function () {
         await basicSetupToUnlockOneAccount()
-        sandbox.on(keyring, '_sendMessage', (msg, cb) => {
-          assert.deepStrictEqual(msg.params, {
+        sandbox.on(bridge, 'deviceSignTransaction', (params) => {
+          assert.deepStrictEqual(params, {
             hdPath: "m/44'/60'/0'/0",
             tx: fakeTx.serialize().toString('hex'),
           })
-          cb({ success: true, payload: { v: '0x1', r: '0x0', s: '0x0' } })
+          return { v: '0x1', r: '0x0', s: '0x0' }
         })
 
         sandbox.on(fakeTx, 'verifySignature', () => true)
 
         const returnedTx = await keyring.signTransaction(fakeAccounts[0], fakeTx)
-        expect(keyring._sendMessage).to.have.been.called()
+        expect(keyring.bridge.deviceSignTransaction).to.have.been.called()
         expect(returnedTx).to.have.property('v')
         expect(returnedTx).to.have.property('r')
         expect(returnedTx).to.have.property('s')
@@ -547,16 +536,16 @@ describe('LedgerBridgeKeyring', function () {
         await basicSetupToUnlockOneAccount()
 
         sandbox.on(newFakeTx, 'verifySignature', () => true)
-        sandbox.on(keyring, '_sendMessage', (msg, cb) => {
-          assert.deepStrictEqual(msg.params, {
+        sandbox.on(bridge, 'deviceSignTransaction', (params) => {
+          assert.deepStrictEqual(params, {
             hdPath: "m/44'/60'/0'/0",
             tx: ethUtil.rlp.encode(newFakeTx.getMessageToSign(false)).toString('hex'),
           })
-          cb({ success: true, payload: expectedRSV })
+          return expectedRSV
         })
 
         const returnedTx = await keyring.signTransaction(fakeAccounts[0], newFakeTx, common)
-        expect(keyring._sendMessage).to.have.been.called()
+        expect(keyring.bridge.deviceSignTransaction).to.have.been.called()
         expect(returnedTx.toJSON()).to.deep.equal({ ...newFakeTx.toJSON(), ...expectedRSV })
       })
 
@@ -571,16 +560,16 @@ describe('LedgerBridgeKeyring', function () {
         await basicSetupToUnlockOneAccount()
 
         sandbox.on(fakeTypeTwoTx, 'verifySignature', () => true)
-        sandbox.on(keyring, '_sendMessage', (msg, cb) => {
-          assert.deepStrictEqual(msg.params, {
+        sandbox.on(bridge, 'deviceSignTransaction', (params) => {
+          assert.deepStrictEqual(params, {
             hdPath: "m/44'/60'/0'/0",
             tx: fakeTypeTwoTx.getMessageToSign(false).toString('hex'),
           })
-          cb({ success: true, payload: expectedRSV })
+          return expectedRSV
         })
 
         const returnedTx = await keyring.signTransaction(fakeAccounts[0], fakeTypeTwoTx, commonEIP1559)
-        expect(keyring._sendMessage).to.have.been.called()
+        expect(keyring.bridge.deviceSignTransaction).to.have.been.called()
         expect(returnedTx.toJSON()).to.deep.equal({ ...fakeTypeTwoTx.toJSON(), ...expectedRSV })
       })
     })
@@ -589,34 +578,34 @@ describe('LedgerBridgeKeyring', function () {
   describe('signPersonalMessage', function () {
     it('should call create a listener waiting for the iframe response', async function () {
       await basicSetupToUnlockOneAccount()
-      sandbox.on(keyring, '_sendMessage', (msg, cb) => {
-        assert.deepStrictEqual(msg.params, {
+      sandbox.on(bridge, 'deviceSignMessage', (params) => {
+        assert.deepStrictEqual(params, {
           hdPath: "m/44'/60'/0'/0",
           message: 'some msg',
         })
-        cb({ success: true, payload: { v: '0x1', r: '0x0', s: '0x0' } })
+        return { v: '0x1', r: '0x0', s: '0x0' }
       })
 
       sandbox.on(sigUtil, 'recoverPersonalSignature', () => fakeAccounts[0])
       await keyring.signPersonalMessage(fakeAccounts[0], 'some msg')
-      expect(keyring._sendMessage).to.have.been.called()
+      expect(keyring.bridge.deviceSignMessage).to.have.been.called()
     })
   })
 
   describe('signMessage', function () {
     it('should call create a listener waiting for the iframe response', async function () {
       await basicSetupToUnlockOneAccount()
-      sandbox.on(keyring, '_sendMessage', (msg, cb) => {
-        assert.deepStrictEqual(msg.params, {
+      sandbox.on(bridge, 'deviceSignMessage', (params) => {
+        assert.deepStrictEqual(params, {
           hdPath: "m/44'/60'/0'/0",
           message: 'some msg',
         })
-        cb({ success: true, payload: { v: '0x1', r: '0x0', s: '0x0' } })
+        return { v: '0x1', r: '0x0', s: '0x0' }
       })
 
       sandbox.on(sigUtil, 'recoverPersonalSignature', () => fakeAccounts[0])
       await keyring.signMessage(fakeAccounts[0], 'some msg')
-      expect(keyring._sendMessage).to.have.been.called()
+      expect(keyring.bridge.deviceSignMessage).to.have.been.called()
     })
   })
 
@@ -700,8 +689,8 @@ describe('LedgerBridgeKeyring', function () {
     })
 
     it('should resolve properly when called', async function () {
-      sandbox.on(keyring, '_sendMessage', (_, cb) => {
-        cb({ success: true, payload: { v: '27', r: '72d4e38a0e582e09a620fd38e236fe687a1ec782206b56d576f579c026a7e5b9', s: '46759735981cd0c3efb02d36df28bb2feedfec3d90e408efc93f45b894946e32' } })
+      sandbox.on(bridge, 'deviceSignTypedData', (_) => {
+        return { v: '27', r: '72d4e38a0e582e09a620fd38e236fe687a1ec782206b56d576f579c026a7e5b9', s: '46759735981cd0c3efb02d36df28bb2feedfec3d90e408efc93f45b894946e32' }
       })
 
       const result = await keyring.signTypedData(fakeAccounts[15], fixtureData, options)
@@ -709,9 +698,9 @@ describe('LedgerBridgeKeyring', function () {
     })
 
     it('should error when address does not match', async function () {
-      sandbox.on(keyring, '_sendMessage', (_, cb) => {
+      sandbox.on(bridge, 'deviceSignTypedData', (_) => {
         // Changing v to 28 should cause a validation error
-        cb({ success: true, payload: { v: '28', r: '72d4e38a0e582e09a620fd38e236fe687a1ec782206b56d576f579c026a7e5b9', s: '46759735981cd0c3efb02d36df28bb2feedfec3d90e408efc93f45b894946e32' } })
+        return { v: '28', r: '72d4e38a0e582e09a620fd38e236fe687a1ec782206b56d576f579c026a7e5b9', s: '46759735981cd0c3efb02d36df28bb2feedfec3d90e408efc93f45b894946e32' }
       })
 
       assert.rejects(keyring.signTypedData(fakeAccounts[15], fixtureData, options), new Error('Ledger: The signature doesnt match the right address'))
@@ -719,12 +708,12 @@ describe('LedgerBridgeKeyring', function () {
   })
 
   describe('destroy', function () {
-    it('should remove the message event listener', function () {
-      sandbox.on(global.window, 'removeEventListener', () => true)
-      keyring.destroy()
-      expect(global.window.removeEventListener).to.have.been.called()
-      expect(global.window.removeEventListener)
-        .to.have.been.called.with('message', keyring._eventListener)
+    it('should remove the message event listener', async function () {
+      sandbox.on(bridge, 'destroy', () => Promise.resolve())
+
+      await keyring.destroy()
+
+      expect(bridge.destroy).to.have.been.called()
     })
   })
 })
