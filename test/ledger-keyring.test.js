@@ -144,6 +144,7 @@ describe('LedgerKeyring', function () {
     it('serializes an instance', function (done) {
       keyring.serialize()
         .then((output) => {
+          assert.equal(output.bridgeUrl, 'https://metamask.github.io/eth-ledger-bridge-keyring')
           assert.equal(output.hdPath, `m/44'/60'/0'`)
           assert.equal(Array.isArray(output.accounts), true)
           assert.equal(output.accounts.length, 0)
@@ -173,6 +174,7 @@ describe('LedgerKeyring', function () {
           return keyring.serialize()
         }).then((serialized) => {
           assert.equal(serialized.accounts.length, 1, 'restores 1 account')
+          assert.equal(serialized.bridgeUrl, 'https://metamask.github.io/eth-ledger-bridge-keyring', 'restores bridgeUrl')
           assert.equal(serialized.hdPath, someHdPath, 'restores hdPath')
           assert.deepEqual(serialized.accountDetails, accountDetails, 'restores accountDetails')
         })

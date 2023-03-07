@@ -1,25 +1,25 @@
-export type GetPublicKeyPayload = { hdPath: string };
+export type GetPublicKeyParams = { hdPath: string };
 export type GetPublicKeyResponse = {
   publicKey: string;
   address: string;
   chainCode?: string;
 };
 
-export type LedgerSignTransactionPayload = { hdPath: string; rawTxHex: string };
+export type LedgerSignTransactionParams = { hdPath: string; tx: string };
 export type LedgerSignTransactionResponse = {
   s: string;
   v: string;
   r: string;
 };
 
-export type LedgerSignMessagePayload = { hdPath: string; message: string };
+export type LedgerSignMessageParams = { hdPath: string; message: string };
 export type LedgerSignMessageResponse = {
   v: number;
   s: string;
   r: string;
 };
 
-export type LedgerSignTypedDataPayload = {
+export type LedgerSignTypedDataParams = {
   hdPath: string;
   domainSeparatorHex: string;
   hashStructMessageHex: string;
@@ -37,19 +37,19 @@ export interface LedgerBridge {
 
   attemptMakeApp(): Promise<boolean>;
 
-  getPublicKey(
-    payload: GetPublicKeyPayload
-  ): Promise<GetPublicKeyResponse>;
+  updateTransportMethod(transportType: string): Promise<boolean>;
+
+  getPublicKey(params: GetPublicKeyParams): Promise<GetPublicKeyResponse>;
 
   deviceSignTransaction(
-    payload: LedgerSignTransactionPayload
+    params: LedgerSignTransactionParams
   ): Promise<LedgerSignTransactionResponse>;
 
   deviceSignMessage(
-    payload: LedgerSignMessagePayload
+    params: LedgerSignMessageParams
   ): Promise<LedgerSignMessageResponse>;
 
   deviceSignTypedData(
-    payload: LedgerSignTypedDataPayload
+    params: LedgerSignTypedDataParams
   ): Promise<LedgerSignTypedDataResponse>;
 }

@@ -7,7 +7,7 @@
   "files": [
     "index.js",
     "ledger-keyring.js",
-    "ledger-bridge-iframe.js",
+    "ledger-iframe-bridge.js",
     "types/index.d.ts"
   ],
   "engines": {

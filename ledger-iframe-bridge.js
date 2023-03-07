@@ -1,15 +1,13 @@
-const { BRIDGE_URL } = require('./ledger-keyring')
-
 const CONNECTION_EVENT = 'ledger-connection-change'
 
 class LedgerIframeBridge {
-  init () {
+  init (bridgeUrl) {
     this.iframeLoaded = false
-    this._setupIframe()
+    this._setupIframe(bridgeUrl)
 
     this.currentMessageId = 0
     this.messageCallbacks = {}
-    this._setupListener()
+    this._setupListener(bridgeUrl)
 
     return Promise.resolve()
   }
@@ -100,9 +98,9 @@ class LedgerIframeBridge {
     })
   }
 
-  _setupIframe () {
+  _setupIframe (bridgeUrl) {
     this.iframe = document.createElement('iframe')
-    this.iframe.src = BRIDGE_URL
+    this.iframe.src = bridgeUrl
     this.iframe.allow = `hid 'src'`
     this.iframe.onload = async () => {
       // If the ledger live preference was set before the iframe is loaded,
@@ -124,15 +122,15 @@ class LedgerIframeBridge {
     document.head.appendChild(this.iframe)
   }
 
-  _getOrigin () {
-    const tmp = this.bridgeUrl.split('/')
+  _getOrigin (bridgeUrl) {
+    const tmp = bridgeUrl.split('/')
     tmp.splice(-1, 1)
     return tmp.join('/')
   }
 
-  _setupListener () {
+  _setupListener (bridgeUrl) {
     this._eventListener = ({ origin, data }) => {
-      if (origin !== this._getOrigin()) {
+      if (origin !== this._getOrigin(bridgeUrl)) {
         return false
       }
 
