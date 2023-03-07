@@ -18,7 +18,7 @@ const NETWORK_API_URLS: Record<string, string> = {
   kovan: 'http://api-kovan.etherscan.io',
   rinkeby: 'https://api-rinkeby.etherscan.io',
   mainnet: 'https://api.etherscan.io',
-};
+} as const;
 
 enum IFrameMessageAction {
   LedgerConnectionChange = 'ledger-connection-change',
@@ -145,7 +145,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
 
   paths: Record<string, number> = {};
 
-  network = 'mainnet';
+  network: keyof typeof NETWORK_API_URLS = 'mainnet';
 
   implementFullBIP44 = false;
 
@@ -421,8 +421,6 @@ export class LedgerBridgeKeyring extends EventEmitter {
       // transaction which is only communicated to ethereumjs-tx in this
       // value. In newer versions the chainId is communicated via the 'Common'
       // object.
-      // TODO: Understand why we where passing strings here
-      // moreover, getChainId should return a number.
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore next-line
       tx.v = ethUtil.bufferToHex(tx.getChainId());
@@ -869,7 +867,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
     }
 
     for (; i < l; i += 2) {
-      const code = parseInt(hex.substr(i, 2), 16);
+      const code = parseInt(hex.substring(i, 2), 16);
       str += String.fromCharCode(code);
     }
 
