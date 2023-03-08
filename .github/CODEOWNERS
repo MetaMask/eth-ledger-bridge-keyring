@@ -1,0 +1,7 @@
+# Lines starting with '#' are comments.
+# Each line is a file pattern followed by one or more owners.
+
+# The execution environemnt is a page used in production,
+# require highly privileged team to deploy
+
+*                                    @MetaMask/npm-publishers
