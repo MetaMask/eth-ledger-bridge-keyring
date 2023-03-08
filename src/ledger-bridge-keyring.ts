@@ -73,12 +73,12 @@ export interface AccountDetails {
 }
 
 export interface LedgerBridgeKeyringOptions {
-  hdPath?: string;
-  accounts?: string[];
-  accountDetails?: Record<string, AccountDetails>;
-  accountIndexes?: Record<string, number>;
-  bridgeUrl?: string;
-  implementFullBIP44?: boolean;
+  hdPath: string;
+  accounts: readonly string[];
+  accountDetails: Readonly<Record<string, AccountDetails>>;
+  accountIndexes: Readonly<Record<string, number>>;
+  bridgeUrl: string;
+  implementFullBIP44: boolean;
 }
 
 /**
@@ -192,7 +192,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
     });
   }
 
-  deserialize(opts: LedgerBridgeKeyringOptions = {}) {
+  deserialize(opts: Partial<LedgerBridgeKeyringOptions> = {}) {
     this.hdPath = opts.hdPath || hdPathString;
     this.bridgeUrl = opts.bridgeUrl || BRIDGE_URL;
     this.accounts = opts.accounts || [];
@@ -213,7 +213,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
     return Promise.resolve();
   }
 
-  #migrateAccountDetails(opts: LedgerBridgeKeyringOptions) {
+  #migrateAccountDetails(opts: Partial<LedgerBridgeKeyringOptions>) {
     if (this.#isLedgerLiveHdPath() && opts.accountIndexes) {
       for (const account of Object.keys(opts.accountIndexes)) {
         this.accountDetails[account] = {
