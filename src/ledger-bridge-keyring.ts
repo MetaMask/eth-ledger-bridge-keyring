@@ -823,14 +823,6 @@ export class LedgerBridgeKeyring extends EventEmitter {
     return accounts;
   }
 
-  #padLeftEven(hex: string) {
-    return hex.length % 2 === 0 ? hex : `0${hex}`;
-  }
-
-  #normalize(buf: Buffer) {
-    return this.#padLeftEven(ethUtil.bufferToHex(buf).toLowerCase());
-  }
-
   // eslint-disable-next-line no-shadow
   #addressFromIndex(basePath: string, i: number) {
     const dkey = this.hdk.derive(`${basePath}/${i}`);
@@ -856,22 +848,6 @@ export class LedgerBridgeKeyring extends EventEmitter {
       throw new Error('Unknown address');
     }
     return this.#getPathForIndex(index);
-  }
-
-  #toAscii(hex: string) {
-    let str = '';
-    let i = 0;
-    const l = hex.length;
-    if (hex.substring(0, 2) === '0x') {
-      i = 2;
-    }
-
-    for (; i < l; i += 2) {
-      const code = parseInt(hex.substring(i, 2), 16);
-      str += String.fromCharCode(code);
-    }
-
-    return str;
   }
 
   #getPathForIndex(index: number) {
