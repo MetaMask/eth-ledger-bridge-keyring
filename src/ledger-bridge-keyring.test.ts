@@ -241,18 +241,24 @@ describe('LedgerBridgeKeyring', function () {
       // @ts-ignore next-line
       ledgerKeyring.hdk = { publicKey: 'ABC' };
 
-      sandbox.on(ledgerKeyring, '_sendMessage', (_, cb) => {
-        cb({
-          success: true,
-          payload: {
-            publicKey:
-              '04197ced33b63059074b90ddecb9400c45cbc86210a20317b539b8cae84e573342149c3384ae45f27db68e75823323e97e03504b73ecbc47f5922b9b8144345e5a',
-            chainCode:
-              'ba0fb16e01c463d1635ec36f5adeb93a838adcd1526656c55f828f1e34002a8b',
-            address: fakeAccounts[1],
-          },
-        });
-      });
+      sandbox.on(
+        ledgerKeyring?.iframe?.contentWindow as Window,
+        'postMessage',
+        (msg) => {
+          ledgerKeyring.messageCallbacks[msg.messageId]?.({
+            action: msg.action,
+            messageId: msg.messageId,
+            success: true,
+            payload: {
+              publicKey:
+                '04197ced33b63059074b90ddecb9400c45cbc86210a20317b539b8cae84e573342149c3384ae45f27db68e75823323e97e03504b73ecbc47f5922b9b8144345e5a',
+              chainCode:
+                'ba0fb16e01c463d1635ec36f5adeb93a838adcd1526656c55f828f1e34002a8b',
+              address: fakeAccounts[1],
+            },
+          });
+        },
+      );
 
       ledgerKeyring.unlock(`m/44'/60'/0'/1`).then((_) => {
         assert.notDeepEqual(ledgerKeyring.hdk.publicKey, 'ABC');
@@ -266,18 +272,24 @@ describe('LedgerBridgeKeyring', function () {
       // @ts-ignore next-line
       ledgerKeyring.hdk = { publicKey: 'ABC' };
 
-      sandbox.on(ledgerKeyring, '_sendMessage', (_, cb) => {
-        cb({
-          success: true,
-          payload: {
-            publicKey:
-              '04197ced33b63059074b90ddecb9400c45cbc86210a20317b539b8cae84e573342149c3384ae45f27db68e75823323e97e03504b73ecbc47f5922b9b8144345e5a',
-            chainCode:
-              'ba0fb16e01c463d1635ec36f5adeb93a838adcd1526656c55f828f1e34002a8b',
-            address: fakeAccounts[1],
-          },
-        });
-      });
+      sandbox.on(
+        ledgerKeyring?.iframe?.contentWindow as Window,
+        'postMessage',
+        (msg) => {
+          ledgerKeyring.messageCallbacks[msg.messageId]?.({
+            action: msg.action,
+            messageId: msg.messageId,
+            success: true,
+            payload: {
+              publicKey:
+                '04197ced33b63059074b90ddecb9400c45cbc86210a20317b539b8cae84e573342149c3384ae45f27db68e75823323e97e03504b73ecbc47f5922b9b8144345e5a',
+              chainCode:
+                'ba0fb16e01c463d1635ec36f5adeb93a838adcd1526656c55f828f1e34002a8b',
+              address: fakeAccounts[1],
+            },
+          });
+        },
+      );
 
       ledgerKeyring.unlock(`m/44'/60'/0'/1`, false).then((_) => {
         assert.deepEqual(ledgerKeyring.hdk.publicKey, 'ABC');
@@ -509,13 +521,22 @@ describe('LedgerBridgeKeyring', function () {
     describe('using old versions of ethereumjs/tx', function () {
       it('should pass serialized transaction to ledger and return signed tx', async function () {
         await basicSetupToUnlockOneAccount();
-        sandbox.on(keyring, '_sendMessage', (msg, cb) => {
-          assert.deepStrictEqual(msg.params, {
-            hdPath: "m/44'/60'/0'/0",
-            tx: fakeTx.serialize().toString('hex'),
-          });
-          cb({ success: true, payload: { v: '0x1', r: '0x0', s: '0x0' } });
-        });
+        sandbox.on(
+          keyring?.iframe?.contentWindow as Window,
+          'postMessage',
+          (msg) => {
+            assert.deepStrictEqual(msg.params, {
+              hdPath: "m/44'/60'/0'/0",
+              tx: fakeTx.serialize().toString('hex'),
+            });
+
+            keyring.messageCallbacks[msg.messageId]?.({
+              ...msg,
+              success: true,
+              payload: { v: '0x1', r: '0x0', s: '0x0' },
+            });
+          },
+        );
 
         sandbox.on(fakeTx, 'verifySignature', () => true);
 
@@ -523,7 +544,9 @@ describe('LedgerBridgeKeyring', function () {
           fakeAccounts[0],
           fakeTx,
         );
-        expect((keyring as any)._sendMessage).to.have.been.called();
+        expect(
+          keyring?.iframe?.contentWindow?.postMessage,
+        ).to.have.been.called();
         expect(returnedTx).to.have.property('v');
         expect(returnedTx).to.have.property('r');
         expect(returnedTx).to.have.property('s');
@@ -540,27 +563,43 @@ describe('LedgerBridgeKeyring', function () {
         };
 
         await basicSetupToUnlockOneAccount();
+
         const signedNewFakeTx = TransactionFactory.fromTxData({
           ...newFakeTx.toJSON(),
           ...expectedRSV,
         });
+
         sandbox.on(TransactionFactory, 'fromTxData', () => signedNewFakeTx);
         sandbox.on(signedNewFakeTx, 'verifySignature', () => true);
-        sandbox.on(keyring, '_sendMessage', (msg, cb) => {
-          assert.deepStrictEqual(msg.params, {
-            hdPath: "m/44'/60'/0'/0",
-            tx: ethUtil.rlp
-              .encode(newFakeTx.getMessageToSign(false))
-              .toString('hex'),
-          });
-          cb({ success: true, payload: expectedRSV });
-        });
+
+        sandbox.on(
+          keyring?.iframe?.contentWindow as Window,
+          'postMessage',
+          (msg) => {
+            assert.deepStrictEqual(msg.params, {
+              hdPath: "m/44'/60'/0'/0",
+              tx: ethUtil.rlp
+                .encode(newFakeTx.getMessageToSign(false))
+                .toString('hex'),
+            });
+
+            keyring.messageCallbacks[msg.messageId]?.({
+              ...msg,
+              success: true,
+              payload: expectedRSV,
+            });
+          },
+        );
 
         const returnedTx = await keyring.signTransaction(
           fakeAccounts[0],
           newFakeTx,
         );
-        expect((keyring as any)._sendMessage).to.have.been.called();
+
+        expect(
+          keyring?.iframe?.contentWindow?.postMessage,
+        ).to.have.been.called();
+
         expect(returnedTx.toJSON()).to.deep.equal(signedNewFakeTx.toJSON());
       });
 
@@ -586,19 +625,33 @@ describe('LedgerBridgeKeyring', function () {
         sandbox.on(signedFakeTypeTwoTx, 'verifySignature', () => true);
 
         sandbox.on(fakeTypeTwoTx, 'verifySignature', () => true);
-        sandbox.on(keyring, '_sendMessage', (msg, cb) => {
-          assert.deepStrictEqual(msg.params, {
-            hdPath: "m/44'/60'/0'/0",
-            tx: fakeTypeTwoTx.getMessageToSign(false).toString('hex'),
-          });
-          cb({ success: true, payload: expectedRSV });
-        });
+
+        sandbox.on(
+          keyring?.iframe?.contentWindow as Window,
+          'postMessage',
+          (msg) => {
+            assert.deepStrictEqual(msg.params, {
+              hdPath: "m/44'/60'/0'/0",
+              tx: fakeTypeTwoTx.getMessageToSign(false).toString('hex'),
+            });
+
+            keyring.messageCallbacks[msg.messageId]?.({
+              ...msg,
+              success: true,
+              payload: expectedRSV,
+            });
+          },
+        );
 
         const returnedTx = await keyring.signTransaction(
           fakeAccounts[0],
           fakeTypeTwoTx,
         );
-        expect((keyring as any)._sendMessage).to.have.been.called();
+
+        expect(
+          keyring?.iframe?.contentWindow?.postMessage,
+        ).to.have.been.called();
+
         expect(returnedTx.toJSON()).to.deep.equal(signedFakeTypeTwoTx.toJSON());
       });
     });
@@ -607,34 +660,53 @@ describe('LedgerBridgeKeyring', function () {
   describe('signPersonalMessage', function () {
     it('should call create a listener waiting for the iframe response', async function () {
       await basicSetupToUnlockOneAccount();
-      sandbox.on(keyring, '_sendMessage', (msg, cb) => {
-        assert.deepStrictEqual(msg.params, {
-          hdPath: "m/44'/60'/0'/0",
-          message: 'some msg',
-        });
-        cb({ success: true, payload: { v: 1, r: '0x0', s: '0x0' } });
-      });
+
+      sandbox.on(
+        keyring?.iframe?.contentWindow as Window,
+        'postMessage',
+        (msg) => {
+          assert.deepStrictEqual(msg.params, {
+            hdPath: "m/44'/60'/0'/0",
+            message: 'some msg',
+          });
+
+          keyring.messageCallbacks[msg.messageId]?.({
+            ...msg,
+            success: true,
+            payload: { v: 1, r: '0x0', s: '0x0' },
+          });
+        },
+      );
 
       sandbox.on(sigUtil, 'recoverPersonalSignature', () => fakeAccounts[0]);
       await keyring.signPersonalMessage(fakeAccounts[0], 'some msg');
-      expect((keyring as any)._sendMessage).to.have.been.called();
+      expect(keyring?.iframe?.contentWindow?.postMessage).to.have.been.called();
     });
   });
 
   describe('signMessage', function () {
     it('should call create a listener waiting for the iframe response', async function () {
       await basicSetupToUnlockOneAccount();
-      sandbox.on(keyring, '_sendMessage', (msg, cb) => {
-        assert.deepStrictEqual(msg.params, {
-          hdPath: "m/44'/60'/0'/0",
-          message: 'some msg',
-        });
-        cb({ success: true, payload: { v: 1, r: '0x0', s: '0x0' } });
-      });
+      sandbox.on(
+        keyring?.iframe?.contentWindow as Window,
+        'postMessage',
+        (msg) => {
+          assert.deepStrictEqual(msg.params, {
+            hdPath: "m/44'/60'/0'/0",
+            message: 'some msg',
+          });
+
+          keyring.messageCallbacks[msg.messageId]?.({
+            ...msg,
+            success: true,
+            payload: { v: 1, r: '0x0', s: '0x0' },
+          });
+        },
+      );
 
       sandbox.on(sigUtil, 'recoverPersonalSignature', () => fakeAccounts[0]);
       await keyring.signMessage(fakeAccounts[0], 'some msg');
-      expect((keyring as any)._sendMessage).to.have.been.called();
+      expect(keyring?.iframe?.contentWindow?.postMessage).to.have.been.called();
     });
   });
 
@@ -724,16 +796,21 @@ describe('LedgerBridgeKeyring', function () {
     });
 
     it('should resolve properly when called', async function () {
-      sandbox.on(keyring, '_sendMessage', (_, cb) => {
-        cb({
-          success: true,
-          payload: {
-            v: 27,
-            r: '72d4e38a0e582e09a620fd38e236fe687a1ec782206b56d576f579c026a7e5b9',
-            s: '46759735981cd0c3efb02d36df28bb2feedfec3d90e408efc93f45b894946e32',
-          },
-        });
-      });
+      sandbox.on(
+        keyring?.iframe?.contentWindow as Window,
+        'postMessage',
+        (msg) => {
+          keyring.messageCallbacks[msg.messageId]?.({
+            ...msg,
+            success: true,
+            payload: {
+              v: 27,
+              r: '72d4e38a0e582e09a620fd38e236fe687a1ec782206b56d576f579c026a7e5b9',
+              s: '46759735981cd0c3efb02d36df28bb2feedfec3d90e408efc93f45b894946e32',
+            },
+          });
+        },
+      );
 
       const result = await keyring.signTypedData(
         fakeAccounts[15],
@@ -747,17 +824,21 @@ describe('LedgerBridgeKeyring', function () {
     });
 
     it('should error when address does not match', async function () {
-      sandbox.on(keyring, '_sendMessage', (_, cb) => {
-        // Changing v to 28 should cause a validation error
-        cb({
-          success: true,
-          payload: {
-            v: 28,
-            r: '72d4e38a0e582e09a620fd38e236fe687a1ec782206b56d576f579c026a7e5b9',
-            s: '46759735981cd0c3efb02d36df28bb2feedfec3d90e408efc93f45b894946e32',
-          },
-        });
-      });
+      sandbox.on(
+        keyring?.iframe?.contentWindow as Window,
+        'postMessage',
+        (msg) => {
+          keyring.messageCallbacks[msg.messageId]?.({
+            ...msg,
+            success: true,
+            payload: {
+              v: 28,
+              r: '72d4e38a0e582e09a620fd38e236fe687a1ec782206b56d576f579c026a7e5b9',
+              s: '46759735981cd0c3efb02d36df28bb2feedfec3d90e408efc93f45b894946e32',
+            },
+          });
+        },
+      );
 
       assert.rejects(
         keyring.signTypedData(fakeAccounts[15], fixtureData, options),

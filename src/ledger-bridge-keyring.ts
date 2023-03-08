@@ -58,7 +58,7 @@ type IFrameMessageResponsePayload = { error?: unknown } & (
   | ConnectionChangedPayload
 );
 
-interface IFrameMessageResponse {
+export interface IFrameMessageResponse {
   success: boolean;
   action: IFrameMessageAction;
   messageId: number;
@@ -271,7 +271,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
     }
     const path = hdPath ? this.#toLedgerPath(hdPath) : this.hdPath;
     return new Promise((resolve, reject) => {
-      this._sendMessage(
+      this.#sendMessage(
         {
           action: IFrameMessageAction.LedgerUnlock,
           params: {
@@ -361,7 +361,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
 
   attemptMakeApp() {
     return new Promise((resolve, reject) => {
-      this._sendMessage(
+      this.#sendMessage(
         {
           action: IFrameMessageAction.LedgerMakeApp,
         },
@@ -389,7 +389,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
         return;
       }
 
-      this._sendMessage(
+      this.#sendMessage(
         {
           action: IFrameMessageAction.LedgerUpdateTransport,
           params: { transportType },
@@ -485,7 +485,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
     return new Promise((resolve, reject) => {
       this.unlockAccountByAddress(address)
         .then((hdPath) => {
-          this._sendMessage(
+          this.#sendMessage(
             {
               action: IFrameMessageAction.LedgerSignTransaction,
               params: {
@@ -528,7 +528,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
     return new Promise((resolve, reject) => {
       this.unlockAccountByAddress(withAccount)
         .then((hdPath) => {
-          this._sendMessage(
+          this.#sendMessage(
             {
               action: IFrameMessageAction.LedgerSignPersonalMessage,
               params: {
@@ -629,7 +629,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
     const hdPath = await this.unlockAccountByAddress(withAccount);
     const { success, payload }: IFrameMessageResponse = await new Promise(
       (resolve) => {
-        this._sendMessage(
+        this.#sendMessage(
           {
             action: IFrameMessageAction.LedgerSignTypedData,
             params: {
@@ -714,7 +714,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
     return tmp.join('/');
   }
 
-  private _sendMessage(
+  #sendMessage(
     msg: Partial<IFrameMessage>,
     cb: (response: IFrameMessageResponse) => void,
   ) {
