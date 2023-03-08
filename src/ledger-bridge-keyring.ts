@@ -168,7 +168,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
     transportType: string;
   };
 
-  private _eventListener?: (params: {
+  #eventListener?: (params: {
     origin: string;
     data: IFrameMessageResponse;
   }) => void;
@@ -728,7 +728,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
   }
 
   #setupListener() {
-    this._eventListener = ({ origin, data }) => {
+    this.#eventListener = ({ origin, data }) => {
       if (origin !== this.#getOrigin()) {
         return false;
       }
@@ -746,12 +746,12 @@ export class LedgerBridgeKeyring extends EventEmitter {
 
       return undefined;
     };
-    window.addEventListener('message', this._eventListener);
+    window.addEventListener('message', this.#eventListener);
   }
 
   destroy() {
-    if (this._eventListener) {
-      window.removeEventListener('message', this._eventListener);
+    if (this.#eventListener) {
+      window.removeEventListener('message', this.#eventListener);
     }
   }
 

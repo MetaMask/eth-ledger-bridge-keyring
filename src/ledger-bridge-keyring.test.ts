@@ -854,7 +854,6 @@ describe('LedgerBridgeKeyring', function () {
       expect(global.window.removeEventListener).to.have.been.called();
       expect(global.window.removeEventListener).to.have.been.called.with(
         'message',
-        (keyring as any)._eventListener,
       );
     });
   });
