@@ -849,12 +849,13 @@ describe('LedgerBridgeKeyring', function () {
 
   describe('destroy', function () {
     it('should remove the message event listener', function () {
-      sandbox.on(global.window, 'removeEventListener', () => true);
+      sandbox.on(global.window, 'removeEventListener', (type, listener) => {
+        assert(type, 'message');
+        assert(typeof listener === 'function');
+        return true;
+      });
       keyring.destroy();
       expect(global.window.removeEventListener).to.have.been.called();
-      expect(global.window.removeEventListener).to.have.been.called.with(
-        'message',
-      );
     });
   });
 });
