@@ -270,8 +270,7 @@ describe('LedgerBridgeKeyring', function () {
 
     it('should update hdk.publicKey if updateHdk is true', async function () {
       const ledgerKeyring = new LedgerBridgeKeyring();
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore next-line
+      // @ts-expect-error we want to bypass the set publicKey property set method
       ledgerKeyring.hdk = { publicKey: 'ABC' };
       await simulateIFrameLoad(ledgerKeyring.iframe);
 
@@ -296,8 +295,7 @@ describe('LedgerBridgeKeyring', function () {
 
     it('should not update hdk.publicKey if updateHdk is false', async function () {
       const ledgerKeyring = new LedgerBridgeKeyring();
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore next-line
+      // @ts-expect-error we want to bypass the publicKey property set method
       ledgerKeyring.hdk = { publicKey: 'ABC' };
       await simulateIFrameLoad(ledgerKeyring.iframe);
 
