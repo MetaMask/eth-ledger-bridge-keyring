@@ -1,5 +1,5 @@
 import { strict as assert } from 'assert';
-import chai from 'chai';
+import chai, { expect } from 'chai';
 import spies from 'chai-spies';
 import EthereumTx from 'ethereumjs-tx';
 import HDKey from 'hdkey';
@@ -7,6 +7,7 @@ import * as ethUtil from 'ethereumjs-util';
 import { TransactionFactory } from '@ethereumjs/tx';
 import { Common, Chain, Hardfork } from '@ethereumjs/common';
 import sigUtil from 'eth-sig-util';
+import { hasProperty } from '@metamask/utils';
 import windowShim from '../test/window.shim';
 import documentShim from '../test/document.shim';
 
@@ -14,8 +15,6 @@ import { AccountDetails, LedgerBridgeKeyring } from './ledger-bridge-keyring';
 
 global.document = documentShim;
 global.window = windowShim;
-
-const { expect } = chai;
 
 const fakeAccounts = [
   '0xF30952A1c534CDE7bC471380065726fa8686dfB3',
@@ -82,6 +81,27 @@ const fakeTypeTwoTx = TransactionFactory.fromTxData(
   { common: commonEIP1559, freeze: false },
 );
 
+function isIFrameValid(
+  iframe?: HTMLIFrameElement,
+): iframe is HTMLIFrameElement & { contentWindow: Window } & {
+  onload: () => any;
+} {
+  return (
+    iframe !== undefined &&
+    hasProperty(iframe, 'contentWindow') &&
+    typeof iframe.onload === 'function' &&
+    hasProperty(iframe.contentWindow as Window, 'postMessage')
+  );
+}
+
+async function simulateIFrameLoad(iframe?: HTMLIFrameElement) {
+  if (!isIFrameValid(iframe)) {
+    throw new Error('the iframe is not valid');
+  }
+  // we call manually the onload event to simulate the iframe loading
+  return await iframe.onload(new Event('load'));
+}
+
 chai.use(spies);
 
 describe('LedgerBridgeKeyring', function () {
@@ -96,10 +116,23 @@ describe('LedgerBridgeKeyring', function () {
     );
   }
 
-  beforeEach(function () {
+  function stubKeyringIFramePostMessage(
+    keyringInstance: LedgerBridgeKeyring,
+    fn: (msg: any) => void,
+  ) {
+    if (!isIFrameValid(keyringInstance.iframe)) {
+      throw new Error('the iframe is not valid');
+    }
+
+    sandbox.on(keyringInstance.iframe.contentWindow, 'postMessage', fn);
+  }
+
+  beforeEach(async function () {
     sandbox = chai.spy.sandbox();
     keyring = new LedgerBridgeKeyring();
     keyring.hdk = fakeHdKey;
+
+    await simulateIFrameLoad(keyring.iframe);
   });
 
   afterEach(function () {
@@ -235,66 +268,56 @@ describe('LedgerBridgeKeyring', function () {
       });
     });
 
-    it('should update hdk.publicKey if updateHdk is true', function (done) {
+    it('should update hdk.publicKey if updateHdk is true', async function () {
       const ledgerKeyring = new LedgerBridgeKeyring();
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore next-line
       ledgerKeyring.hdk = { publicKey: 'ABC' };
+      await simulateIFrameLoad(ledgerKeyring.iframe);
 
-      sandbox.on(
-        ledgerKeyring?.iframe?.contentWindow as Window,
-        'postMessage',
-        (msg) => {
-          ledgerKeyring.messageCallbacks[msg.messageId]?.({
-            action: msg.action,
-            messageId: msg.messageId,
-            success: true,
-            payload: {
-              publicKey:
-                '04197ced33b63059074b90ddecb9400c45cbc86210a20317b539b8cae84e573342149c3384ae45f27db68e75823323e97e03504b73ecbc47f5922b9b8144345e5a',
-              chainCode:
-                'ba0fb16e01c463d1635ec36f5adeb93a838adcd1526656c55f828f1e34002a8b',
-              address: fakeAccounts[1],
-            },
-          });
-        },
-      );
-
-      ledgerKeyring.unlock(`m/44'/60'/0'/1`).then((_) => {
-        assert.notDeepEqual(ledgerKeyring.hdk.publicKey, 'ABC');
-        done();
+      stubKeyringIFramePostMessage(ledgerKeyring, (msg) => {
+        ledgerKeyring.messageCallbacks[msg.messageId]?.({
+          action: msg.action,
+          messageId: msg.messageId,
+          success: true,
+          payload: {
+            publicKey:
+              '04197ced33b63059074b90ddecb9400c45cbc86210a20317b539b8cae84e573342149c3384ae45f27db68e75823323e97e03504b73ecbc47f5922b9b8144345e5a',
+            chainCode:
+              'ba0fb16e01c463d1635ec36f5adeb93a838adcd1526656c55f828f1e34002a8b',
+            address: fakeAccounts[1],
+          },
+        });
       });
+
+      await ledgerKeyring.unlock(`m/44'/60'/0'/1`);
+      assert.notDeepEqual(ledgerKeyring.hdk.publicKey, 'ABC');
     });
 
-    it('should not update hdk.publicKey if updateHdk is false', function (done) {
+    it('should not update hdk.publicKey if updateHdk is false', async function () {
       const ledgerKeyring = new LedgerBridgeKeyring();
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore next-line
       ledgerKeyring.hdk = { publicKey: 'ABC' };
+      await simulateIFrameLoad(ledgerKeyring.iframe);
 
-      sandbox.on(
-        ledgerKeyring?.iframe?.contentWindow as Window,
-        'postMessage',
-        (msg) => {
-          ledgerKeyring.messageCallbacks[msg.messageId]?.({
-            action: msg.action,
-            messageId: msg.messageId,
-            success: true,
-            payload: {
-              publicKey:
-                '04197ced33b63059074b90ddecb9400c45cbc86210a20317b539b8cae84e573342149c3384ae45f27db68e75823323e97e03504b73ecbc47f5922b9b8144345e5a',
-              chainCode:
-                'ba0fb16e01c463d1635ec36f5adeb93a838adcd1526656c55f828f1e34002a8b',
-              address: fakeAccounts[1],
-            },
-          });
-        },
-      );
-
-      ledgerKeyring.unlock(`m/44'/60'/0'/1`, false).then((_) => {
-        assert.deepEqual(ledgerKeyring.hdk.publicKey, 'ABC');
-        done();
+      stubKeyringIFramePostMessage(ledgerKeyring, (msg) => {
+        ledgerKeyring.messageCallbacks[msg.messageId]?.({
+          action: msg.action,
+          messageId: msg.messageId,
+          success: true,
+          payload: {
+            publicKey:
+              '04197ced33b63059074b90ddecb9400c45cbc86210a20317b539b8cae84e573342149c3384ae45f27db68e75823323e97e03504b73ecbc47f5922b9b8144345e5a',
+            chainCode:
+              'ba0fb16e01c463d1635ec36f5adeb93a838adcd1526656c55f828f1e34002a8b',
+            address: fakeAccounts[1],
+          },
+        });
       });
+
+      await ledgerKeyring.unlock(`m/44'/60'/0'/1`, false);
+      assert.deepEqual(ledgerKeyring.hdk.publicKey, 'ABC');
     });
   });
 
@@ -521,22 +544,18 @@ describe('LedgerBridgeKeyring', function () {
     describe('using old versions of ethereumjs/tx', function () {
       it('should pass serialized transaction to ledger and return signed tx', async function () {
         await basicSetupToUnlockOneAccount();
-        sandbox.on(
-          keyring?.iframe?.contentWindow as Window,
-          'postMessage',
-          (msg) => {
-            assert.deepStrictEqual(msg.params, {
-              hdPath: "m/44'/60'/0'/0",
-              tx: fakeTx.serialize().toString('hex'),
-            });
+        stubKeyringIFramePostMessage(keyring, (msg) => {
+          assert.deepStrictEqual(msg.params, {
+            hdPath: "m/44'/60'/0'/0",
+            tx: fakeTx.serialize().toString('hex'),
+          });
 
-            keyring.messageCallbacks[msg.messageId]?.({
-              ...msg,
-              success: true,
-              payload: { v: '0x1', r: '0x0', s: '0x0' },
-            });
-          },
-        );
+          keyring.messageCallbacks[msg.messageId]?.({
+            ...msg,
+            success: true,
+            payload: { v: '0x1', r: '0x0', s: '0x0' },
+          });
+        });
 
         sandbox.on(fakeTx, 'verifySignature', () => true);
 
@@ -545,7 +564,7 @@ describe('LedgerBridgeKeyring', function () {
           fakeTx,
         );
         expect(
-          keyring?.iframe?.contentWindow?.postMessage,
+          keyring.iframe?.contentWindow?.postMessage,
         ).to.have.been.called();
         expect(returnedTx).to.have.property('v');
         expect(returnedTx).to.have.property('r');
@@ -572,24 +591,20 @@ describe('LedgerBridgeKeyring', function () {
         sandbox.on(TransactionFactory, 'fromTxData', () => signedNewFakeTx);
         sandbox.on(signedNewFakeTx, 'verifySignature', () => true);
 
-        sandbox.on(
-          keyring?.iframe?.contentWindow as Window,
-          'postMessage',
-          (msg) => {
-            assert.deepStrictEqual(msg.params, {
-              hdPath: "m/44'/60'/0'/0",
-              tx: ethUtil.rlp
-                .encode(newFakeTx.getMessageToSign(false))
-                .toString('hex'),
-            });
+        stubKeyringIFramePostMessage(keyring, (msg) => {
+          assert.deepStrictEqual(msg.params, {
+            hdPath: "m/44'/60'/0'/0",
+            tx: ethUtil.rlp
+              .encode(newFakeTx.getMessageToSign(false))
+              .toString('hex'),
+          });
 
-            keyring.messageCallbacks[msg.messageId]?.({
-              ...msg,
-              success: true,
-              payload: expectedRSV,
-            });
-          },
-        );
+          keyring.messageCallbacks[msg.messageId]?.({
+            ...msg,
+            success: true,
+            payload: expectedRSV,
+          });
+        });
 
         const returnedTx = await keyring.signTransaction(
           fakeAccounts[0],
@@ -597,7 +612,7 @@ describe('LedgerBridgeKeyring', function () {
         );
 
         expect(
-          keyring?.iframe?.contentWindow?.postMessage,
+          keyring.iframe?.contentWindow?.postMessage,
         ).to.have.been.called();
 
         expect(returnedTx.toJSON()).to.deep.equal(signedNewFakeTx.toJSON());
@@ -626,22 +641,18 @@ describe('LedgerBridgeKeyring', function () {
 
         sandbox.on(fakeTypeTwoTx, 'verifySignature', () => true);
 
-        sandbox.on(
-          keyring?.iframe?.contentWindow as Window,
-          'postMessage',
-          (msg) => {
-            assert.deepStrictEqual(msg.params, {
-              hdPath: "m/44'/60'/0'/0",
-              tx: fakeTypeTwoTx.getMessageToSign(false).toString('hex'),
-            });
+        stubKeyringIFramePostMessage(keyring, (msg) => {
+          assert.deepStrictEqual(msg.params, {
+            hdPath: "m/44'/60'/0'/0",
+            tx: fakeTypeTwoTx.getMessageToSign(false).toString('hex'),
+          });
 
-            keyring.messageCallbacks[msg.messageId]?.({
-              ...msg,
-              success: true,
-              payload: expectedRSV,
-            });
-          },
-        );
+          keyring.messageCallbacks[msg.messageId]?.({
+            ...msg,
+            success: true,
+            payload: expectedRSV,
+          });
+        });
 
         const returnedTx = await keyring.signTransaction(
           fakeAccounts[0],
@@ -649,7 +660,7 @@ describe('LedgerBridgeKeyring', function () {
         );
 
         expect(
-          keyring?.iframe?.contentWindow?.postMessage,
+          keyring.iframe?.contentWindow?.postMessage,
         ).to.have.been.called();
 
         expect(returnedTx.toJSON()).to.deep.equal(signedFakeTypeTwoTx.toJSON());
@@ -661,52 +672,44 @@ describe('LedgerBridgeKeyring', function () {
     it('should call create a listener waiting for the iframe response', async function () {
       await basicSetupToUnlockOneAccount();
 
-      sandbox.on(
-        keyring?.iframe?.contentWindow as Window,
-        'postMessage',
-        (msg) => {
-          assert.deepStrictEqual(msg.params, {
-            hdPath: "m/44'/60'/0'/0",
-            message: 'some msg',
-          });
+      stubKeyringIFramePostMessage(keyring, (msg) => {
+        assert.deepStrictEqual(msg.params, {
+          hdPath: "m/44'/60'/0'/0",
+          message: 'some msg',
+        });
 
-          keyring.messageCallbacks[msg.messageId]?.({
-            ...msg,
-            success: true,
-            payload: { v: 1, r: '0x0', s: '0x0' },
-          });
-        },
-      );
+        keyring.messageCallbacks[msg.messageId]?.({
+          ...msg,
+          success: true,
+          payload: { v: 1, r: '0x0', s: '0x0' },
+        });
+      });
 
       sandbox.on(sigUtil, 'recoverPersonalSignature', () => fakeAccounts[0]);
       await keyring.signPersonalMessage(fakeAccounts[0], 'some msg');
-      expect(keyring?.iframe?.contentWindow?.postMessage).to.have.been.called();
+      expect(keyring.iframe?.contentWindow?.postMessage).to.have.been.called();
     });
   });
 
   describe('signMessage', function () {
     it('should call create a listener waiting for the iframe response', async function () {
       await basicSetupToUnlockOneAccount();
-      sandbox.on(
-        keyring?.iframe?.contentWindow as Window,
-        'postMessage',
-        (msg) => {
-          assert.deepStrictEqual(msg.params, {
-            hdPath: "m/44'/60'/0'/0",
-            message: 'some msg',
-          });
+      stubKeyringIFramePostMessage(keyring, (msg) => {
+        assert.deepStrictEqual(msg.params, {
+          hdPath: "m/44'/60'/0'/0",
+          message: 'some msg',
+        });
 
-          keyring.messageCallbacks[msg.messageId]?.({
-            ...msg,
-            success: true,
-            payload: { v: 1, r: '0x0', s: '0x0' },
-          });
-        },
-      );
+        keyring.messageCallbacks[msg.messageId]?.({
+          ...msg,
+          success: true,
+          payload: { v: 1, r: '0x0', s: '0x0' },
+        });
+      });
 
       sandbox.on(sigUtil, 'recoverPersonalSignature', () => fakeAccounts[0]);
       await keyring.signMessage(fakeAccounts[0], 'some msg');
-      expect(keyring?.iframe?.contentWindow?.postMessage).to.have.been.called();
+      expect(keyring.iframe?.contentWindow?.postMessage).to.have.been.called();
     });
   });
 
@@ -796,21 +799,17 @@ describe('LedgerBridgeKeyring', function () {
     });
 
     it('should resolve properly when called', async function () {
-      sandbox.on(
-        keyring?.iframe?.contentWindow as Window,
-        'postMessage',
-        (msg) => {
-          keyring.messageCallbacks[msg.messageId]?.({
-            ...msg,
-            success: true,
-            payload: {
-              v: 27,
-              r: '72d4e38a0e582e09a620fd38e236fe687a1ec782206b56d576f579c026a7e5b9',
-              s: '46759735981cd0c3efb02d36df28bb2feedfec3d90e408efc93f45b894946e32',
-            },
-          });
-        },
-      );
+      stubKeyringIFramePostMessage(keyring, (msg) => {
+        keyring.messageCallbacks[msg.messageId]?.({
+          ...msg,
+          success: true,
+          payload: {
+            v: 27,
+            r: '72d4e38a0e582e09a620fd38e236fe687a1ec782206b56d576f579c026a7e5b9',
+            s: '46759735981cd0c3efb02d36df28bb2feedfec3d90e408efc93f45b894946e32',
+          },
+        });
+      });
 
       const result = await keyring.signTypedData(
         fakeAccounts[15],
@@ -824,21 +823,17 @@ describe('LedgerBridgeKeyring', function () {
     });
 
     it('should error when address does not match', async function () {
-      sandbox.on(
-        keyring?.iframe?.contentWindow as Window,
-        'postMessage',
-        (msg) => {
-          keyring.messageCallbacks[msg.messageId]?.({
-            ...msg,
-            success: true,
-            payload: {
-              v: 28,
-              r: '72d4e38a0e582e09a620fd38e236fe687a1ec782206b56d576f579c026a7e5b9',
-              s: '46759735981cd0c3efb02d36df28bb2feedfec3d90e408efc93f45b894946e32',
-            },
-          });
-        },
-      );
+      stubKeyringIFramePostMessage(keyring, (msg) => {
+        keyring.messageCallbacks[msg.messageId]?.({
+          ...msg,
+          success: true,
+          payload: {
+            v: 28,
+            r: '72d4e38a0e582e09a620fd38e236fe687a1ec782206b56d576f579c026a7e5b9',
+            s: '46759735981cd0c3efb02d36df28bb2feedfec3d90e408efc93f45b894946e32',
+          },
+        });
+      });
 
       assert.rejects(
         keyring.signTypedData(fakeAccounts[15], fixtureData, options),

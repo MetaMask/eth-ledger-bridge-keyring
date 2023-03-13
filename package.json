@@ -37,6 +37,7 @@
   },
   "dependencies": {
     "@ethereumjs/tx": "^4.1.1",
+    "@metamask/utils": "^5.0.0",
     "eth-sig-util": "^2.0.0",
     "ethereumjs-util": "^7.0.9",
     "hdkey": "0.8.0"
