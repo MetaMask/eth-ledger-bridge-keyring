@@ -35,13 +35,13 @@
   },
   "homepage": "https://github.com/MetaMask/eth-ledger-bridge-keyring#readme",
   "dependencies": {
-    "@ethereumjs/tx": "^3.2.0",
+    "@ethereumjs/tx": "^4.1.1",
     "eth-sig-util": "^2.0.0",
     "ethereumjs-util": "^7.0.9",
     "hdkey": "0.8.0"
   },
   "devDependencies": {
-    "@ethereumjs/common": "^2.4.0",
+    "@ethereumjs/common": "^3.1.1",
     "@lavamoat/allow-scripts": "^2.3.0",
     "@metamask/eslint-config": "^3.0.0",
     "babel-eslint": "^10.1.0",

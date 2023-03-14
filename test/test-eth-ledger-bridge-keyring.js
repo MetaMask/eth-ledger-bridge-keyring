@@ -8,7 +8,7 @@ const EthereumTx = require('ethereumjs-tx')
 const HDKey = require('hdkey')
 const ethUtil = require('ethereumjs-util')
 const { TransactionFactory } = require('@ethereumjs/tx')
-const Common = require('@ethereumjs/common').default
+const { Common, Chain, Hardfork } = require('@ethereumjs/common')
 const sigUtil = require('eth-sig-util')
 
 const LedgerBridgeKeyring = require('..')
@@ -47,8 +47,8 @@ const fakeTx = new EthereumTx({
   chainId: 1,
 })
 
-const common = new Common({ chain: 'mainnet' })
-const commonEIP1559 = Common.forCustomChain('mainnet', {}, 'london')
+const common = new Common({ chain: Chain.Mainnet, hardfork: Hardfork.Berlin })
+const commonEIP1559 = new Common({ chain: Chain.Mainnet, hardfork: Hardfork.London })
 const newFakeTx = TransactionFactory.fromTxData({
   nonce: '0x00',
   gasPrice: '0x09184e72a000',
@@ -522,8 +522,12 @@ describe('LedgerBridgeKeyring', function () {
         }
 
         await basicSetupToUnlockOneAccount()
-
-        sandbox.on(newFakeTx, 'verifySignature', () => true)
+        const signedNewFakeTx = TransactionFactory.fromTxData({
+          ...newFakeTx.toJSON(),
+          ...expectedRSV,
+        })
+        sandbox.on(TransactionFactory, 'fromTxData', () => signedNewFakeTx)
+        sandbox.on(signedNewFakeTx, 'verifySignature', () => true)
         sandbox.on(keyring, '_sendMessage', (msg, cb) => {
           assert.deepStrictEqual(msg.params, {
             hdPath: "m/44'/60'/0'/0",
@@ -534,7 +538,7 @@ describe('LedgerBridgeKeyring', function () {
 
         const returnedTx = await keyring.signTransaction(fakeAccounts[0], newFakeTx, common)
         expect(keyring._sendMessage).to.have.been.called()
-        expect(returnedTx.toJSON()).to.deep.equal({ ...newFakeTx.toJSON(), ...expectedRSV })
+        expect(returnedTx.toJSON()).to.deep.equal(signedNewFakeTx.toJSON())
       })
 
       it('should pass correctly encoded EIP1559 transaction to ledger and return signed tx', async function () {
@@ -547,6 +551,14 @@ describe('LedgerBridgeKeyring', function () {
 
         await basicSetupToUnlockOneAccount()
 
+        const signedFakeTypeTwoTx = TransactionFactory.fromTxData({
+          ...fakeTypeTwoTx.toJSON(),
+          type: fakeTypeTwoTx.type,
+          ...expectedRSV,
+        }, { common: commonEIP1559, freeze: false })
+        sandbox.on(TransactionFactory, 'fromTxData', () => signedFakeTypeTwoTx)
+        sandbox.on(signedFakeTypeTwoTx, 'verifySignature', () => true)
+
         sandbox.on(fakeTypeTwoTx, 'verifySignature', () => true)
         sandbox.on(keyring, '_sendMessage', (msg, cb) => {
           assert.deepStrictEqual(msg.params, {
@@ -558,7 +570,7 @@ describe('LedgerBridgeKeyring', function () {
 
         const returnedTx = await keyring.signTransaction(fakeAccounts[0], fakeTypeTwoTx, commonEIP1559)
         expect(keyring._sendMessage).to.have.been.called()
-        expect(returnedTx.toJSON()).to.deep.equal({ ...fakeTypeTwoTx.toJSON(), ...expectedRSV })
+        expect(returnedTx.toJSON()).to.deep.equal(signedFakeTypeTwoTx.toJSON())
       })
     })
   })
