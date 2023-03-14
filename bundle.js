@@ -1,4 +1,5 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+(function (Buffer){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -29,19 +30,26 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 require('buffer');
 
-// URL which triggers Ledger Live app to open and handle communication
-var BRIDGE_URL = 'ws://localhost:8435';
+var SUPPORTED_TRANSPORT_TYPES = {
+    U2F: 'u2f',
+    WEB_HID: 'webhid',
+    LEDGER_LIVE: 'ledgerLive'
+
+    // URL which triggers Ledger Live app to open and handle communication
+};var BRIDGE_URL = 'ws://localhost:8435';
 
 // Number of seconds to poll for Ledger Live and Ethereum app opening
 var TRANSPORT_CHECK_DELAY = 1000;
 var TRANSPORT_CHECK_LIMIT = 120;
+
+var POLLING_INTERVAL = 5000;
 
 var LedgerBridge = function () {
     function LedgerBridge() {
         _classCallCheck(this, LedgerBridge);
 
         this.addEventListeners();
-        this.transportType = 'u2f';
+        this.transportType = SUPPORTED_TRANSPORT_TYPES.U2F;
     }
 
     _createClass(LedgerBridge, [{
@@ -72,12 +80,12 @@ var LedgerBridge = function () {
                             _this.cleanUp(replyAction, messageId);
                             break;
                         case 'ledger-update-transport':
-                            if (params.transportType === 'ledgerLive' || params.useLedgerLive) {
-                                _this.updateTransportTypePreference(replyAction, 'ledgerLive', messageId);
-                            } else if (params.transportType === 'webhid') {
-                                _this.updateTransportTypePreference(replyAction, 'webhid', messageId);
+                            if (params.transportType === SUPPORTED_TRANSPORT_TYPES.LEDGER_LIVE || params.useLedgerLive) {
+                                _this.updateTransportTypePreference(replyAction, SUPPORTED_TRANSPORT_TYPES.LEDGER_LIVE, messageId);
+                            } else if (params.transportType === SUPPORTED_TRANSPORT_TYPES.WEB_HID) {
+                                _this.updateTransportTypePreference(replyAction, SUPPORTED_TRANSPORT_TYPES.WEB_HID, messageId);
                             } else {
-                                _this.updateTransportTypePreference(replyAction, 'u2f', messageId);
+                                _this.updateTransportTypePreference(replyAction, SUPPORTED_TRANSPORT_TYPES.U2F, messageId);
                             }
                             break;
                         case 'ledger-make-app':
@@ -85,6 +93,12 @@ var LedgerBridge = function () {
                             break;
                         case 'ledger-sign-typed-data':
                             _this.signTypedData(replyAction, params.hdPath, params.domainSeparatorHex, params.hashStructMessageHex, messageId);
+                            break;
+                        case 'ledger-start-polling':
+                            _this.startConnectionPolling(replyAction, messageId);
+                            break;
+                        case 'ledger-stop-polling':
+                            _this.stopConnectionPolling(replyAction, messageId);
                             break;
                     }
                 }
@@ -141,10 +155,18 @@ var LedgerBridge = function () {
     }, {
         key: 'makeApp',
         value: async function makeApp() {
+            var _this3 = this;
+
             var config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
+            // It's possible that a connection to the device could already exist
+            // at the time a user tries to sign; in that case, simply bail!
+            if (this.transport) {
+                return Promise.resolve(true);
+            }
+
             try {
-                if (this.transportType === 'ledgerLive') {
+                if (this.transportType === SUPPORTED_TRANSPORT_TYPES.LEDGER_LIVE) {
                     var reestablish = false;
                     try {
                         await _WebSocketTransport2.default.check(BRIDGE_URL);
@@ -157,7 +179,7 @@ var LedgerBridge = function () {
                         this.transport = await _WebSocketTransport2.default.open(BRIDGE_URL);
                         this.app = new _hwAppEth2.default(this.transport);
                     }
-                } else if (this.transportType === 'webhid') {
+                } else if (this.transportType === SUPPORTED_TRANSPORT_TYPES.WEB_HID) {
                     var device = this.transport && this.transport.device;
                     var nameOfDeviceType = device && device.constructor.name;
                     var deviceIsOpen = device && device.opened;
@@ -170,16 +192,97 @@ var LedgerBridge = function () {
                     this.transport = await _hwTransportU2f2.default.create();
                     this.app = new _hwAppEth2.default(this.transport);
                 }
+
+                // Upon Ledger disconnect from user's machine, signal disconnect
+                this.transport.on('disconnect', function () {
+                    return _this3.onDisconnect();
+                });
             } catch (e) {
                 console.log('LEDGER:::CREATE APP ERROR', e);
                 throw e;
             }
         }
     }, {
+        key: 'startConnectionPolling',
+        value: async function startConnectionPolling(replyAction, messageId) {
+            var _this4 = this;
+
+            // Prevent the possibility that there could be more than one 
+            // polling interval if stopConnectionPolling hasn't been called
+            if (this.pollingInterval) {
+                return false;
+            }
+
+            // The U2F transport is deprecated and the following block will
+            // throw an error in Firefox, so we cannot detect true
+            // connection status with U2F
+            if (this.transportType !== SUPPORTED_TRANSPORT_TYPES.U2F) {
+                // We need to poll for connection status because going into
+                // sleep mode doesn't trigger the "disconnect" event
+                var connected = await this.checkConnectionStatus();
+                this.pollingInterval = setInterval(function () {
+                    _this4.checkConnectionStatus();
+                }, POLLING_INTERVAL);
+            }
+        }
+    }, {
+        key: 'stopConnectionPolling',
+        value: function stopConnectionPolling(replyAction, messageId) {
+            if (this.pollingInterval) {
+                clearInterval(this.pollingInterval);
+            }
+        }
+    }, {
+        key: 'checkConnectionStatus',
+        value: async function checkConnectionStatus() {
+            // If there's no app or transport, leave and signal disconnect
+            if (!this.app || !this.transport) {
+                this.onDisconnect();
+                return false;
+            }
+
+            // Ensure the correct (Ethereum) app is open; if not, immediately kill
+            // the connection as the wrong app is open and switching apps will call
+            // a disconnect from within the Ledger API
+            try {
+                var sampleSendResult = await this.transport.send(0xb0, 0x01, 0x00, 0x00);
+                var bufferResult = Buffer.from(sampleSendResult).toString();
+                // Ensures the correct app is open
+                if (bufferResult.includes('Ethereum')) {
+                    // Ensure the device is unlocked by requesting an account
+                    // An error of `6b0c` will throw if locked
+                    var _ref = await this.app.getAddress('44\'/60\'/0\'/0', false, true),
+                        address = _ref.address;
+
+                    if (address) {
+                        this.sendConnectionMessage(true);
+                        return true;
+                    } else {
+                        this.onDisconnect();
+                        throw Error('LEDGER:::Device appears to be locked');
+                    }
+                } else {
+                    // Wrong app
+                    this.onDisconnect();
+                    return false;
+                }
+            } catch (e) {
+                console.log('LEDGER:::Transport check error', e);
+                // A race condition for checking connection status isn't a sign that
+                // connection status has changed, so don't disconnect on this type of error
+                if (e.name !== 'TransportRaceCondition') {
+                    this.onDisconnect();
+                }
+                throw e;
+            }
+        }
+    }, {
         key: 'updateTransportTypePreference',
         value: function updateTransportTypePreference(replyAction, transportType, messageId) {
-            this.transportType = transportType;
-            this.cleanUp();
+            if (transportType !== this.transportType) {
+                this.transportType = transportType;
+                this.cleanUp();
+            }
             this.sendMessageToExtension({
                 action: replyAction,
                 success: true,
@@ -223,8 +326,8 @@ var LedgerBridge = function () {
                     messageId: messageId
                 });
             } finally {
-                if (this.transportType !== 'ledgerLive') {
-                    this.cleanUp();
+                if (this._shouldCleanupTransport()) {
+                    await this.cleanUp();
                 }
             }
         }
@@ -249,8 +352,8 @@ var LedgerBridge = function () {
                     messageId: messageId
                 });
             } finally {
-                if (this.transportType !== 'ledgerLive') {
-                    this.cleanUp();
+                if (this._shouldCleanupTransport()) {
+                    await this.cleanUp();
                 }
             }
         }
@@ -276,8 +379,8 @@ var LedgerBridge = function () {
                     messageId: messageId
                 });
             } finally {
-                if (this.transportType !== 'ledgerLive') {
-                    this.cleanUp();
+                if (this._shouldCleanupTransport()) {
+                    await this.cleanUp();
                 }
             }
         }
@@ -303,8 +406,30 @@ var LedgerBridge = function () {
                     messageId: messageId
                 });
             } finally {
-                this.cleanUp();
+                if (this._shouldCleanupTransport()) {
+                    await this.cleanUp();
+                }
             }
+        }
+    }, {
+        key: 'onDisconnect',
+        value: function onDisconnect() {
+            this.cleanUp();
+            this.sendConnectionMessage(false);
+        }
+    }, {
+        key: 'sendConnectionMessage',
+        value: function sendConnectionMessage(connected) {
+            this.sendMessageToExtension({
+                action: 'ledger-connection-change',
+                success: true,
+                payload: { connected: connected }
+            });
+        }
+    }, {
+        key: '_shouldCleanupTransport',
+        value: function _shouldCleanupTransport() {
+            return this.transportType === SUPPORTED_TRANSPORT_TYPES.U2F;
         }
     }, {
         key: 'ledgerErrToMessage',
@@ -358,6 +483,7 @@ var LedgerBridge = function () {
 
 exports.default = LedgerBridge;
 
+}).call(this,require("buffer").Buffer)
 },{"@ledgerhq/hw-app-eth":125,"@ledgerhq/hw-transport-http/lib/WebSocketTransport":161,"@ledgerhq/hw-transport-u2f":165,"@ledgerhq/hw-transport-webhid":166,"buffer":226}],2:[function(require,module,exports){
 'use strict';
 
