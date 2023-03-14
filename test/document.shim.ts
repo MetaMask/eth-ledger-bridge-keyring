@@ -14,7 +14,7 @@ try {
     }),
     addEventListener: () => false,
   };
-} catch (e) {
+} catch (error) {
   documentShim = {
     head: {
       appendChild: () => false,

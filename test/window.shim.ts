@@ -10,7 +10,7 @@ try {
       return false;
     },
   };
-} catch (e) {
+} catch (error) {
   windowShim = {
     addEventListener: () => {
       return false;
