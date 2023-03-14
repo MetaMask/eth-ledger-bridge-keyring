@@ -114,7 +114,7 @@ async function simulateIFrameLoad(iframe?: HTMLIFrameElement) {
     throw new Error('the iframe is not valid');
   }
   // we call manually the onload event to simulate the iframe loading
-  return await iframe.onload(new Event('load'));
+  return await iframe.onload();
 }
 
 describe('LedgerBridgeKeyring', function () {
