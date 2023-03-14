@@ -1,17 +1,17 @@
+import { Common, Chain, Hardfork } from '@ethereumjs/common';
+import { TransactionFactory } from '@ethereumjs/tx';
+import { hasProperty } from '@metamask/utils';
 import { strict as assert } from 'assert';
 import chai, { expect } from 'chai';
 import spies from 'chai-spies';
-import EthereumTx from 'ethereumjs-tx';
-import HDKey from 'hdkey';
-import * as ethUtil from 'ethereumjs-util';
-import { TransactionFactory } from '@ethereumjs/tx';
-import { Common, Chain, Hardfork } from '@ethereumjs/common';
 import sigUtil from 'eth-sig-util';
-import { hasProperty } from '@metamask/utils';
-import windowShim from '../test/window.shim';
-import documentShim from '../test/document.shim';
+import EthereumTx from 'ethereumjs-tx';
+import * as ethUtil from 'ethereumjs-util';
+import HDKey from 'hdkey';
 
 import { AccountDetails, LedgerBridgeKeyring } from './ledger-bridge-keyring';
+import documentShim from '../test/document.shim';
+import windowShim from '../test/window.shim';
 
 global.document = documentShim;
 global.window = windowShim;
@@ -81,6 +81,15 @@ const fakeTypeTwoTx = TransactionFactory.fromTxData(
   { common: commonEIP1559, freeze: false },
 );
 
+chai.use(spies);
+
+/**
+ * Checks if the iframe provided has a valid contentWindow
+ * and onload function.
+ *
+ * @param iframe - The iframe to check.
+ * @returns Returns true if the iframe is valid, false otherwise.
+ */
 function isIFrameValid(
   iframe?: HTMLIFrameElement,
 ): iframe is HTMLIFrameElement & { contentWindow: Window } & {
@@ -94,6 +103,12 @@ function isIFrameValid(
   );
 }
 
+/**
+ * Simulates the loading of an iframe by calling the onload function.
+ *
+ * @param iframe - The iframe to simulate the loading of.
+ * @returns Returns a promise that resolves when the onload function is called.
+ */
 async function simulateIFrameLoad(iframe?: HTMLIFrameElement) {
   if (!isIFrameValid(iframe)) {
     throw new Error('the iframe is not valid');
@@ -102,23 +117,33 @@ async function simulateIFrameLoad(iframe?: HTMLIFrameElement) {
   return await iframe.onload(new Event('load'));
 }
 
-chai.use(spies);
-
 describe('LedgerBridgeKeyring', function () {
   let keyring: LedgerBridgeKeyring;
   let sandbox: ChaiSpies.Sandbox;
 
+  /**
+   * Sets up the keyring to unlock one account.
+   *
+   * @param accountIndex - The index of the account to unlock.
+   * @returns Returns a promise that resolves when the keyring is unlocked.
+   */
   async function basicSetupToUnlockOneAccount(accountIndex = 0) {
     keyring.setAccountToUnlock(accountIndex);
     await keyring.addAccounts();
-    sandbox.on(keyring, 'unlock', () =>
+    sandbox.on(keyring, 'unlock', async () =>
       Promise.resolve(fakeAccounts[accountIndex]),
     );
   }
 
+  /**
+   * Stubs the postMessage function of the keyring iframe.
+   *
+   * @param keyringInstance - The keyring instance to stub.
+   * @param fn - The function to call when the postMessage function is called.
+   */
   function stubKeyringIFramePostMessage(
     keyringInstance: LedgerBridgeKeyring,
-    fn: (msg: any) => void,
+    fn: (message: any) => void,
   ) {
     if (!isIFrameValid(keyringInstance.iframe)) {
       throw new Error('the iframe is not valid');
@@ -153,33 +178,31 @@ describe('LedgerBridgeKeyring', function () {
   });
 
   describe('constructor', function () {
-    it('constructs', function (done) {
-      const t = new LedgerBridgeKeyring({ hdPath: `m/44'/60'/0'` });
-      assert.equal(typeof t, 'object');
-      t.getAccounts().then((accounts) => {
-        assert.equal(Array.isArray(accounts), true);
-        done();
-      });
+    it('constructs', async function () {
+      const ledgerKeyring = new LedgerBridgeKeyring({ hdPath: `m/44'/60'/0'` });
+      assert.equal(typeof ledgerKeyring, 'object');
+
+      const accounts = await ledgerKeyring.getAccounts();
+      assert.equal(Array.isArray(accounts), true);
     });
   });
 
   describe('serialize', function () {
-    it('serializes an instance', function (done) {
-      keyring.serialize().then((output) => {
-        assert.equal(
-          output.bridgeUrl,
-          'https://metamask.github.io/eth-ledger-bridge-keyring',
-        );
-        assert.equal(output.hdPath, `m/44'/60'/0'`);
-        assert.equal(Array.isArray(output.accounts), true);
-        assert.equal(output.accounts.length, 0);
-        done();
-      });
+    it('serializes an instance', async function () {
+      const output = await keyring.serialize();
+
+      assert.equal(
+        output.bridgeUrl,
+        'https://metamask.github.io/eth-ledger-bridge-keyring',
+      );
+      assert.equal(output.hdPath, `m/44'/60'/0'`);
+      assert.equal(Array.isArray(output.accounts), true);
+      assert.equal(output.accounts.length, 0);
     });
   });
 
   describe('deserialize', function () {
-    it('serializes what it deserializes', function () {
+    it('serializes what it deserializes', async function () {
       const account = fakeAccounts[0];
       const checksum = ethUtil.toChecksumAddress(account);
       const someHdPath = `m/44'/60'/0'/1`;
@@ -188,70 +211,62 @@ describe('LedgerBridgeKeyring', function () {
         index: 0,
         hdPath: someHdPath,
       };
-      return keyring
-        .deserialize({
-          hdPath: someHdPath,
-          accounts: [account],
-          accountDetails,
-        })
-        .then(() => {
-          return keyring.serialize();
-        })
-        .then((serialized) => {
-          assert.equal(serialized.accounts.length, 1, 'restores 1 account');
-          assert.equal(
-            serialized.bridgeUrl,
-            'https://metamask.github.io/eth-ledger-bridge-keyring',
-            'restores bridgeUrl',
-          );
-          assert.equal(serialized.hdPath, someHdPath, 'restores hdPath');
-          assert.deepEqual(
-            serialized.accountDetails,
-            accountDetails,
-            'restores accountDetails',
-          );
-        });
+      await keyring.deserialize({
+        hdPath: someHdPath,
+        accounts: [account],
+        accountDetails,
+      });
+      const serialized = await keyring.serialize();
+
+      assert.equal(serialized.accounts.length, 1, 'restores 1 account');
+      assert.equal(
+        serialized.bridgeUrl,
+        'https://metamask.github.io/eth-ledger-bridge-keyring',
+        'restores bridgeUrl',
+      );
+      assert.equal(serialized.hdPath, someHdPath, 'restores hdPath');
+      assert.deepEqual(
+        serialized.accountDetails,
+        accountDetails,
+        'restores accountDetails',
+      );
     });
 
-    it('should migrate accountIndexes to accountDetails', function () {
+    it('should migrate accountIndexes to accountDetails', async function () {
       const someHdPath = `m/44'/60'/0'/0/0`;
       const account = fakeAccounts[1];
       const checksum = ethUtil.toChecksumAddress(account);
       const accountIndexes: Record<string, number> = {};
       accountIndexes[checksum] = 1;
-      return keyring
-        .deserialize({
-          accounts: [account],
-          accountIndexes,
-          hdPath: someHdPath,
-        })
-        .then(() => {
-          assert.equal(keyring.hdPath, someHdPath);
-          assert.equal(keyring.accounts[0], account);
-          assert.deepEqual(keyring.accountDetails[checksum], {
-            bip44: true,
-            hdPath: `m/44'/60'/1'/0/0`,
-          });
-        });
+      await keyring.deserialize({
+        accounts: [account],
+        accountIndexes,
+        hdPath: someHdPath,
+      });
+
+      assert.equal(keyring.hdPath, someHdPath);
+      assert.equal(keyring.accounts[0], account);
+      assert.deepEqual(keyring.accountDetails[checksum], {
+        bip44: true,
+        hdPath: `m/44'/60'/1'/0/0`,
+      });
     });
 
-    it('should migrate non-bip44 accounts to accountDetails', function () {
+    it('should migrate non-bip44 accounts to accountDetails', async function () {
       const someHdPath = `m/44'/60'/0'`;
       const account = fakeAccounts[1];
       const checksum = ethUtil.toChecksumAddress(account);
-      return keyring
-        .deserialize({
-          accounts: [account],
-          hdPath: someHdPath,
-        })
-        .then(() => {
-          assert.equal(keyring.hdPath, someHdPath);
-          assert.equal(keyring.accounts[0], account);
-          assert.deepEqual(keyring.accountDetails[checksum], {
-            bip44: false,
-            hdPath: `m/44'/60'/0'/1`,
-          });
-        });
+      await keyring.deserialize({
+        accounts: [account],
+        hdPath: someHdPath,
+      });
+
+      assert.equal(keyring.hdPath, someHdPath);
+      assert.equal(keyring.accounts[0], account);
+      assert.deepEqual(keyring.accountDetails[checksum], {
+        bip44: false,
+        hdPath: `m/44'/60'/0'/1`,
+      });
     });
   });
 
@@ -262,10 +277,8 @@ describe('LedgerBridgeKeyring', function () {
   });
 
   describe('unlock', function () {
-    it('should resolve if we have a public key', function (done) {
-      keyring.unlock().then((_) => {
-        done();
-      });
+    it('should resolve if we have a public key', async function () {
+      await keyring.unlock();
     });
 
     it('should update hdk.publicKey if updateHdk is true', async function () {
@@ -274,10 +287,10 @@ describe('LedgerBridgeKeyring', function () {
       ledgerKeyring.hdk = { publicKey: 'ABC' };
       await simulateIFrameLoad(ledgerKeyring.iframe);
 
-      stubKeyringIFramePostMessage(ledgerKeyring, (msg) => {
-        ledgerKeyring.messageCallbacks[msg.messageId]?.({
-          action: msg.action,
-          messageId: msg.messageId,
+      stubKeyringIFramePostMessage(ledgerKeyring, (message) => {
+        ledgerKeyring.messageCallbacks[message.messageId]?.({
+          action: message.action,
+          messageId: message.messageId,
           success: true,
           payload: {
             publicKey:
@@ -299,10 +312,10 @@ describe('LedgerBridgeKeyring', function () {
       ledgerKeyring.hdk = { publicKey: 'ABC' };
       await simulateIFrameLoad(ledgerKeyring.iframe);
 
-      stubKeyringIFramePostMessage(ledgerKeyring, (msg) => {
-        ledgerKeyring.messageCallbacks[msg.messageId]?.({
-          action: msg.action,
-          messageId: msg.messageId,
+      stubKeyringIFramePostMessage(ledgerKeyring, (message) => {
+        ledgerKeyring.messageCallbacks[message.messageId]?.({
+          action: message.action,
+          messageId: message.messageId,
           success: true,
           payload: {
             publicKey:
@@ -344,85 +357,75 @@ describe('LedgerBridgeKeyring', function () {
 
   describe('addAccounts', function () {
     describe('with no arguments', function () {
-      it('returns a single account', function (done) {
+      it('returns a single account', async function () {
         keyring.setAccountToUnlock(0);
-        keyring.addAccounts().then((accounts) => {
-          assert.equal(accounts.length, 1);
-          done();
-        });
+        const accounts = await keyring.addAccounts();
+        assert.equal(accounts.length, 1);
       });
     });
 
     describe('with a numeric argument', function () {
-      it('returns that number of accounts', function (done) {
+      it('returns that number of accounts', async function () {
         keyring.setAccountToUnlock(0);
-        keyring.addAccounts(5).then((accounts) => {
-          assert.equal(accounts.length, 5);
-          done();
-        });
+        const accounts = await keyring.addAccounts(5);
+        assert.equal(accounts.length, 5);
       });
 
-      it('returns the expected accounts', function (done) {
+      it('returns the expected accounts', async function () {
         keyring.setAccountToUnlock(0);
-        keyring.addAccounts(3).then((accounts) => {
-          assert.equal(accounts[0], fakeAccounts[0]);
-          assert.equal(accounts[1], fakeAccounts[1]);
-          assert.equal(accounts[2], fakeAccounts[2]);
-          done();
-        });
+        const accounts = await keyring.addAccounts(3);
+        assert.equal(accounts[0], fakeAccounts[0]);
+        assert.equal(accounts[1], fakeAccounts[1]);
+        assert.equal(accounts[2], fakeAccounts[2]);
       });
     });
 
-    it('stores account details for bip44 accounts', function () {
+    it('stores account details for bip44 accounts', async function () {
       keyring.setHdPath(`m/44'/60'/0'/0/0`);
       keyring.setAccountToUnlock(1);
-      sandbox.on(keyring, 'unlock', () => Promise.resolve(fakeAccounts[0]));
-      return keyring.addAccounts(1).then((accounts) => {
-        assert.deepEqual(keyring.accountDetails[accounts[0] as string], {
-          bip44: true,
-          hdPath: `m/44'/60'/1'/0/0`,
-        });
+      sandbox.on(keyring, 'unlock', async () =>
+        Promise.resolve(fakeAccounts[0]),
+      );
+      const accounts = await keyring.addAccounts(1);
+      assert.deepEqual(keyring.accountDetails[accounts[0] as string], {
+        bip44: true,
+        hdPath: `m/44'/60'/1'/0/0`,
       });
     });
 
-    it('stores account details for non-bip44 accounts', function () {
+    it('stores account details for non-bip44 accounts', async function () {
       keyring.setHdPath(`m/44'/60'/0'`);
       keyring.setAccountToUnlock(2);
-      return keyring.addAccounts(1).then((accounts) => {
-        assert.deepEqual(keyring.accountDetails[accounts[0] as string], {
-          bip44: false,
-          hdPath: `m/44'/60'/0'/2`,
-        });
+      const accounts = await keyring.addAccounts(1);
+      assert.deepEqual(keyring.accountDetails[accounts[0] as string], {
+        bip44: false,
+        hdPath: `m/44'/60'/0'/2`,
       });
     });
 
     describe('when called multiple times', function () {
-      it('should not remove existing accounts', function (done) {
+      it('should not remove existing accounts', async function () {
         keyring.setAccountToUnlock(0);
-        keyring.addAccounts(1).then(function () {
-          keyring.setAccountToUnlock(1);
-          keyring.addAccounts(1).then((accounts) => {
-            assert.equal(accounts.length, 2);
-            assert.equal(accounts[0], fakeAccounts[0]);
-            assert.equal(accounts[1], fakeAccounts[1]);
-            done();
-          });
-        });
+        let accounts = await keyring.addAccounts(1);
+        keyring.setAccountToUnlock(1);
+        accounts = await keyring.addAccounts(1);
+
+        assert.equal(accounts.length, 2);
+        assert.equal(accounts[0], fakeAccounts[0]);
+        assert.equal(accounts[1], fakeAccounts[1]);
       });
     });
   });
 
   describe('removeAccount', function () {
     describe('if the account exists', function () {
-      it('should remove that account', function (done) {
+      it('should remove that account', async function () {
         keyring.setAccountToUnlock(0);
-        keyring.addAccounts().then(async (accounts) => {
-          assert.equal(accounts.length, 1);
-          keyring.removeAccount(fakeAccounts[0]);
-          const accountsAfterRemoval = await keyring.getAccounts();
-          assert.equal(accountsAfterRemoval.length, 0);
-          done();
-        });
+        const accounts = await keyring.addAccounts();
+        assert.equal(accounts.length, 1);
+        keyring.removeAccount(fakeAccounts[0]);
+        const accountsAfterRemoval = await keyring.getAccounts();
+        assert.equal(accountsAfterRemoval.length, 0);
       });
     });
 
@@ -542,14 +545,14 @@ describe('LedgerBridgeKeyring', function () {
     describe('using old versions of ethereumjs/tx', function () {
       it('should pass serialized transaction to ledger and return signed tx', async function () {
         await basicSetupToUnlockOneAccount();
-        stubKeyringIFramePostMessage(keyring, (msg) => {
-          assert.deepStrictEqual(msg.params, {
+        stubKeyringIFramePostMessage(keyring, (message) => {
+          assert.deepStrictEqual(message.params, {
             hdPath: "m/44'/60'/0'/0",
             tx: fakeTx.serialize().toString('hex'),
           });
 
-          keyring.messageCallbacks[msg.messageId]?.({
-            ...msg,
+          keyring.messageCallbacks[message.messageId]?.({
+            ...message,
             success: true,
             payload: { v: '0x1', r: '0x0', s: '0x0' },
           });
@@ -562,6 +565,7 @@ describe('LedgerBridgeKeyring', function () {
           fakeTx,
         );
         expect(
+          // eslint-disable-next-line @typescript-eslint/unbound-method
           keyring.iframe?.contentWindow?.postMessage,
         ).to.have.been.called();
         expect(returnedTx).to.have.property('v');
@@ -589,16 +593,16 @@ describe('LedgerBridgeKeyring', function () {
         sandbox.on(TransactionFactory, 'fromTxData', () => signedNewFakeTx);
         sandbox.on(signedNewFakeTx, 'verifySignature', () => true);
 
-        stubKeyringIFramePostMessage(keyring, (msg) => {
-          assert.deepStrictEqual(msg.params, {
+        stubKeyringIFramePostMessage(keyring, (message) => {
+          assert.deepStrictEqual(message.params, {
             hdPath: "m/44'/60'/0'/0",
             tx: ethUtil.rlp
               .encode(newFakeTx.getMessageToSign(false))
               .toString('hex'),
           });
 
-          keyring.messageCallbacks[msg.messageId]?.({
-            ...msg,
+          keyring.messageCallbacks[message.messageId]?.({
+            ...message,
             success: true,
             payload: expectedRSV,
           });
@@ -610,6 +614,7 @@ describe('LedgerBridgeKeyring', function () {
         );
 
         expect(
+          // eslint-disable-next-line @typescript-eslint/unbound-method
           keyring.iframe?.contentWindow?.postMessage,
         ).to.have.been.called();
 
@@ -639,14 +644,14 @@ describe('LedgerBridgeKeyring', function () {
 
         sandbox.on(fakeTypeTwoTx, 'verifySignature', () => true);
 
-        stubKeyringIFramePostMessage(keyring, (msg) => {
-          assert.deepStrictEqual(msg.params, {
+        stubKeyringIFramePostMessage(keyring, (message) => {
+          assert.deepStrictEqual(message.params, {
             hdPath: "m/44'/60'/0'/0",
             tx: fakeTypeTwoTx.getMessageToSign(false).toString('hex'),
           });
 
-          keyring.messageCallbacks[msg.messageId]?.({
-            ...msg,
+          keyring.messageCallbacks[message.messageId]?.({
+            ...message,
             success: true,
             payload: expectedRSV,
           });
@@ -658,6 +663,7 @@ describe('LedgerBridgeKeyring', function () {
         );
 
         expect(
+          // eslint-disable-next-line @typescript-eslint/unbound-method
           keyring.iframe?.contentWindow?.postMessage,
         ).to.have.been.called();
 
@@ -670,21 +676,22 @@ describe('LedgerBridgeKeyring', function () {
     it('should call create a listener waiting for the iframe response', async function () {
       await basicSetupToUnlockOneAccount();
 
-      stubKeyringIFramePostMessage(keyring, (msg) => {
-        assert.deepStrictEqual(msg.params, {
+      stubKeyringIFramePostMessage(keyring, (message) => {
+        assert.deepStrictEqual(message.params, {
           hdPath: "m/44'/60'/0'/0",
-          message: 'some msg',
+          message: 'some message',
         });
 
-        keyring.messageCallbacks[msg.messageId]?.({
-          ...msg,
+        keyring.messageCallbacks[message.messageId]?.({
+          ...message,
           success: true,
           payload: { v: 1, r: '0x0', s: '0x0' },
         });
       });
 
       sandbox.on(sigUtil, 'recoverPersonalSignature', () => fakeAccounts[0]);
-      await keyring.signPersonalMessage(fakeAccounts[0], 'some msg');
+      await keyring.signPersonalMessage(fakeAccounts[0], 'some message');
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(keyring.iframe?.contentWindow?.postMessage).to.have.been.called();
     });
   });
@@ -692,21 +699,22 @@ describe('LedgerBridgeKeyring', function () {
   describe('signMessage', function () {
     it('should call create a listener waiting for the iframe response', async function () {
       await basicSetupToUnlockOneAccount();
-      stubKeyringIFramePostMessage(keyring, (msg) => {
-        assert.deepStrictEqual(msg.params, {
+      stubKeyringIFramePostMessage(keyring, (message) => {
+        assert.deepStrictEqual(message.params, {
           hdPath: "m/44'/60'/0'/0",
-          message: 'some msg',
+          message: 'some message',
         });
 
-        keyring.messageCallbacks[msg.messageId]?.({
-          ...msg,
+        keyring.messageCallbacks[message.messageId]?.({
+          ...message,
           success: true,
           payload: { v: 1, r: '0x0', s: '0x0' },
         });
       });
 
       sandbox.on(sigUtil, 'recoverPersonalSignature', () => fakeAccounts[0]);
-      await keyring.signMessage(fakeAccounts[0], 'some msg');
+      await keyring.signMessage(fakeAccounts[0], 'some message');
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(keyring.iframe?.contentWindow?.postMessage).to.have.been.called();
     });
   });
@@ -724,10 +732,13 @@ describe('LedgerBridgeKeyring', function () {
       const incorrectAccount = fakeAccounts[1];
       keyring.setAccountToUnlock(0);
       await keyring.addAccounts();
-      sandbox.on(keyring, 'unlock', (_) => Promise.resolve(incorrectAccount));
+      sandbox.on(keyring, 'unlock', async (_) =>
+        Promise.resolve(incorrectAccount),
+      );
 
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       assert.rejects(
-        () => keyring.unlockAccountByAddress(requestedAccount),
+        keyring.unlockAccountByAddress(requestedAccount),
         new Error(
           `Ledger: Account ${fakeAccounts[0]} does not belong to the connected device`,
         ),
@@ -790,16 +801,16 @@ describe('LedgerBridgeKeyring', function () {
     const options = { version: 'V4' };
 
     beforeEach(async function () {
-      sandbox.on(keyring, 'unlockAccountByAddress', (_) =>
+      sandbox.on(keyring, 'unlockAccountByAddress', async (_) =>
         Promise.resolve(`m/44'/60'/15'`),
       );
       await basicSetupToUnlockOneAccount(15);
     });
 
     it('should resolve properly when called', async function () {
-      stubKeyringIFramePostMessage(keyring, (msg) => {
-        keyring.messageCallbacks[msg.messageId]?.({
-          ...msg,
+      stubKeyringIFramePostMessage(keyring, (message) => {
+        keyring.messageCallbacks[message.messageId]?.({
+          ...message,
           success: true,
           payload: {
             v: 27,
@@ -821,9 +832,9 @@ describe('LedgerBridgeKeyring', function () {
     });
 
     it('should error when address does not match', async function () {
-      stubKeyringIFramePostMessage(keyring, (msg) => {
-        keyring.messageCallbacks[msg.messageId]?.({
-          ...msg,
+      stubKeyringIFramePostMessage(keyring, (message) => {
+        keyring.messageCallbacks[message.messageId]?.({
+          ...message,
           success: true,
           payload: {
             v: 28,
@@ -833,6 +844,7 @@ describe('LedgerBridgeKeyring', function () {
         });
       });
 
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       assert.rejects(
         keyring.signTypedData(fakeAccounts[15], fixtureData, options),
         new Error('Ledger: The signature doesnt match the right address'),

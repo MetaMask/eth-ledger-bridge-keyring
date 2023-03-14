@@ -1,11 +1,11 @@
-import { EventEmitter } from 'events';
-import HDKey from 'hdkey';
-import * as ethUtil from 'ethereumjs-util';
-import * as sigUtil from 'eth-sig-util';
 import { TransactionFactory, TxData, TypedTransaction } from '@ethereumjs/tx';
-import type OldEthJsTransaction from 'ethereumjs-tx';
 import type LedgerHwAppEth from '@ledgerhq/hw-app-eth';
 import { hasProperty } from '@metamask/utils';
+import * as sigUtil from 'eth-sig-util';
+import type OldEthJsTransaction from 'ethereumjs-tx';
+import * as ethUtil from 'ethereumjs-util';
+import { EventEmitter } from 'events';
+import HDKey from 'hdkey';
 
 const pathBase = 'm';
 const hdPathString = `${pathBase}/44'/60'/0'`;
@@ -31,12 +31,12 @@ enum IFrameMessageAction {
   LedgerSignTypedData = 'ledger-sign-typed-data',
 }
 
-interface IFrameMessage {
+type IFrameMessage = {
   action: IFrameMessageAction;
   params: Record<string, unknown>;
   target: string;
   messageId: number;
-}
+};
 
 type GetAddressPayload = Awaited<ReturnType<LedgerHwAppEth['getAddress']>>;
 
@@ -48,39 +48,39 @@ type SignTransactionPayload = Awaited<
   ReturnType<LedgerHwAppEth['signTransaction']>
 >;
 
-interface ConnectionChangedPayload {
+type ConnectionChangedPayload = {
   connected: boolean;
-}
+};
 
-type IFrameMessageResponsePayload = { error?: unknown } & (
+type IFrameMessageResponsePayload = { error?: Error } & (
   | GetAddressPayload
   | SignTransactionPayload
   | SignMessagePayload
   | ConnectionChangedPayload
 );
 
-export interface IFrameMessageResponse {
+export type IFrameMessageResponse = {
   success: boolean;
   action: IFrameMessageAction;
   messageId: number;
   payload: IFrameMessageResponsePayload;
   error?: unknown;
-}
+};
 
-export interface AccountDetails {
+export type AccountDetails = {
   index?: number;
   bip44?: boolean;
   hdPath?: string;
-}
+};
 
-export interface LedgerBridgeKeyringOptions {
+export type LedgerBridgeKeyringOptions = {
   hdPath: string;
   accounts: readonly string[];
   accountDetails: Readonly<Record<string, AccountDetails>>;
   accountIndexes: Readonly<Record<string, number>>;
   bridgeUrl: string;
   implementFullBIP44: boolean;
-}
+};
 
 /**
  * Check if the given transaction is made with ethereumjs-tx or @ethereumjs/tx
@@ -92,7 +92,7 @@ export interface LedgerBridgeKeyringOptions {
  * Expected shape and type
  * of data for v, r and s differ (Buffer (old) vs BN (new)).
  *
- * @param tx
+ * @param tx - Transaction to check, instance of either ethereumjs-tx or @ethereumjs/tx.
  * @returns Returns `true` if tx is an old-style ethereumjs-tx transaction.
  */
 function isOldStyleEthereumjsTx(
@@ -101,18 +101,36 @@ function isOldStyleEthereumjsTx(
   return typeof (tx as OldEthJsTransaction).getChainId === 'function';
 }
 
+/**
+ * Check if the given payload is a SignTransactionPayload.
+ *
+ * @param payload - IFrame message response payload to check.
+ * @returns Returns `true` if payload is a SignTransactionPayload.
+ */
 function isSignTransactionResponse(
   payload: IFrameMessageResponsePayload,
 ): payload is SignTransactionPayload {
   return hasProperty(payload, 'v') && typeof payload.v === 'string';
 }
 
+/**
+ * Check if the given payload is a SignMessagePayload.
+ *
+ * @param payload - IFrame message response payload to check.
+ * @returns Returns `true` if payload is a SignMessagePayload.
+ */
 function isSignMessageResponse(
   payload: IFrameMessageResponsePayload,
 ): payload is SignMessagePayload {
   return hasProperty(payload, 'v') && typeof payload.v === 'number';
 }
 
+/**
+ * Check if the given payload is a GetAddressPayload.
+ *
+ * @param payload - IFrame message response payload to check.
+ * @returns Returns `true` if payload is a GetAddressPayload.
+ */
 function isGetAddressMessageResponse(
   payload: IFrameMessageResponsePayload,
 ): payload is GetAddressPayload {
@@ -121,6 +139,12 @@ function isGetAddressMessageResponse(
   );
 }
 
+/**
+ * Check if the given payload is a ConnectionChangedPayload.
+ *
+ * @param payload - IFrame message response payload to check.
+ * @returns Returns `true` if payload is a ConnectionChangedPayload.
+ */
 function isConnectionChangedResponse(
   payload: IFrameMessageResponsePayload,
 ): payload is ConnectionChangedPayload {
@@ -180,14 +204,17 @@ export class LedgerBridgeKeyring extends EventEmitter {
 
   constructor(opts = {}) {
     super();
-    this.deserialize(opts);
+
+    this.deserialize(opts).catch((error) => {
+      throw error;
+    });
 
     this.#setupIframe();
 
     this.#setupListener();
   }
 
-  serialize() {
+  async serialize() {
     return Promise.resolve({
       hdPath: this.hdPath,
       accounts: this.accounts,
@@ -197,16 +224,16 @@ export class LedgerBridgeKeyring extends EventEmitter {
     });
   }
 
-  deserialize(opts: Partial<LedgerBridgeKeyringOptions> = {}) {
-    this.hdPath = opts.hdPath || hdPathString;
-    this.bridgeUrl = opts.bridgeUrl || BRIDGE_URL;
-    this.accounts = opts.accounts || [];
-    this.accountDetails = opts.accountDetails || {};
+  async deserialize(opts: Partial<LedgerBridgeKeyringOptions> = {}) {
+    this.hdPath = opts.hdPath ?? hdPathString;
+    this.bridgeUrl = opts.bridgeUrl ?? BRIDGE_URL;
+    this.accounts = opts.accounts ?? [];
+    this.accountDetails = opts.accountDetails ?? {};
     if (!opts.accountDetails) {
       this.#migrateAccountDetails(opts);
     }
 
-    this.implementFullBIP44 = opts.implementFullBIP44 || false;
+    this.implementFullBIP44 = opts.implementFullBIP44 ?? false;
 
     // Remove accounts that don't have corresponding account details
     this.accounts = this.accounts.filter((account) =>
@@ -243,7 +270,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
               bip44: false,
               hdPath: this.#pathFromAddress(account),
             };
-          } catch (e) {
+          } catch (error) {
             console.log(`failed to migrate account ${account}`);
           }
         });
@@ -271,7 +298,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
     this.hdPath = hdPath;
   }
 
-  unlock(hdPath?: string, updateHdk = true): Promise<string> {
+  async unlock(hdPath?: string, updateHdk = true): Promise<string> {
     if (this.isUnlocked() && !hdPath) {
       return Promise.resolve('already unlocked');
     }
@@ -295,19 +322,19 @@ export class LedgerBridgeKeyring extends EventEmitter {
             }
             resolve(payload.address);
           } else {
-            reject(payload.error || new Error('Unknown error'));
+            reject(payload.error ?? new Error('Unknown error'));
           }
         },
       );
     });
   }
 
-  addAccounts(n = 1): Promise<string[]> {
+  async addAccounts(amount = 1): Promise<string[]> {
     return new Promise((resolve, reject) => {
       this.unlock()
         .then(async (_) => {
           const from = this.unlockedAccount;
-          const to = from + n;
+          const to = from + amount;
           for (let i = from; i < to; i++) {
             const path = this.#getPathForIndex(i);
             let address;
@@ -335,20 +362,20 @@ export class LedgerBridgeKeyring extends EventEmitter {
     });
   }
 
-  getFirstPage() {
+  async getFirstPage() {
     this.page = 0;
     return this.#getPage(1);
   }
 
-  getNextPage() {
+  async getNextPage() {
     return this.#getPage(1);
   }
 
-  getPreviousPage() {
+  async getPreviousPage() {
     return this.#getPage(-1);
   }
 
-  getAccounts() {
+  async getAccounts() {
     return Promise.resolve(this.accounts.slice());
   }
 
@@ -365,7 +392,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
     delete this.accountDetails[ethUtil.toChecksumAddress(address)];
   }
 
-  attemptMakeApp() {
+  async attemptMakeApp() {
     return new Promise((resolve, reject) => {
       this.#sendMessage(
         {
@@ -382,7 +409,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
     });
   }
 
-  updateTransportMethod(transportType: string) {
+  async updateTransportMethod(transportType: string) {
     return new Promise((resolve, reject) => {
       // If the iframe isn't loaded yet, let's store the desired transportType value and
       // optimistically return a successful promise
@@ -412,7 +439,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
   }
 
   // tx is an instance of the ethereumjs-transaction class.
-  signTransaction(
+  async signTransaction(
     address: string,
     tx: TypedTransaction | OldEthJsTransaction,
   ): Promise<TypedTransaction | OldEthJsTransaction> {
@@ -478,7 +505,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
     });
   }
 
-  #signTransaction(
+  async #signTransaction(
     address: string,
     rawTxHex: string,
     handleSigning: (
@@ -509,7 +536,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
                 }
               } else {
                 reject(
-                  payload.error ||
+                  payload.error ??
                     new Error(
                       'Ledger: Unknown error while signing transaction',
                     ),
@@ -522,12 +549,12 @@ export class LedgerBridgeKeyring extends EventEmitter {
     });
   }
 
-  signMessage(withAccount: string, data: string) {
+  async signMessage(withAccount: string, data: string) {
     return this.signPersonalMessage(withAccount, data);
   }
 
   // For personal_sign, we need to prefix the message:
-  signPersonalMessage(withAccount: string, message: string) {
+  async signPersonalMessage(withAccount: string, message: string) {
     return new Promise((resolve, reject) => {
       this.unlockAccountByAddress(withAccount)
         .then((hdPath) => {
@@ -541,13 +568,14 @@ export class LedgerBridgeKeyring extends EventEmitter {
             },
             ({ success, payload }) => {
               if (success && isSignMessageResponse(payload)) {
-                let v = parseInt(String(payload.v), 10).toString(16);
-                if (v.length < 2) {
-                  v = `0${v}`;
+                let recoveryId = parseInt(String(payload.v), 10).toString(16);
+                if (recoveryId.length < 2) {
+                  recoveryId = `0${recoveryId}`;
                 }
-                const signature = `0x${payload.r}${payload.s}${v}`;
+                const signature = `0x${payload.r}${payload.s}${recoveryId}`;
                 const addressSignedWith = sigUtil.recoverPersonalSignature({
                   data: message,
+                  // eslint-disable-next-line id-denylist
                   sig: signature,
                 });
                 if (
@@ -563,7 +591,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
                 resolve(signature);
               } else {
                 reject(
-                  payload.error ||
+                  payload.error ??
                     new Error('Ledger: Unknown error while signing message'),
                 );
               }
@@ -644,16 +672,17 @@ export class LedgerBridgeKeyring extends EventEmitter {
     );
 
     if (success && isSignMessageResponse(payload)) {
-      let v = parseInt(String(payload.v), 10).toString(16);
-      if (v.length < 2) {
-        v = `0${v}`;
+      let recoveryId = parseInt(String(payload.v), 10).toString(16);
+      if (recoveryId.length < 2) {
+        recoveryId = `0${recoveryId}`;
       }
-      const signature = `0x${payload.r}${payload.s}${v}`;
+      const signature = `0x${payload.r}${payload.s}${recoveryId}`;
       // @ts-expect-error recoverTypedSignature_v4 is missing from
       // @types/eth-sig-util.
       // See: https://github.com/MetaMask/eth-sig-util/blob/v2.5.4/index.js#L464
       const addressSignedWith = sigUtil.recoverTypedSignature_v4({
         data,
+        // eslint-disable-next-line id-denylist
         sig: signature,
       });
       if (
@@ -665,7 +694,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
       return signature;
     }
     throw (
-      payload.error || new Error('Ledger: Unknown error while signing message')
+      payload.error ?? new Error('Ledger: Unknown error while signing message')
     );
   }
 
@@ -698,8 +727,8 @@ export class LedgerBridgeKeyring extends EventEmitter {
             this.delayedPromise.transportType,
           );
           this.delayedPromise.resolve(result);
-        } catch (e) {
-          this.delayedPromise.reject(e);
+        } catch (error) {
+          this.delayedPromise.reject(error);
         } finally {
           delete this.delayedPromise;
         }
@@ -715,21 +744,21 @@ export class LedgerBridgeKeyring extends EventEmitter {
   }
 
   #sendMessage(
-    msg: Partial<IFrameMessage>,
-    cb: (response: IFrameMessageResponse) => void,
+    message: Partial<IFrameMessage>,
+    callback: (response: IFrameMessageResponse) => void,
   ) {
-    msg.target = 'LEDGER-IFRAME';
+    message.target = 'LEDGER-IFRAME';
 
     this.currentMessageId += 1;
-    msg.messageId = this.currentMessageId;
+    message.messageId = this.currentMessageId;
 
-    this.messageCallbacks[this.currentMessageId] = cb;
+    this.messageCallbacks[this.currentMessageId] = callback;
 
     if (!this.iframeLoaded || !this.iframe || !this.iframe.contentWindow) {
       throw new Error('The iframe is not loaded yet');
     }
 
-    this.iframe.contentWindow.postMessage(msg, '*');
+    this.iframe.contentWindow.postMessage(message, '*');
   }
 
   #setupListener() {
