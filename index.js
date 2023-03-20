@@ -217,6 +217,34 @@ class LedgerBridgeKeyring extends EventEmitter {
     })
   }
 
+  startConnectionPolling () {
+    return new Promise((resolve, reject) => {
+      this._sendMessage({
+        action: 'ledger-start-polling',
+      }, ({ success, error }) => {
+        if (success) {
+          resolve(true)
+        } else {
+          reject(error)
+        }
+      })
+    })
+  }
+
+  stopConnectionPolling () {
+    return new Promise((resolve, reject) => {
+      this._sendMessage({
+        action: 'ledger-stop-polling',
+      }, ({ success, error }) => {
+        if (success) {
+          resolve(true)
+        } else {
+          reject(error)
+        }
+      })
+    })
+  }
+
   updateTransportMethod (transportType) {
     return new Promise((resolve, reject) => {
       // If the iframe isn't loaded yet, let's store the desired transportType value and
