@@ -14,12 +14,13 @@ const keyringType = 'Ledger Hardware';
 const BRIDGE_URL = 'https://metamask.github.io/eth-ledger-bridge-keyring';
 
 const MAX_INDEX = 1000;
-const NETWORK_API_URLS = {
-  ropsten: 'http://api-ropsten.etherscan.io',
-  kovan: 'http://api-kovan.etherscan.io',
-  rinkeby: 'https://api-rinkeby.etherscan.io',
-  mainnet: 'https://api.etherscan.io',
-} as const;
+
+enum NetworkApiUrls {
+  Ropsten = 'http://api-ropsten.etherscan.io',
+  Kovan = 'http://api-kovan.etherscan.io',
+  Rinkeby = 'https://api-rinkeby.etherscan.io',
+  Mainnet = 'https://api.etherscan.io',
+}
 
 enum IFrameMessageAction {
   LedgerConnectionChange = 'ledger-connection-change',
@@ -174,7 +175,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
 
   paths: Record<string, number> = {};
 
-  network: keyof typeof NETWORK_API_URLS = 'mainnet';
+  network: NetworkApiUrls = NetworkApiUrls.Mainnet;
 
   implementFullBIP44 = false;
 
@@ -912,6 +913,6 @@ export class LedgerBridgeKeyring extends EventEmitter {
   }
 
   #getApiUrl() {
-    return NETWORK_API_URLS[this.network];
+    return this.network;
   }
 }
