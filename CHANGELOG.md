@@ -8,7 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ## [0.14.0]
 ### Changed
-- **Breaking:** The minimum version of Node.js required for this package has been bumped to v14.
+- **BREAKING:** The minimum version of Node.js required for this package has been bumped to v14.
+
 ### Fixed
 - Fix incorrect `v` for EIP-712 signatures and `personal_sign` ([#152](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/152))
 
