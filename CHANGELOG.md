@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+## [0.14.0]
+### Changed
+- @ethereumjs/tx upgraded to major version 4, which includes a shift from storing numerical values as BNs to storing them as native BigInts. This is a breaking change for users of this keyring who access the values of the tx object, or that use those tx objects to interact with other libraries that depend on @ethereumsjs/tx versions under 4.0.0.
 ## [0.13.1]
 ### Fixed
 - Fix incorrect `v` for EIP-712 signatures and `personal_sign` ([#152](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/152))
