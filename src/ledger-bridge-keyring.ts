@@ -248,10 +248,10 @@ export class LedgerBridgeKeyring extends EventEmitter {
 
   #migrateAccountDetails(opts: Partial<LedgerBridgeKeyringOptions>) {
     if (this.#isLedgerLiveHdPath() && opts.accountIndexes) {
-      for (const account of Object.keys(opts.accountIndexes)) {
+      for (const [account, index] of Object.entries(opts.accountIndexes)) {
         this.accountDetails[account] = {
           bip44: true,
-          hdPath: this.#getPathForIndex(opts.accountIndexes[account] as number),
+          hdPath: this.#getPathForIndex(index),
         };
       }
     }
