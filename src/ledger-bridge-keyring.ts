@@ -99,7 +99,7 @@ export type LedgerBridgeKeyringOptions = {
 function isOldStyleEthereumjsTx(
   tx: TypedTransaction | OldEthJsTransaction,
 ): tx is OldEthJsTransaction {
-  return typeof (tx as OldEthJsTransaction).getChainId === 'function';
+  return 'getChainId' in tx && typeof tx.getChainId === 'function';
 }
 
 /**
