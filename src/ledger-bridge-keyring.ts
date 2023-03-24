@@ -208,9 +208,8 @@ export class LedgerBridgeKeyring extends EventEmitter {
   constructor(opts: Partial<LedgerBridgeKeyringOptions> = {}) {
     super();
 
-    this.deserialize(opts).catch((error) => {
-      throw error;
-    });
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    this.deserialize(opts);
 
     this.#setupIframe();
 
