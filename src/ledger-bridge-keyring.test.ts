@@ -130,9 +130,7 @@ describe('LedgerBridgeKeyring', function () {
   async function basicSetupToUnlockOneAccount(accountIndex = 0) {
     keyring.setAccountToUnlock(accountIndex);
     await keyring.addAccounts();
-    sandbox.on(keyring, 'unlock', async () =>
-      Promise.resolve(fakeAccounts[accountIndex]),
-    );
+    sandbox.on(keyring, 'unlock', async () => fakeAccounts[accountIndex]);
   }
 
   /**
@@ -406,9 +404,9 @@ describe('LedgerBridgeKeyring', function () {
     describe('when called multiple times', function () {
       it('should not remove existing accounts', async function () {
         keyring.setAccountToUnlock(0);
-        let accounts = await keyring.addAccounts(1);
+        await keyring.addAccounts(1);
         keyring.setAccountToUnlock(1);
-        accounts = await keyring.addAccounts(1);
+        const accounts = await keyring.addAccounts(1);
 
         assert.equal(accounts.length, 2);
         assert.equal(accounts[0], fakeAccounts[0]);

@@ -15,6 +15,8 @@ const BRIDGE_URL = 'https://metamask.github.io/eth-ledger-bridge-keyring';
 
 const MAX_INDEX = 1000;
 
+const LEDGER_IFRAME_ID = 'LEDGER-IFRAME';
+
 enum NetworkApiUrls {
   Ropsten = 'http://api-ropsten.etherscan.io',
   Kovan = 'http://api-kovan.etherscan.io',
@@ -32,14 +34,9 @@ enum IFrameMessageAction {
   LedgerSignTypedData = 'ledger-sign-typed-data',
 }
 
-type IFrameMessage = {
-  action: IFrameMessageAction;
-  params: Record<string, unknown>;
-  target: string;
-  messageId: number;
+type GetAddressPayload = Awaited<ReturnType<LedgerHwAppEth['getAddress']>> & {
+  chainCode: string;
 };
-
-type GetAddressPayload = Awaited<ReturnType<LedgerHwAppEth['getAddress']>>;
 
 type SignMessagePayload = Awaited<
   ReturnType<LedgerHwAppEth['signEIP712HashedMessage']>
@@ -51,6 +48,16 @@ type SignTransactionPayload = Awaited<
 
 type ConnectionChangedPayload = {
   connected: boolean;
+};
+
+type IFrameMessage = {
+  action: IFrameMessageAction;
+  params?: Readonly<Record<string, unknown>>;
+};
+
+type IFramePostMessage = IFrameMessage & {
+  messageId: number;
+  target: typeof LEDGER_IFRAME_ID;
 };
 
 type IFrameMessageResponsePayload = { error?: Error } & (
@@ -198,12 +205,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
     transportType: string;
   };
 
-  #eventListener?: (params: {
-    origin: string;
-    data: IFrameMessageResponse;
-  }) => void;
-
-  constructor(opts = {}) {
+  constructor(opts: Partial<LedgerBridgeKeyringOptions> = {}) {
     super();
 
     this.deserialize(opts).catch((error) => {
@@ -216,13 +218,13 @@ export class LedgerBridgeKeyring extends EventEmitter {
   }
 
   async serialize() {
-    return Promise.resolve({
+    return {
       hdPath: this.hdPath,
       accounts: this.accounts,
       accountDetails: this.accountDetails,
       bridgeUrl: this.bridgeUrl,
       implementFullBIP44: false,
-    });
+    };
   }
 
   async deserialize(opts: Partial<LedgerBridgeKeyringOptions> = {}) {
@@ -301,7 +303,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
 
   async unlock(hdPath?: string, updateHdk = true): Promise<string> {
     if (this.isUnlocked() && !hdPath) {
-      return Promise.resolve('already unlocked');
+      return 'already unlocked';
     }
     const path = hdPath ? this.#toLedgerPath(hdPath) : this.hdPath;
     return new Promise((resolve, reject) => {
@@ -316,10 +318,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
           if (success && isGetAddressMessageResponse(payload)) {
             if (updateHdk) {
               this.hdk.publicKey = Buffer.from(payload.publicKey, 'hex');
-              this.hdk.chainCode = Buffer.from(
-                payload.chainCode as string,
-                'hex',
-              );
+              this.hdk.chainCode = Buffer.from(payload.chainCode, 'hex');
             }
             resolve(payload.address);
           } else {
@@ -744,14 +743,39 @@ export class LedgerBridgeKeyring extends EventEmitter {
     return tmp.join('/');
   }
 
+  #eventListener(params: { origin: string; data: IFrameMessageResponse }) {
+    const { origin, data } = params;
+
+    if (origin !== this.#getOrigin()) {
+      return false;
+    }
+
+    if (data) {
+      const messageCallback = this.messageCallbacks[data.messageId];
+      if (messageCallback) {
+        messageCallback(data);
+      } else if (
+        data.action === IFrameMessageAction.LedgerConnectionChange &&
+        isConnectionChangedResponse(data.payload)
+      ) {
+        this.isDeviceConnected = data.payload.connected;
+      }
+    }
+
+    return undefined;
+  }
+
   #sendMessage(
-    message: Partial<IFrameMessage>,
+    message: IFrameMessage,
     callback: (response: IFrameMessageResponse) => void,
   ) {
-    message.target = 'LEDGER-IFRAME';
-
     this.currentMessageId += 1;
-    message.messageId = this.currentMessageId;
+
+    const postMsg: IFramePostMessage = {
+      ...message,
+      messageId: this.currentMessageId,
+      target: LEDGER_IFRAME_ID,
+    };
 
     this.messageCallbacks[this.currentMessageId] = callback;
 
@@ -759,36 +783,15 @@ export class LedgerBridgeKeyring extends EventEmitter {
       throw new Error('The iframe is not loaded yet');
     }
 
-    this.iframe.contentWindow.postMessage(message, '*');
+    this.iframe.contentWindow.postMessage(postMsg, '*');
   }
 
   #setupListener() {
-    this.#eventListener = ({ origin, data }) => {
-      if (origin !== this.#getOrigin()) {
-        return false;
-      }
-
-      if (data) {
-        const messageCallback = this.messageCallbacks[data.messageId];
-        if (messageCallback) {
-          messageCallback(data);
-        } else if (
-          data.action === IFrameMessageAction.LedgerConnectionChange &&
-          isConnectionChangedResponse(data.payload)
-        ) {
-          this.isDeviceConnected = data.payload.connected;
-        }
-      }
-
-      return undefined;
-    };
-    window.addEventListener('message', this.#eventListener);
+    window.addEventListener('message', this.#eventListener.bind(this));
   }
 
   destroy() {
-    if (this.#eventListener) {
-      window.removeEventListener('message', this.#eventListener);
-    }
+    window.removeEventListener('message', this.#eventListener.bind(this));
   }
 
   async #getPage(increment: number) {
