@@ -13,7 +13,9 @@ import { AccountDetails, LedgerBridgeKeyring } from './ledger-bridge-keyring';
 import documentShim from '../test/document.shim';
 import windowShim from '../test/window.shim';
 
+// eslint-disable-next-line no-restricted-globals
 global.document = documentShim;
+// eslint-disable-next-line no-restricted-globals
 global.window = windowShim;
 
 const fakeAccounts = [
@@ -852,12 +854,14 @@ describe('LedgerBridgeKeyring', function () {
 
   describe('destroy', function () {
     it('should remove the message event listener', function () {
+      // eslint-disable-next-line no-restricted-globals
       sandbox.on(global.window, 'removeEventListener', (type, listener) => {
         assert(type, 'message');
         assert(typeof listener === 'function');
         return true;
       });
       keyring.destroy();
+      // eslint-disable-next-line no-restricted-globals
       expect(global.window.removeEventListener).to.have.been.called();
     });
   });

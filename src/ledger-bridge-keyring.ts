@@ -1,9 +1,12 @@
 import { TransactionFactory, TxData, TypedTransaction } from '@ethereumjs/tx';
 import type LedgerHwAppEth from '@ledgerhq/hw-app-eth';
 import { hasProperty } from '@metamask/utils';
+// eslint-disable-next-line import/no-nodejs-modules
+import { Buffer } from 'buffer';
 import * as sigUtil from 'eth-sig-util';
 import type OldEthJsTransaction from 'ethereumjs-tx';
 import * as ethUtil from 'ethereumjs-util';
+// eslint-disable-next-line import/no-nodejs-modules
 import { EventEmitter } from 'events';
 import HDKey from 'hdkey';
 
@@ -743,21 +746,19 @@ export class LedgerBridgeKeyring extends EventEmitter {
   }
 
   #eventListener(params: { origin: string; data: IFrameMessageResponse }) {
-    const { origin, data } = params;
-
-    if (origin !== this.#getOrigin()) {
+    if (params.origin !== this.#getOrigin()) {
       return false;
     }
 
-    if (data) {
-      const messageCallback = this.messageCallbacks[data.messageId];
+    if (params.data) {
+      const messageCallback = this.messageCallbacks[params.data.messageId];
       if (messageCallback) {
-        messageCallback(data);
+        messageCallback(params.data);
       } else if (
-        data.action === IFrameMessageAction.LedgerConnectionChange &&
-        isConnectionChangedResponse(data.payload)
+        params.data.action === IFrameMessageAction.LedgerConnectionChange &&
+        isConnectionChangedResponse(params.data.payload)
       ) {
-        this.isDeviceConnected = data.payload.connected;
+        this.isDeviceConnected = params.data.payload.connected;
       }
     }
 
