@@ -1,12 +1,15 @@
 module.exports = {
   root: true,
 
-  extends: ['@metamask/eslint-config', '@metamask/eslint-config-browser'],
+  extends: ['@metamask/eslint-config'],
 
   overrides: [
     {
       files: ['*.ts'],
-      extends: ['@metamask/eslint-config-typescript'],
+      extends: [
+        '@metamask/eslint-config-typescript',
+        '@metamask/eslint-config-browser',
+      ],
     },
 
     {
@@ -22,7 +25,10 @@ module.exports = {
       rules: {
         'import/no-nodejs-modules': 'off',
       },
-      extends: ['@metamask/eslint-config-mocha'],
+      extends: [
+        '@metamask/eslint-config-nodejs',
+        '@metamask/eslint-config-mocha',
+      ],
     },
   ],
 

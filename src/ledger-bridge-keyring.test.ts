@@ -13,10 +13,13 @@ import { AccountDetails, LedgerBridgeKeyring } from './ledger-bridge-keyring';
 import documentShim from '../test/document.shim';
 import windowShim from '../test/window.shim';
 
-// eslint-disable-next-line no-restricted-globals
 global.document = documentShim;
-// eslint-disable-next-line no-restricted-globals
 global.window = windowShim;
+
+// eslint-disable-next-line no-restricted-globals
+type HTMLIFrameElementShim = HTMLIFrameElement;
+// eslint-disable-next-line no-restricted-globals
+type WindowShim = Window;
 
 const fakeAccounts = [
   '0xF30952A1c534CDE7bC471380065726fa8686dfB3',
@@ -93,15 +96,15 @@ chai.use(spies);
  * @returns Returns true if the iframe is valid, false otherwise.
  */
 function isIFrameValid(
-  iframe?: HTMLIFrameElement,
-): iframe is HTMLIFrameElement & { contentWindow: Window } & {
+  iframe?: HTMLIFrameElementShim,
+): iframe is HTMLIFrameElementShim & { contentWindow: WindowShim } & {
   onload: () => any;
 } {
   return (
     iframe !== undefined &&
     hasProperty(iframe, 'contentWindow') &&
     typeof iframe.onload === 'function' &&
-    hasProperty(iframe.contentWindow as Window, 'postMessage')
+    hasProperty(iframe.contentWindow as WindowShim, 'postMessage')
   );
 }
 
@@ -111,7 +114,7 @@ function isIFrameValid(
  * @param iframe - The iframe to simulate the loading of.
  * @returns Returns a promise that resolves when the onload function is called.
  */
-async function simulateIFrameLoad(iframe?: HTMLIFrameElement) {
+async function simulateIFrameLoad(iframe?: HTMLIFrameElementShim) {
   if (!isIFrameValid(iframe)) {
     throw new Error('the iframe is not valid');
   }
