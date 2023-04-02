@@ -30,8 +30,11 @@ export type LedgerSignTypedDataResponse = {
   r: string;
 };
 
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export interface LedgerBridge {
-  init(): Promise<void>;
+  isDeviceConnected: boolean;
+
+  init(bridgeUrl: string): Promise<void>;
 
   destroy(): Promise<void>;
 
@@ -42,14 +45,14 @@ export interface LedgerBridge {
   getPublicKey(params: GetPublicKeyParams): Promise<GetPublicKeyResponse>;
 
   deviceSignTransaction(
-    params: LedgerSignTransactionParams
+    params: LedgerSignTransactionParams,
   ): Promise<LedgerSignTransactionResponse>;
 
   deviceSignMessage(
-    params: LedgerSignMessageParams
+    params: LedgerSignMessageParams,
   ): Promise<LedgerSignMessageResponse>;
 
   deviceSignTypedData(
-    params: LedgerSignTypedDataParams
+    params: LedgerSignTypedDataParams,
   ): Promise<LedgerSignTypedDataResponse>;
 }
