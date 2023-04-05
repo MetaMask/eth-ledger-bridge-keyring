@@ -57,14 +57,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Support new versions of ethereumjs/tx ([#68](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/68))
 
-[Unreleased]: git+https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v0.15.0...HEAD
-[0.15.0]: git+https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v0.14.0...v0.15.0
-[0.14.0]: git+https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v0.13.0...v0.14.0
-[0.13.0]: git+https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v0.12.0...v0.13.0
-[0.12.0]: git+https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v0.11.0...v0.12.0
-[0.11.0]: git+https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v0.10.0...v0.11.0
-[0.10.0]: git+https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v0.9.0...v0.10.0
-[0.9.0]: git+https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v0.8.0...v0.9.0
-[0.8.0]: git+https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v0.7.0...v0.8.0
-[0.7.0]: git+https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v0.6.0...v0.7.0
-[0.6.0]: git+https://github.com/MetaMask/eth-ledger-bridge-keyring/releases/tag/v0.6.0
+[Unreleased]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v0.15.0...HEAD
+[0.15.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v0.14.0...v0.15.0
+[0.14.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v0.13.0...v0.14.0
+[0.13.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v0.12.0...v0.13.0
+[0.12.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v0.11.0...v0.12.0
+[0.11.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v0.10.0...v0.11.0
+[0.10.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v0.9.0...v0.10.0
+[0.9.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v0.8.0...v0.9.0
+[0.8.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v0.7.0...v0.8.0
+[0.7.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v0.6.0...v0.7.0
+[0.6.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/releases/tag/v0.6.0
