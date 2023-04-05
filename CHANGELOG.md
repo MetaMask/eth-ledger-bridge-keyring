@@ -1,11 +1,11 @@
 # Changelog
-
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
 ## [0.15.0]
 ### Changed
 - **BREAKING:** @ethereumjs/tx upgraded to major version 4, which includes a shift from storing numerical values as BNs to storing them as native BigInts. This is a breaking change for users of this keyring who access the values of the tx object, or that use those tx objects to interact with other libraries that depend on @ethereumsjs/tx versions under 4.0.0. ([#181](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/181))
@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.11.0]
 ### Added
 - Add a new `isConnected` method which allows determining if the device is last known to be connected.  ([#131](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/131))
+
 ### Changed
 - Messaging now runs off of message IDs instead of assuming the response received is from the last message sent, which will not always been true.  ([#132](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/132))
 
@@ -55,3 +56,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.6.0]
 ### Added
 - Support new versions of ethereumjs/tx ([#68](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/68))
+
+[Unreleased]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v0.15.0...HEAD
+[0.15.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v0.14.0...v0.15.0
+[0.14.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v0.13.0...v0.14.0
+[0.13.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v0.12.0...v0.13.0
+[0.12.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v0.11.0...v0.12.0
+[0.11.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v0.10.0...v0.11.0
+[0.10.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v0.9.0...v0.10.0
+[0.9.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v0.8.0...v0.9.0
+[0.8.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v0.7.0...v0.8.0
+[0.7.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v0.6.0...v0.7.0
+[0.6.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/releases/tag/v0.6.0
