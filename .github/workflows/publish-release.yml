@@ -77,34 +77,3 @@ jobs:
           npm-token: ${{ secrets.NPM_TOKEN }}
         env:
           SKIP_PREPACK: true
-
-  get-release-version:
-    runs-on: ubuntu-latest
-    needs: publish-npm
-    outputs:
-      RELEASE_VERSION: ${{ steps.get-release-version.outputs.RELEASE_VERSION }}
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.sha }}
-      - id: get-release-version
-        shell: bash
-        run: ./scripts/get.sh ".version" "RELEASE_VERSION"
-
-  publish-release-to-gh-pages:
-    needs: get-release-version
-    name: Publish docs to `${{ needs.get-release-version.outputs.RELEASE_VERSION }}` directory of `gh-pages` branch
-    permissions:
-      contents: write
-    uses: ./.github/workflows/publish-docs.yml
-    with:
-      destination_dir: ${{ needs.get-release-version.outputs.RELEASE_VERSION }}
-
-  publish-release-to-latest-gh-pages:
-    needs: publish-npm
-    name: Publish docs to `latest` directory of `gh-pages` branch
-    permissions:
-      contents: write
-    uses: ./.github/workflows/publish-docs.yml
-    with:
-      destination_dir: latest
