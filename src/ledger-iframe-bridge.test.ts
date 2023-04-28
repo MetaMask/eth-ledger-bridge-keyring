@@ -1,4 +1,5 @@
 import { hasProperty } from '@metamask/utils';
+
 import { LedgerIframeBridge } from './ledger-iframe-bridge';
 import documentShim from '../test/document.shim';
 import windowShim from '../test/window.shim';
@@ -126,6 +127,7 @@ describe('LedgerIframeBridge', function () {
 
       expect(result).toBe(true);
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(bridge.iframe?.contentWindow?.postMessage).toHaveBeenCalled();
     });
 
@@ -145,8 +147,9 @@ describe('LedgerIframeBridge', function () {
         } as any);
       });
 
-      await expect(bridge.attemptMakeApp()).rejects.toThrowError(errorMessage);
+      await expect(bridge.attemptMakeApp()).rejects.toThrow(errorMessage);
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(bridge.iframe?.contentWindow?.postMessage).toHaveBeenCalled();
     });
   });
@@ -174,6 +177,7 @@ describe('LedgerIframeBridge', function () {
 
       expect(result).toBe(true);
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(bridge.iframe?.contentWindow?.postMessage).toHaveBeenCalled();
     });
 
@@ -195,10 +199,11 @@ describe('LedgerIframeBridge', function () {
         } as any);
       });
 
-      await expect(
-        bridge.updateTransportMethod(transportType),
-      ).rejects.toThrowError('Ledger transport could not be updated');
+      await expect(bridge.updateTransportMethod(transportType)).rejects.toThrow(
+        'Ledger transport could not be updated',
+      );
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(bridge.iframe?.contentWindow?.postMessage).toHaveBeenCalled();
     });
   });
@@ -228,6 +233,7 @@ describe('LedgerIframeBridge', function () {
 
       expect(result).toBe(payload);
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(bridge.iframe?.contentWindow?.postMessage).toHaveBeenCalled();
     });
 
@@ -251,10 +257,9 @@ describe('LedgerIframeBridge', function () {
         } as any);
       });
 
-      await expect(bridge.getPublicKey(params)).rejects.toThrowError(
-        errorMessage,
-      );
+      await expect(bridge.getPublicKey(params)).rejects.toThrow(errorMessage);
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(bridge.iframe?.contentWindow?.postMessage).toHaveBeenCalled();
     });
   });
@@ -285,6 +290,7 @@ describe('LedgerIframeBridge', function () {
 
       expect(result).toBe(payload);
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(bridge.iframe?.contentWindow?.postMessage).toHaveBeenCalled();
     });
 
@@ -306,10 +312,11 @@ describe('LedgerIframeBridge', function () {
         } as any);
       });
 
-      await expect(bridge.deviceSignTransaction(params)).rejects.toThrowError(
+      await expect(bridge.deviceSignTransaction(params)).rejects.toThrow(
         errorMessage,
       );
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(bridge.iframe?.contentWindow?.postMessage).toHaveBeenCalled();
     });
   });
@@ -337,6 +344,7 @@ describe('LedgerIframeBridge', function () {
 
       expect(result).toBe(payload);
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(bridge.iframe?.contentWindow?.postMessage).toHaveBeenCalled();
     });
 
@@ -358,10 +366,11 @@ describe('LedgerIframeBridge', function () {
         } as any);
       });
 
-      await expect(bridge.deviceSignMessage(params)).rejects.toThrowError(
+      await expect(bridge.deviceSignMessage(params)).rejects.toThrow(
         errorMessage,
       );
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(bridge.iframe?.contentWindow?.postMessage).toHaveBeenCalled();
     });
   });
@@ -393,6 +402,7 @@ describe('LedgerIframeBridge', function () {
 
       expect(result).toBe(payload);
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(bridge.iframe?.contentWindow?.postMessage).toHaveBeenCalled();
     });
 
@@ -418,10 +428,11 @@ describe('LedgerIframeBridge', function () {
         } as any);
       });
 
-      await expect(bridge.deviceSignTypedData(params)).rejects.toThrowError(
+      await expect(bridge.deviceSignTypedData(params)).rejects.toThrow(
         errorMessage,
       );
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(bridge.iframe?.contentWindow?.postMessage).toHaveBeenCalled();
     });
   });

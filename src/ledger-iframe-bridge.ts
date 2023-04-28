@@ -1,5 +1,6 @@
 import type LedgerHwAppEth from '@ledgerhq/hw-app-eth';
 import { hasProperty } from '@metamask/utils';
+
 import {
   GetPublicKeyParams,
   GetPublicKeyResponse,

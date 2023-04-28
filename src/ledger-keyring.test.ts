@@ -6,8 +6,8 @@ import * as ethUtil from 'ethereumjs-util';
 import HDKey from 'hdkey';
 
 import { LedgerBridge } from './ledger-bridge';
-import { AccountDetails, LedgerKeyring } from './ledger-keyring';
 import { LedgerIframeBridge } from './ledger-iframe-bridge';
+import { AccountDetails, LedgerKeyring } from './ledger-keyring';
 
 const fakeAccounts = [
   '0xF30952A1c534CDE7bC471380065726fa8686dfB3',
@@ -145,7 +145,7 @@ describe('LedgerKeyring', function () {
           new LedgerKeyring({
             bridge: undefined as unknown as LedgerBridge,
           }),
-      ).toThrowError('Bridge is a required dependency for the keyring');
+      ).toThrow('Bridge is a required dependency for the keyring');
     });
   });
 
@@ -155,6 +155,7 @@ describe('LedgerKeyring', function () {
 
       await keyring.init();
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(bridge.init).toHaveBeenCalledTimes(1);
     });
   });
@@ -492,12 +493,12 @@ describe('LedgerKeyring', function () {
         await basicSetupToUnlockOneAccount();
         jest
           .spyOn(keyring.bridge, 'deviceSignTransaction')
-          .mockImplementation((params) => {
+          .mockImplementation(async (params) => {
             expect(params).toStrictEqual({
               hdPath: "m/44'/60'/0'/0",
               tx: fakeTx.serialize().toString('hex'),
             });
-            return Promise.resolve({ v: '0x1', r: '0x0', s: '0x0' });
+            return { v: '0x1', r: '0x0', s: '0x0' };
           });
 
         jest.spyOn(fakeTx, 'verifySignature').mockReturnValue(true);
@@ -507,6 +508,7 @@ describe('LedgerKeyring', function () {
           fakeTx,
         );
 
+        // eslint-disable-next-line @typescript-eslint/unbound-method
         expect(keyring.bridge.deviceSignTransaction).toHaveBeenCalled();
         expect(returnedTx).toHaveProperty('v');
         expect(returnedTx).toHaveProperty('r');
@@ -543,14 +545,14 @@ describe('LedgerKeyring', function () {
 
         jest
           .spyOn(keyring.bridge, 'deviceSignTransaction')
-          .mockImplementation((params) => {
+          .mockImplementation(async (params) => {
             expect(params).toStrictEqual({
               hdPath: "m/44'/60'/0'/0",
               tx: ethUtil.rlp
                 .encode(newFakeTx.getMessageToSign(false))
                 .toString('hex'),
             });
-            return Promise.resolve(expectedRSV);
+            return expectedRSV;
           });
 
         const returnedTx = await keyring.signTransaction(
@@ -558,6 +560,7 @@ describe('LedgerKeyring', function () {
           newFakeTx,
         );
 
+        // eslint-disable-next-line @typescript-eslint/unbound-method
         expect(keyring.bridge.deviceSignTransaction).toHaveBeenCalled();
         expect(returnedTx.toJSON()).toStrictEqual(signedNewFakeTx.toJSON());
       });
@@ -590,12 +593,12 @@ describe('LedgerKeyring', function () {
         jest.spyOn(fakeTypeTwoTx, 'verifySignature').mockReturnValue(true);
         jest
           .spyOn(keyring.bridge, 'deviceSignTransaction')
-          .mockImplementation((params) => {
+          .mockImplementation(async (params) => {
             expect(params).toStrictEqual({
               hdPath: "m/44'/60'/0'/0",
               tx: fakeTypeTwoTx.getMessageToSign(false).toString('hex'),
             });
-            return Promise.resolve(expectedRSV);
+            return expectedRSV;
           });
 
         const returnedTx = await keyring.signTransaction(
@@ -603,8 +606,8 @@ describe('LedgerKeyring', function () {
           fakeTypeTwoTx,
         );
 
+        // eslint-disable-next-line @typescript-eslint/unbound-method
         expect(keyring.bridge.deviceSignTransaction).toHaveBeenCalled();
-
         expect(returnedTx.toJSON()).toStrictEqual(signedFakeTypeTwoTx.toJSON());
       });
     });
@@ -615,18 +618,21 @@ describe('LedgerKeyring', function () {
       await basicSetupToUnlockOneAccount();
       jest
         .spyOn(keyring.bridge, 'deviceSignMessage')
-        .mockImplementation((params) => {
+        .mockImplementation(async (params) => {
           expect(params).toStrictEqual({
             hdPath: "m/44'/60'/0'/0",
             message: 'some message',
           });
-          return Promise.resolve({ v: 1, r: '0x0', s: '0x0' });
+          return { v: 1, r: '0x0', s: '0x0' };
         });
 
       jest
         .spyOn(sigUtil, 'recoverPersonalSignature')
         .mockReturnValue(fakeAccounts[0]);
+
       await keyring.signPersonalMessage(fakeAccounts[0], 'some message');
+
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(keyring.bridge.deviceSignMessage).toHaveBeenCalled();
     });
   });
@@ -636,18 +642,21 @@ describe('LedgerKeyring', function () {
       await basicSetupToUnlockOneAccount();
       jest
         .spyOn(keyring.bridge, 'deviceSignMessage')
-        .mockImplementation((params) => {
+        .mockImplementation(async (params) => {
           expect(params).toStrictEqual({
             hdPath: "m/44'/60'/0'/0",
             message: 'some message',
           });
-          return Promise.resolve({ v: 1, r: '0x0', s: '0x0' });
+          return { v: 1, r: '0x0', s: '0x0' };
         });
 
       jest
         .spyOn(sigUtil, 'recoverPersonalSignature')
         .mockReturnValue(fakeAccounts[0]);
+
       await keyring.signMessage(fakeAccounts[0], 'some message');
+
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(keyring.bridge.deviceSignMessage).toHaveBeenCalled();
     });
   });
@@ -739,13 +748,11 @@ describe('LedgerKeyring', function () {
     it('should resolve properly when called', async function () {
       jest
         .spyOn(keyring.bridge, 'deviceSignTypedData')
-        .mockImplementation(() => {
-          return Promise.resolve({
-            v: 27,
-            r: '72d4e38a0e582e09a620fd38e236fe687a1ec782206b56d576f579c026a7e5b9',
-            s: '46759735981cd0c3efb02d36df28bb2feedfec3d90e408efc93f45b894946e32',
-          });
-        });
+        .mockImplementation(async () => ({
+          v: 27,
+          r: '72d4e38a0e582e09a620fd38e236fe687a1ec782206b56d576f579c026a7e5b9',
+          s: '46759735981cd0c3efb02d36df28bb2feedfec3d90e408efc93f45b894946e32',
+        }));
 
       const result = await keyring.signTypedData(
         fakeAccounts[15],
@@ -760,14 +767,12 @@ describe('LedgerKeyring', function () {
     it('should error when address does not match', async function () {
       jest
         .spyOn(keyring.bridge, 'deviceSignTypedData')
-        .mockImplementation(() => {
-          // Changing v to 28 should cause a validation error
-          return Promise.resolve({
-            v: 28,
-            r: '72d4e38a0e582e09a620fd38e236fe687a1ec782206b56d576f579c026a7e5b9',
-            s: '46759735981cd0c3efb02d36df28bb2feedfec3d90e408efc93f45b894946e32',
-          });
-        });
+        // Changing v to 28 should cause a validation error
+        .mockImplementation(async () => ({
+          v: 28,
+          r: '72d4e38a0e582e09a620fd38e236fe687a1ec782206b56d576f579c026a7e5b9',
+          s: '46759735981cd0c3efb02d36df28bb2feedfec3d90e408efc93f45b894946e32',
+        }));
 
       await expect(
         keyring.signTypedData(fakeAccounts[15], fixtureData, options),
@@ -781,6 +786,7 @@ describe('LedgerKeyring', function () {
 
       await keyring.destroy();
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(bridge.destroy).toHaveBeenCalled();
     });
   });
