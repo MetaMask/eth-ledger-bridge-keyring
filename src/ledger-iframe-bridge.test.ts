@@ -1,8 +1,4 @@
 import { hasProperty } from '@metamask/utils';
-import { strict as assert } from 'assert';
-import chai, { expect } from 'chai';
-import spies from 'chai-spies';
-
 import { LedgerIframeBridge } from './ledger-iframe-bridge';
 import documentShim from '../test/document.shim';
 import windowShim from '../test/window.shim';
@@ -14,8 +10,6 @@ global.window = windowShim;
 type HTMLIFrameElementShim = HTMLIFrameElement;
 // eslint-disable-next-line no-restricted-globals
 type WindowShim = Window;
-
-chai.use(spies);
 
 /**
  * Checks if the iframe provided has a valid contentWindow
@@ -53,7 +47,6 @@ async function simulateIFrameLoad(iframe?: HTMLIFrameElementShim) {
 
 describe('LedgerIframeBridge', function () {
   let bridge: LedgerIframeBridge;
-  let sandbox: ChaiSpies.Sandbox;
 
   /**
    * Stubs the postMessage function of the keyring iframe.
@@ -69,56 +62,56 @@ describe('LedgerIframeBridge', function () {
       throw new Error('the iframe is not valid');
     }
 
-    sandbox.on(bridgeInstance.iframe.contentWindow, 'postMessage', fn);
+    jest
+      .spyOn(bridgeInstance.iframe.contentWindow, 'postMessage')
+      .mockImplementation(fn);
   }
 
   beforeEach(async function () {
-    sandbox = chai.spy.sandbox();
-
     bridge = new LedgerIframeBridge();
     await bridge.init('bridgeUrl');
     await simulateIFrameLoad(bridge.iframe);
   });
 
   afterEach(function () {
-    sandbox.restore();
+    jest.clearAllMocks();
   });
 
   describe('init', function () {
     it('sets up the listener and iframe', async function () {
       bridge = new LedgerIframeBridge();
 
-      sandbox.on(global.window, 'addEventListener');
+      const addEventListenerSpy = jest.spyOn(global.window, 'addEventListener');
 
       const bridgeUrl = 'bridgeUrl';
       await bridge.init(bridgeUrl);
 
-      expect(global.window.addEventListener).to.have.been.called();
-
-      expect(bridge.bridgeUrl).to.equal(bridgeUrl);
-
-      expect(bridge.iframeLoaded).to.equal(false);
+      expect(addEventListenerSpy).toHaveBeenCalledTimes(1);
+      expect(bridge.bridgeUrl).toBe(bridgeUrl);
+      expect(bridge.iframeLoaded).toBe(false);
 
       await simulateIFrameLoad(bridge.iframe);
-
-      expect(bridge.iframeLoaded).to.equal(true);
+      expect(bridge.iframeLoaded).toBe(true);
     });
   });
 
   describe('destroy', function () {
     it('removes the message event listener', async function () {
-      sandbox.on(global.window, 'removeEventListener');
+      const removeEventListenerSpy = jest.spyOn(
+        global.window,
+        'removeEventListener',
+      );
 
       await bridge.destroy();
 
-      expect(global.window.removeEventListener).to.have.been.called();
+      expect(removeEventListenerSpy).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('attemptMakeApp', function () {
     it('sends and processes a successful ledger-make-app message', async function () {
       stubKeyringIFramePostMessage(bridge, (message) => {
-        assert.deepStrictEqual(message, {
+        expect(message).toStrictEqual({
           action: 'ledger-make-app',
           messageId: 1,
           target: 'LEDGER-IFRAME',
@@ -131,17 +124,16 @@ describe('LedgerIframeBridge', function () {
 
       const result = await bridge.attemptMakeApp();
 
-      expect(result).to.equal(true);
+      expect(result).toBe(true);
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(bridge.iframe?.contentWindow?.postMessage).to.have.been.called();
+      expect(bridge.iframe?.contentWindow?.postMessage).toHaveBeenCalled();
     });
 
     it('throws an error when a ledger-make-app message is not successful', async function () {
       const errorMessage = 'Ledger Error';
 
       stubKeyringIFramePostMessage(bridge, (message) => {
-        assert.deepStrictEqual(message, {
+        expect(message).toStrictEqual({
           action: 'ledger-make-app',
           messageId: 1,
           target: 'LEDGER-IFRAME',
@@ -153,16 +145,9 @@ describe('LedgerIframeBridge', function () {
         } as any);
       });
 
-      try {
-        await bridge.attemptMakeApp();
-      } catch (error: any) {
-        expect(error).to.be.an('error');
-        expect(error.name).to.be.equal('Error');
-        expect(error.message).to.be.equal(errorMessage);
-      }
+      await expect(bridge.attemptMakeApp()).rejects.toThrowError(errorMessage);
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(bridge.iframe?.contentWindow?.postMessage).to.have.been.called();
+      expect(bridge.iframe?.contentWindow?.postMessage).toHaveBeenCalled();
     });
   });
 
@@ -173,7 +158,7 @@ describe('LedgerIframeBridge', function () {
       const transportType = 'u2f';
 
       stubKeyringIFramePostMessage(bridge, (message) => {
-        assert.deepStrictEqual(message, {
+        expect(message).toStrictEqual({
           action: 'ledger-update-transport',
           params: { transportType },
           messageId: 1,
@@ -187,10 +172,9 @@ describe('LedgerIframeBridge', function () {
 
       const result = await bridge.updateTransportMethod(transportType);
 
-      expect(result).to.equal(true);
+      expect(result).toBe(true);
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(bridge.iframe?.contentWindow?.postMessage).to.have.been.called();
+      expect(bridge.iframe?.contentWindow?.postMessage).toHaveBeenCalled();
     });
 
     it('throws an error when a ledger-update-transport message is not successful', async function () {
@@ -199,7 +183,7 @@ describe('LedgerIframeBridge', function () {
       const transportType = 'u2f';
 
       stubKeyringIFramePostMessage(bridge, (message) => {
-        assert.deepStrictEqual(message, {
+        expect(message).toStrictEqual({
           action: 'ledger-update-transport',
           params: { transportType },
           messageId: 1,
@@ -211,28 +195,23 @@ describe('LedgerIframeBridge', function () {
         } as any);
       });
 
-      try {
-        await bridge.updateTransportMethod(transportType);
-      } catch (error: any) {
-        expect(error).to.be.an('error');
-        expect(error.name).to.be.equal('Error');
-        expect(error.message).to.be.equal(
-          'Ledger transport could not be updated',
-        );
-      }
+      await expect(
+        bridge.updateTransportMethod(transportType),
+      ).rejects.toThrowError('Ledger transport could not be updated');
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(bridge.iframe?.contentWindow?.postMessage).to.have.been.called();
+      expect(bridge.iframe?.contentWindow?.postMessage).toHaveBeenCalled();
     });
   });
 
   describe('getPublicKey', function () {
     it('sends and processes a successful ledger-unlock message', async function () {
       const payload = {};
-      const params = {};
+      const params = {
+        hdPath: "m/44'/60'/0'/0",
+      };
 
       stubKeyringIFramePostMessage(bridge, (message) => {
-        assert.deepStrictEqual(message, {
+        expect(message).toStrictEqual({
           action: 'ledger-unlock',
           params,
           messageId: 1,
@@ -247,18 +226,19 @@ describe('LedgerIframeBridge', function () {
 
       const result = await bridge.getPublicKey(params);
 
-      expect(result).to.equal(payload);
+      expect(result).toBe(payload);
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(bridge.iframe?.contentWindow?.postMessage).to.have.been.called();
+      expect(bridge.iframe?.contentWindow?.postMessage).toHaveBeenCalled();
     });
 
     it('throws an error when a ledger-unlock message is not successful', async function () {
       const errorMessage = 'Ledger Error';
-      const params = {};
+      const params = {
+        hdPath: "m/44'/60'/0'/0",
+      };
 
       stubKeyringIFramePostMessage(bridge, (message) => {
-        assert.deepStrictEqual(message, {
+        expect(message).toStrictEqual({
           action: 'ledger-unlock',
           params,
           messageId: 1,
@@ -271,26 +251,24 @@ describe('LedgerIframeBridge', function () {
         } as any);
       });
 
-      try {
-        await bridge.getPublicKey(params);
-      } catch (error: any) {
-        expect(error).to.be.an('error');
-        expect(error.name).to.be.equal('Error');
-        expect(error.message).to.be.equal(errorMessage);
-      }
+      await expect(bridge.getPublicKey(params)).rejects.toThrowError(
+        errorMessage,
+      );
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(bridge.iframe?.contentWindow?.postMessage).to.have.been.called();
+      expect(bridge.iframe?.contentWindow?.postMessage).toHaveBeenCalled();
     });
   });
 
   describe('deviceSignTransaction', function () {
     it('sends and processes a successful ledger-sign-transaction message', async function () {
       const payload = {};
-      const params = {};
+      const params = {
+        hdPath: "m/44'/60'/0'/0",
+        tx: '',
+      };
 
       stubKeyringIFramePostMessage(bridge, (message) => {
-        assert.deepStrictEqual(message, {
+        expect(message).toStrictEqual({
           action: 'ledger-sign-transaction',
           params,
           messageId: 1,
@@ -305,18 +283,17 @@ describe('LedgerIframeBridge', function () {
 
       const result = await bridge.deviceSignTransaction(params);
 
-      expect(result).to.equal(payload);
+      expect(result).toBe(payload);
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(bridge.iframe?.contentWindow?.postMessage).to.have.been.called();
+      expect(bridge.iframe?.contentWindow?.postMessage).toHaveBeenCalled();
     });
 
     it('throws an error when a ledger-sign-transaction message is not successful', async function () {
       const errorMessage = 'Ledger Error';
-      const params = {};
+      const params = { hdPath: "m/44'/60'/0'/0", tx: '' };
 
       stubKeyringIFramePostMessage(bridge, (message) => {
-        assert.deepStrictEqual(message, {
+        expect(message).toStrictEqual({
           action: 'ledger-sign-transaction',
           params,
           messageId: 1,
@@ -329,26 +306,21 @@ describe('LedgerIframeBridge', function () {
         } as any);
       });
 
-      try {
-        await bridge.deviceSignTransaction(params);
-      } catch (error: any) {
-        expect(error).to.be.an('error');
-        expect(error.name).to.be.equal('Error');
-        expect(error.message).to.be.equal(errorMessage);
-      }
+      await expect(bridge.deviceSignTransaction(params)).rejects.toThrowError(
+        errorMessage,
+      );
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(bridge.iframe?.contentWindow?.postMessage).to.have.been.called();
+      expect(bridge.iframe?.contentWindow?.postMessage).toHaveBeenCalled();
     });
   });
 
   describe('deviceSignMessage', function () {
     it('sends and processes a successful ledger-sign-personal-message message', async function () {
       const payload = {};
-      const params = {};
+      const params = { hdPath: "m/44'/60'/0'/0", message: '' };
 
       stubKeyringIFramePostMessage(bridge, (message) => {
-        assert.deepStrictEqual(message, {
+        expect(message).toStrictEqual({
           action: 'ledger-sign-personal-message',
           params,
           messageId: 1,
@@ -363,18 +335,17 @@ describe('LedgerIframeBridge', function () {
 
       const result = await bridge.deviceSignMessage(params);
 
-      expect(result).to.equal(payload);
+      expect(result).toBe(payload);
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(bridge.iframe?.contentWindow?.postMessage).to.have.been.called();
+      expect(bridge.iframe?.contentWindow?.postMessage).toHaveBeenCalled();
     });
 
     it('throws an error when a ledger-sign-personal-message message is not successful', async function () {
       const errorMessage = 'Ledger Error';
-      const params = {};
+      const params = { hdPath: "m/44'/60'/0'/0", message: '' };
 
       stubKeyringIFramePostMessage(bridge, (message) => {
-        assert.deepStrictEqual(message, {
+        expect(message).toStrictEqual({
           action: 'ledger-sign-personal-message',
           params,
           messageId: 1,
@@ -387,26 +358,25 @@ describe('LedgerIframeBridge', function () {
         } as any);
       });
 
-      try {
-        await bridge.deviceSignMessage(params);
-      } catch (error: any) {
-        expect(error).to.be.an('error');
-        expect(error.name).to.be.equal('Error');
-        expect(error.message).to.be.equal(errorMessage);
-      }
+      await expect(bridge.deviceSignMessage(params)).rejects.toThrowError(
+        errorMessage,
+      );
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(bridge.iframe?.contentWindow?.postMessage).to.have.been.called();
+      expect(bridge.iframe?.contentWindow?.postMessage).toHaveBeenCalled();
     });
   });
 
   describe('deviceSignTypedData', function () {
     it('sends and processes a successful ledger-sign-typed-data message', async function () {
       const payload = {};
-      const params = {};
+      const params = {
+        hdPath: "m/44'/60'/0'/0",
+        domainSeparatorHex: '',
+        hashStructMessageHex: '',
+      };
 
       stubKeyringIFramePostMessage(bridge, (message) => {
-        assert.deepStrictEqual(message, {
+        expect(message).toStrictEqual({
           action: 'ledger-sign-typed-data',
           params,
           messageId: 1,
@@ -421,18 +391,21 @@ describe('LedgerIframeBridge', function () {
 
       const result = await bridge.deviceSignTypedData(params);
 
-      expect(result).to.equal(payload);
+      expect(result).toBe(payload);
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(bridge.iframe?.contentWindow?.postMessage).to.have.been.called();
+      expect(bridge.iframe?.contentWindow?.postMessage).toHaveBeenCalled();
     });
 
     it('throws an error when a ledger-sign-typed-data message is not successful', async function () {
       const errorMessage = 'Ledger Error';
-      const params = {};
+      const params = {
+        hdPath: "m/44'/60'/0'/0",
+        domainSeparatorHex: '',
+        hashStructMessageHex: '',
+      };
 
       stubKeyringIFramePostMessage(bridge, (message) => {
-        assert.deepStrictEqual(message, {
+        expect(message).toStrictEqual({
           action: 'ledger-sign-typed-data',
           params,
           messageId: 1,
@@ -445,16 +418,11 @@ describe('LedgerIframeBridge', function () {
         } as any);
       });
 
-      try {
-        await bridge.deviceSignTypedData(params);
-      } catch (error: any) {
-        expect(error).to.be.an('error');
-        expect(error.name).to.be.equal('Error');
-        expect(error.message).to.be.equal(errorMessage);
-      }
+      await expect(bridge.deviceSignTypedData(params)).rejects.toThrowError(
+        errorMessage,
+      );
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(bridge.iframe?.contentWindow?.postMessage).to.have.been.called();
+      expect(bridge.iframe?.contentWindow?.postMessage).toHaveBeenCalled();
     });
   });
 });

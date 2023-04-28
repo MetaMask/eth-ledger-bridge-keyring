@@ -1,5 +1,16 @@
 import type LedgerHwAppEth from '@ledgerhq/hw-app-eth';
 import { hasProperty } from '@metamask/utils';
+import {
+  GetPublicKeyParams,
+  GetPublicKeyResponse,
+  LedgerBridge,
+  LedgerSignMessageParams,
+  LedgerSignMessageResponse,
+  LedgerSignTransactionParams,
+  LedgerSignTransactionResponse,
+  LedgerSignTypedDataParams,
+  LedgerSignTypedDataResponse,
+} from './ledger-bridge';
 
 const LEDGER_IFRAME_ID = 'LEDGER-IFRAME';
 
@@ -68,7 +79,7 @@ function isConnectionChangedResponse(
   );
 }
 
-export class LedgerIframeBridge {
+export class LedgerIframeBridge implements LedgerBridge {
   iframe?: HTMLIFrameElement;
 
   iframeLoaded = false;
@@ -83,7 +94,7 @@ export class LedgerIframeBridge {
     {};
 
   delayedPromise?: {
-    resolve: (value: unknown) => void;
+    resolve: (value: boolean) => void;
     reject: (error: unknown) => void;
     transportType: string;
   };
@@ -100,7 +111,7 @@ export class LedgerIframeBridge {
     window.removeEventListener('message', this.#eventListener.bind(this));
   }
 
-  async attemptMakeApp() {
+  async attemptMakeApp(): Promise<boolean> {
     return new Promise((resolve, reject) => {
       this.#sendMessage(
         {
@@ -117,7 +128,7 @@ export class LedgerIframeBridge {
     });
   }
 
-  async updateTransportMethod(transportType: string) {
+  async updateTransportMethod(transportType: string): Promise<boolean> {
     return new Promise((resolve, reject) => {
       // If the iframe isn't loaded yet, let's store the desired transportType value and
       // optimistically return a successful promise
@@ -146,25 +157,33 @@ export class LedgerIframeBridge {
     });
   }
 
-  async getPublicKey(params: any) {
+  async getPublicKey(
+    params: GetPublicKeyParams,
+  ): Promise<GetPublicKeyResponse> {
     return this.#deviceActionMessage(IFrameMessageAction.LedgerUnlock, params);
   }
 
-  async deviceSignTransaction(params: any) {
+  async deviceSignTransaction(
+    params: LedgerSignTransactionParams,
+  ): Promise<LedgerSignTransactionResponse> {
     return this.#deviceActionMessage(
       IFrameMessageAction.LedgerSignTransaction,
       params,
     );
   }
 
-  async deviceSignMessage(params: any) {
+  async deviceSignMessage(
+    params: LedgerSignMessageParams,
+  ): Promise<LedgerSignMessageResponse> {
     return this.#deviceActionMessage(
       IFrameMessageAction.LedgerSignPersonalMessage,
       params,
     );
   }
 
-  async deviceSignTypedData(params: any) {
+  async deviceSignTypedData(
+    params: LedgerSignTypedDataParams,
+  ): Promise<LedgerSignTypedDataResponse> {
     return this.#deviceActionMessage(
       IFrameMessageAction.LedgerSignTypedData,
       params,
@@ -172,7 +191,7 @@ export class LedgerIframeBridge {
   }
 
   async #deviceActionMessage(action: IFrameMessageAction, params: any) {
-    return new Promise((resolve, reject) => {
+    return new Promise<any>((resolve, reject) => {
       this.#sendMessage(
         {
           action,
