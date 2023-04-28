@@ -27,7 +27,7 @@ module.exports = {
       },
       extends: [
         '@metamask/eslint-config-nodejs',
-        '@metamask/eslint-config-mocha',
+        '@metamask/eslint-config-jest',
       ],
     },
   ],

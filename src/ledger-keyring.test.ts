@@ -776,7 +776,7 @@ describe('LedgerKeyring', function () {
   });
 
   describe('destroy', function () {
-    it('should remove the message event listener', async function () {
+    it('should call the destroy bridge method', async function () {
       jest.spyOn(keyring.bridge, 'destroy').mockResolvedValue(undefined);
 
       await keyring.destroy();
