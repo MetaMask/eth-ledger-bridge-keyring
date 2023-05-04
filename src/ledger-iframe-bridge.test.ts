@@ -1,6 +1,9 @@
 import { hasProperty } from '@metamask/utils';
 
-import { LedgerIframeBridge } from './ledger-iframe-bridge';
+import {
+  IFrameMessageAction,
+  LedgerIframeBridge,
+} from './ledger-iframe-bridge';
 import documentShim from '../test/document.shim';
 import windowShim from '../test/window.shim';
 
@@ -113,14 +116,16 @@ describe('LedgerIframeBridge', function () {
     it('sends and processes a successful ledger-make-app message', async function () {
       stubKeyringIFramePostMessage(bridge, (message) => {
         expect(message).toStrictEqual({
-          action: 'ledger-make-app',
+          action: IFrameMessageAction.LedgerMakeApp,
           messageId: 1,
           target: 'LEDGER-IFRAME',
         });
 
         bridge.messageCallbacks[message.messageId]?.({
+          action: IFrameMessageAction.LedgerMakeApp,
+          messageId: 1,
           success: true,
-        } as any);
+        });
       });
 
       const result = await bridge.attemptMakeApp();
@@ -136,15 +141,17 @@ describe('LedgerIframeBridge', function () {
 
       stubKeyringIFramePostMessage(bridge, (message) => {
         expect(message).toStrictEqual({
-          action: 'ledger-make-app',
+          action: IFrameMessageAction.LedgerMakeApp,
           messageId: 1,
           target: 'LEDGER-IFRAME',
         });
 
         bridge.messageCallbacks[message.messageId]?.({
+          action: IFrameMessageAction.LedgerMakeApp,
+          messageId: 1,
           error: new Error(errorMessage),
           success: false,
-        } as any);
+        });
       });
 
       await expect(bridge.attemptMakeApp()).rejects.toThrow(errorMessage);
@@ -162,15 +169,17 @@ describe('LedgerIframeBridge', function () {
 
       stubKeyringIFramePostMessage(bridge, (message) => {
         expect(message).toStrictEqual({
-          action: 'ledger-update-transport',
+          action: IFrameMessageAction.LedgerUpdateTransport,
           params: { transportType },
           messageId: 1,
           target: 'LEDGER-IFRAME',
         });
 
         bridge.messageCallbacks[message.messageId]?.({
+          action: IFrameMessageAction.LedgerUpdateTransport,
+          messageId: 1,
           success: true,
-        } as any);
+        });
       });
 
       const result = await bridge.updateTransportMethod(transportType);
@@ -195,8 +204,10 @@ describe('LedgerIframeBridge', function () {
         });
 
         bridge.messageCallbacks[message.messageId]?.({
+          action: IFrameMessageAction.LedgerUpdateTransport,
+          messageId: 1,
           success: false,
-        } as any);
+        });
       });
 
       await expect(bridge.updateTransportMethod(transportType)).rejects.toThrow(

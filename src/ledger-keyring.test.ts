@@ -93,19 +93,7 @@ describe('LedgerKeyring', function () {
   }
 
   beforeEach(async function () {
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
-    const noop = () => {};
-    bridge = {
-      init: noop,
-      destroy: noop,
-      attemptMakeApp: noop,
-      updateTransportMethod: noop,
-      getPublicKey: noop,
-      deviceSignTransaction: noop,
-      deviceSignMessage: noop,
-      deviceSignTypedData: noop,
-    } as any;
-
+    bridge = new LedgerIframeBridge();
     keyring = new LedgerKeyring({ bridge });
     keyring.hdk = fakeHdKey;
     await keyring.deserialize();

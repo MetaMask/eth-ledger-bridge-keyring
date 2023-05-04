@@ -15,7 +15,7 @@ import {
 
 const LEDGER_IFRAME_ID = 'LEDGER-IFRAME';
 
-enum IFrameMessageAction {
+export enum IFrameMessageAction {
   LedgerConnectionChange = 'ledger-connection-change',
   LedgerUnlock = 'ledger-unlock',
   LedgerMakeApp = 'ledger-make-app',
@@ -62,7 +62,7 @@ type IFrameMessageResponse = {
   success: boolean;
   action: IFrameMessageAction;
   messageId: number;
-  payload: IFrameMessageResponsePayload;
+  payload?: IFrameMessageResponsePayload;
   error?: unknown;
 };
 
@@ -250,6 +250,7 @@ export class LedgerIframeBridge implements LedgerBridge {
         messageCallback(params.data);
       } else if (
         params.data.action === IFrameMessageAction.LedgerConnectionChange &&
+        params.data.payload &&
         isConnectionChangedResponse(params.data.payload)
       ) {
         this.isDeviceConnected = params.data.payload.connected;
