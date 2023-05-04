@@ -25,16 +25,6 @@ enum NetworkApiUrls {
   Mainnet = 'https://api.etherscan.io',
 }
 
-export enum IFrameMessageAction {
-  LedgerConnectionChange = 'ledger-connection-change',
-  LedgerUnlock = 'ledger-unlock',
-  LedgerMakeApp = 'ledger-make-app',
-  LedgerUpdateTransport = 'ledger-update-transport',
-  LedgerSignTransaction = 'ledger-sign-transaction',
-  LedgerSignPersonalMessage = 'ledger-sign-personal-message',
-  LedgerSignTypedData = 'ledger-sign-typed-data',
-}
-
 type SignTransactionPayload = Awaited<
   ReturnType<LedgerBridge['deviceSignTransaction']>
 >;

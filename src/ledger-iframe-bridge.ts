@@ -51,20 +51,34 @@ type IFramePostMessage = IFrameMessage & {
   target: typeof LEDGER_IFRAME_ID;
 };
 
-type IFrameMessageResponsePayload = { error?: Error } & (
+type IFrameMessageResponsePayload =
   | GetAddressPayload
   | SignTransactionPayload
   | SignMessagePayload
-  | ConnectionChangedPayload
-);
+  | ConnectionChangedPayload;
+
+// type IFrameMessageResponse = {
+//   success: boolean;
+//   action: IFrameMessageAction;
+//   messageId: number;
+//   payload?: IFrameMessageResponsePayload;
+//   error?: unknown;
+// };
 
 type IFrameMessageResponse = {
-  success: boolean;
   action: IFrameMessageAction;
   messageId: number;
-  payload?: IFrameMessageResponsePayload;
-  error?: unknown;
-};
+} & (
+  | {
+      success: true;
+      payload?: IFrameMessageResponsePayload;
+    }
+  | {
+      success: false;
+      payload?: { error: Error };
+      error?: unknown;
+    }
+);
 
 /**
  * Check if the given payload is a ConnectionChangedPayload.
@@ -118,11 +132,11 @@ export class LedgerIframeBridge implements LedgerBridge {
         {
           action: IFrameMessageAction.LedgerMakeApp,
         },
-        ({ success, error }: IFrameMessageResponse) => {
-          if (success) {
+        (response) => {
+          if (response.success) {
             resolve(true);
           } else {
-            reject(error);
+            reject(response.error);
           }
         },
       );
@@ -149,10 +163,9 @@ export class LedgerIframeBridge implements LedgerBridge {
         },
         ({ success }) => {
           if (success) {
-            resolve(true);
-          } else {
-            reject(new Error('Ledger transport could not be updated'));
+            return resolve(true);
           }
+          reject(new Error('Ledger transport could not be updated'));
         },
       );
     });
@@ -198,12 +211,11 @@ export class LedgerIframeBridge implements LedgerBridge {
           action,
           params,
         },
-        ({ success, payload }) => {
-          if (success) {
-            resolve(payload);
+        (response) => {
+          if (response.success) {
+            return resolve(response.payload);
           }
-          // eslint-disable-next-line prefer-promise-reject-errors
-          reject(payload?.error);
+          reject(response.payload?.error);
         },
       );
     });
@@ -250,6 +262,7 @@ export class LedgerIframeBridge implements LedgerBridge {
         messageCallback(params.data);
       } else if (
         params.data.action === IFrameMessageAction.LedgerConnectionChange &&
+        params.data.success &&
         params.data.payload &&
         isConnectionChangedResponse(params.data.payload)
       ) {

@@ -49,6 +49,8 @@ async function simulateIFrameLoad(iframe?: HTMLIFrameElementShim) {
   return await iframe.onload();
 }
 
+const LEDGER_IFRAME_ID = 'LEDGER-IFRAME';
+
 describe('LedgerIframeBridge', function () {
   let bridge: LedgerIframeBridge;
 
@@ -118,7 +120,7 @@ describe('LedgerIframeBridge', function () {
         expect(message).toStrictEqual({
           action: IFrameMessageAction.LedgerMakeApp,
           messageId: 1,
-          target: 'LEDGER-IFRAME',
+          target: LEDGER_IFRAME_ID,
         });
 
         bridge.messageCallbacks[message.messageId]?.({
@@ -143,14 +145,14 @@ describe('LedgerIframeBridge', function () {
         expect(message).toStrictEqual({
           action: IFrameMessageAction.LedgerMakeApp,
           messageId: 1,
-          target: 'LEDGER-IFRAME',
+          target: LEDGER_IFRAME_ID,
         });
 
         bridge.messageCallbacks[message.messageId]?.({
           action: IFrameMessageAction.LedgerMakeApp,
           messageId: 1,
-          error: new Error(errorMessage),
           success: false,
+          error: new Error(errorMessage),
         });
       });
 
@@ -170,9 +172,9 @@ describe('LedgerIframeBridge', function () {
       stubKeyringIFramePostMessage(bridge, (message) => {
         expect(message).toStrictEqual({
           action: IFrameMessageAction.LedgerUpdateTransport,
-          params: { transportType },
           messageId: 1,
-          target: 'LEDGER-IFRAME',
+          target: LEDGER_IFRAME_ID,
+          params: { transportType },
         });
 
         bridge.messageCallbacks[message.messageId]?.({
@@ -198,9 +200,9 @@ describe('LedgerIframeBridge', function () {
       stubKeyringIFramePostMessage(bridge, (message) => {
         expect(message).toStrictEqual({
           action: 'ledger-update-transport',
-          params: { transportType },
           messageId: 1,
-          target: 'LEDGER-IFRAME',
+          params: { transportType },
+          target: LEDGER_IFRAME_ID,
         });
 
         bridge.messageCallbacks[message.messageId]?.({
@@ -221,23 +223,29 @@ describe('LedgerIframeBridge', function () {
 
   describe('getPublicKey', function () {
     it('sends and processes a successful ledger-unlock message', async function () {
-      const payload = {};
+      const payload = {
+        publicKey: '',
+        address: '',
+        chainCode: '',
+      };
       const params = {
         hdPath: "m/44'/60'/0'/0",
       };
 
       stubKeyringIFramePostMessage(bridge, (message) => {
         expect(message).toStrictEqual({
-          action: 'ledger-unlock',
+          action: IFrameMessageAction.LedgerUnlock,
           params,
           messageId: 1,
-          target: 'LEDGER-IFRAME',
+          target: LEDGER_IFRAME_ID,
         });
 
         bridge.messageCallbacks[message.messageId]?.({
+          action: IFrameMessageAction.LedgerUnlock,
+          messageId: 1,
           success: true,
           payload,
-        } as any);
+        });
       });
 
       const result = await bridge.getPublicKey(params);
@@ -256,16 +264,18 @@ describe('LedgerIframeBridge', function () {
 
       stubKeyringIFramePostMessage(bridge, (message) => {
         expect(message).toStrictEqual({
-          action: 'ledger-unlock',
-          params,
+          action: IFrameMessageAction.LedgerUnlock,
           messageId: 1,
-          target: 'LEDGER-IFRAME',
+          target: LEDGER_IFRAME_ID,
+          params,
         });
 
         bridge.messageCallbacks[message.messageId]?.({
+          action: IFrameMessageAction.LedgerUnlock,
+          messageId: 1,
           success: false,
           payload: { error: new Error(errorMessage) },
-        } as any);
+        });
       });
 
       await expect(bridge.getPublicKey(params)).rejects.toThrow(errorMessage);
@@ -277,7 +287,11 @@ describe('LedgerIframeBridge', function () {
 
   describe('deviceSignTransaction', function () {
     it('sends and processes a successful ledger-sign-transaction message', async function () {
-      const payload = {};
+      const payload = {
+        v: '',
+        r: '',
+        s: '',
+      };
       const params = {
         hdPath: "m/44'/60'/0'/0",
         tx: '',
@@ -285,16 +299,18 @@ describe('LedgerIframeBridge', function () {
 
       stubKeyringIFramePostMessage(bridge, (message) => {
         expect(message).toStrictEqual({
-          action: 'ledger-sign-transaction',
-          params,
+          action: IFrameMessageAction.LedgerSignTransaction,
           messageId: 1,
-          target: 'LEDGER-IFRAME',
+          target: LEDGER_IFRAME_ID,
+          params,
         });
 
         bridge.messageCallbacks[message.messageId]?.({
+          action: IFrameMessageAction.LedgerSignTransaction,
+          messageId: 1,
           success: true,
           payload,
-        } as any);
+        });
       });
 
       const result = await bridge.deviceSignTransaction(params);
@@ -311,16 +327,18 @@ describe('LedgerIframeBridge', function () {
 
       stubKeyringIFramePostMessage(bridge, (message) => {
         expect(message).toStrictEqual({
-          action: 'ledger-sign-transaction',
-          params,
+          action: IFrameMessageAction.LedgerSignTransaction,
           messageId: 1,
-          target: 'LEDGER-IFRAME',
+          target: LEDGER_IFRAME_ID,
+          params,
         });
 
         bridge.messageCallbacks[message.messageId]?.({
+          action: IFrameMessageAction.LedgerSignTransaction,
+          messageId: 1,
           success: false,
           payload: { error: new Error(errorMessage) },
-        } as any);
+        });
       });
 
       await expect(bridge.deviceSignTransaction(params)).rejects.toThrow(
@@ -334,21 +352,27 @@ describe('LedgerIframeBridge', function () {
 
   describe('deviceSignMessage', function () {
     it('sends and processes a successful ledger-sign-personal-message message', async function () {
-      const payload = {};
+      const payload = {
+        v: 0,
+        r: '',
+        s: '',
+      };
       const params = { hdPath: "m/44'/60'/0'/0", message: '' };
 
       stubKeyringIFramePostMessage(bridge, (message) => {
         expect(message).toStrictEqual({
-          action: 'ledger-sign-personal-message',
-          params,
+          action: IFrameMessageAction.LedgerSignPersonalMessage,
           messageId: 1,
-          target: 'LEDGER-IFRAME',
+          target: LEDGER_IFRAME_ID,
+          params,
         });
 
         bridge.messageCallbacks[message.messageId]?.({
+          action: IFrameMessageAction.LedgerSignPersonalMessage,
+          messageId: 1,
           success: true,
           payload,
-        } as any);
+        });
       });
 
       const result = await bridge.deviceSignMessage(params);
@@ -365,16 +389,18 @@ describe('LedgerIframeBridge', function () {
 
       stubKeyringIFramePostMessage(bridge, (message) => {
         expect(message).toStrictEqual({
-          action: 'ledger-sign-personal-message',
-          params,
+          action: IFrameMessageAction.LedgerSignPersonalMessage,
           messageId: 1,
-          target: 'LEDGER-IFRAME',
+          target: LEDGER_IFRAME_ID,
+          params,
         });
 
         bridge.messageCallbacks[message.messageId]?.({
+          action: IFrameMessageAction.LedgerSignPersonalMessage,
+          messageId: 1,
           success: false,
           payload: { error: new Error(errorMessage) },
-        } as any);
+        });
       });
 
       await expect(bridge.deviceSignMessage(params)).rejects.toThrow(
@@ -388,7 +414,11 @@ describe('LedgerIframeBridge', function () {
 
   describe('deviceSignTypedData', function () {
     it('sends and processes a successful ledger-sign-typed-data message', async function () {
-      const payload = {};
+      const payload = {
+        v: 0,
+        r: '',
+        s: '',
+      };
       const params = {
         hdPath: "m/44'/60'/0'/0",
         domainSeparatorHex: '',
@@ -397,16 +427,18 @@ describe('LedgerIframeBridge', function () {
 
       stubKeyringIFramePostMessage(bridge, (message) => {
         expect(message).toStrictEqual({
-          action: 'ledger-sign-typed-data',
-          params,
+          action: IFrameMessageAction.LedgerSignTypedData,
           messageId: 1,
-          target: 'LEDGER-IFRAME',
+          target: LEDGER_IFRAME_ID,
+          params,
         });
 
         bridge.messageCallbacks[message.messageId]?.({
+          action: IFrameMessageAction.LedgerSignTypedData,
+          messageId: 1,
           success: true,
           payload,
-        } as any);
+        });
       });
 
       const result = await bridge.deviceSignTypedData(params);
@@ -427,16 +459,18 @@ describe('LedgerIframeBridge', function () {
 
       stubKeyringIFramePostMessage(bridge, (message) => {
         expect(message).toStrictEqual({
-          action: 'ledger-sign-typed-data',
-          params,
+          action: IFrameMessageAction.LedgerSignTypedData,
           messageId: 1,
-          target: 'LEDGER-IFRAME',
+          target: LEDGER_IFRAME_ID,
+          params,
         });
 
         bridge.messageCallbacks[message.messageId]?.({
+          action: IFrameMessageAction.LedgerSignTypedData,
+          messageId: 1,
           success: false,
           payload: { error: new Error(errorMessage) },
-        } as any);
+        });
       });
 
       await expect(bridge.deviceSignTypedData(params)).rejects.toThrow(
