@@ -1,34 +1,30 @@
+import type LedgerHwAppEth from '@ledgerhq/hw-app-eth';
+
 export type GetPublicKeyParams = { hdPath: string };
-export type GetPublicKeyResponse = {
-  publicKey: string;
-  address: string;
-  chainCode?: string;
+export type GetPublicKeyResponse = Awaited<
+  ReturnType<LedgerHwAppEth['getAddress']>
+> & {
+  chainCode: string;
 };
 
 export type LedgerSignTransactionParams = { hdPath: string; tx: string };
-export type LedgerSignTransactionResponse = {
-  s: string;
-  v: string;
-  r: string;
-};
+export type LedgerSignTransactionResponse = Awaited<
+  ReturnType<LedgerHwAppEth['signTransaction']>
+>;
 
 export type LedgerSignMessageParams = { hdPath: string; message: string };
-export type LedgerSignMessageResponse = {
-  v: number;
-  s: string;
-  r: string;
-};
+export type LedgerSignMessageResponse = Awaited<
+  ReturnType<LedgerHwAppEth['signPersonalMessage']>
+>;
 
 export type LedgerSignTypedDataParams = {
   hdPath: string;
   domainSeparatorHex: string;
   hashStructMessageHex: string;
 };
-export type LedgerSignTypedDataResponse = {
-  v: number;
-  s: string;
-  r: string;
-};
+export type LedgerSignTypedDataResponse = Awaited<
+  ReturnType<LedgerHwAppEth['signEIP712HashedMessage']>
+>;
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export interface LedgerBridge {

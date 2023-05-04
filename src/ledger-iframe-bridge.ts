@@ -1,5 +1,3 @@
-import type LedgerHwAppEth from '@ledgerhq/hw-app-eth';
-
 import {
   GetPublicKeyParams,
   GetPublicKeyResponse,
@@ -30,7 +28,7 @@ type IFrameMessageResponse<TAction extends IFrameMessageAction> = {
 } & (
   | {
       action: IFrameMessageAction.LedgerConnectionChange;
-      payload: ConnectionChangedPayload;
+      payload: { connected: boolean };
     }
   | ({
       action: IFrameMessageAction.LedgerMakeApp;
@@ -42,13 +40,13 @@ type IFrameMessageResponse<TAction extends IFrameMessageAction> = {
   | ({
       action: IFrameMessageAction.LedgerUnlock;
     } & (
-      | { success: true; payload: GetAddressPayload }
+      | { success: true; payload: GetPublicKeyResponse }
       | { success: false; payload: { error: Error } }
     ))
   | ({
       action: IFrameMessageAction.LedgerSignTransaction;
     } & (
-      | { success: true; payload: SignTransactionPayload }
+      | { success: true; payload: LedgerSignTransactionResponse }
       | { success: false; payload: { error: Error } }
     ))
   | ({
@@ -56,26 +54,13 @@ type IFrameMessageResponse<TAction extends IFrameMessageAction> = {
         | IFrameMessageAction.LedgerSignPersonalMessage
         | IFrameMessageAction.LedgerSignTypedData;
     } & (
-      | { success: true; payload: SignMessagePayload }
+      | {
+          success: true;
+          payload: LedgerSignMessageResponse | LedgerSignTypedDataResponse;
+        }
       | { success: false; payload: { error: Error } }
     ))
 );
-
-type GetAddressPayload = Awaited<ReturnType<LedgerHwAppEth['getAddress']>> & {
-  chainCode: string;
-};
-
-type SignMessagePayload = Awaited<
-  ReturnType<LedgerHwAppEth['signEIP712HashedMessage']>
->;
-
-type SignTransactionPayload = Awaited<
-  ReturnType<LedgerHwAppEth['signTransaction']>
->;
-
-type ConnectionChangedPayload = {
-  connected: boolean;
-};
 
 type IFrameMessage<TAction extends IFrameMessageAction> = {
   action: TAction;
