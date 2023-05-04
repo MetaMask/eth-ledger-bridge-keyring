@@ -165,7 +165,7 @@ export class LedgerIframeBridge implements LedgerBridge {
           if (success) {
             return resolve(true);
           }
-          reject(new Error('Ledger transport could not be updated'));
+          return reject(new Error('Ledger transport could not be updated'));
         },
       );
     });
@@ -215,7 +215,7 @@ export class LedgerIframeBridge implements LedgerBridge {
           if (response.success) {
             return resolve(response.payload);
           }
-          reject(response.payload?.error);
+          return reject(response.payload?.error);
         },
       );
     });
