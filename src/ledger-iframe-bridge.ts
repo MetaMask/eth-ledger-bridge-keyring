@@ -1,5 +1,4 @@
 import type LedgerHwAppEth from '@ledgerhq/hw-app-eth';
-import { hasProperty } from '@metamask/utils';
 
 import {
   GetPublicKeyParams,
@@ -25,6 +24,43 @@ export enum IFrameMessageAction {
   LedgerSignTypedData = 'ledger-sign-typed-data',
 }
 
+type IFrameMessageResponse<TAction extends IFrameMessageAction> = {
+  action: TAction;
+  messageId: number;
+} & (
+  | {
+      action: IFrameMessageAction.LedgerConnectionChange;
+      payload: ConnectionChangedPayload;
+    }
+  | ({
+      action: IFrameMessageAction.LedgerMakeApp;
+    } & ({ success: true } | { success: false; error?: unknown }))
+  | {
+      action: IFrameMessageAction.LedgerUpdateTransport;
+      success: boolean;
+    }
+  | ({
+      action: IFrameMessageAction.LedgerUnlock;
+    } & (
+      | { success: true; payload: GetAddressPayload }
+      | { success: false; payload: { error: Error } }
+    ))
+  | ({
+      action: IFrameMessageAction.LedgerSignTransaction;
+    } & (
+      | { success: true; payload: SignTransactionPayload }
+      | { success: false; payload: { error: Error } }
+    ))
+  | ({
+      action:
+        | IFrameMessageAction.LedgerSignPersonalMessage
+        | IFrameMessageAction.LedgerSignTypedData;
+    } & (
+      | { success: true; payload: SignMessagePayload }
+      | { success: false; payload: { error: Error } }
+    ))
+);
+
 type GetAddressPayload = Awaited<ReturnType<LedgerHwAppEth['getAddress']>> & {
   chainCode: string;
 };
@@ -41,58 +77,16 @@ type ConnectionChangedPayload = {
   connected: boolean;
 };
 
-type IFrameMessage = {
-  action: IFrameMessageAction;
+type IFrameMessage<TAction extends IFrameMessageAction> = {
+  action: TAction;
   params?: Readonly<Record<string, unknown>>;
 };
 
-type IFramePostMessage = IFrameMessage & {
-  messageId: number;
-  target: typeof LEDGER_IFRAME_ID;
-};
-
-type IFrameMessageResponsePayload =
-  | GetAddressPayload
-  | SignTransactionPayload
-  | SignMessagePayload
-  | ConnectionChangedPayload;
-
-// type IFrameMessageResponse = {
-//   success: boolean;
-//   action: IFrameMessageAction;
-//   messageId: number;
-//   payload?: IFrameMessageResponsePayload;
-//   error?: unknown;
-// };
-
-type IFrameMessageResponse = {
-  action: IFrameMessageAction;
-  messageId: number;
-} & (
-  | {
-      success: true;
-      payload?: IFrameMessageResponsePayload;
-    }
-  | {
-      success: false;
-      payload?: { error: Error };
-      error?: unknown;
-    }
-);
-
-/**
- * Check if the given payload is a ConnectionChangedPayload.
- *
- * @param payload - IFrame message response payload to check.
- * @returns Returns `true` if payload is a ConnectionChangedPayload.
- */
-function isConnectionChangedResponse(
-  payload: IFrameMessageResponsePayload,
-): payload is ConnectionChangedPayload {
-  return (
-    hasProperty(payload, 'connected') && typeof payload.connected === 'boolean'
-  );
-}
+type IFramePostMessage<TAction extends IFrameMessageAction> =
+  IFrameMessage<TAction> & {
+    messageId: number;
+    target: typeof LEDGER_IFRAME_ID;
+  };
 
 export class LedgerIframeBridge implements LedgerBridge {
   iframe?: HTMLIFrameElement;
@@ -105,8 +99,10 @@ export class LedgerIframeBridge implements LedgerBridge {
 
   currentMessageId = 0;
 
-  messageCallbacks: Record<number, (response: IFrameMessageResponse) => void> =
-    {};
+  messageCallbacks: Record<
+    number,
+    (response: IFrameMessageResponse<IFrameMessageAction>) => void
+  > = {};
 
   delayedPromise?: {
     resolve: (value: boolean) => void;
@@ -174,7 +170,10 @@ export class LedgerIframeBridge implements LedgerBridge {
   async getPublicKey(
     params: GetPublicKeyParams,
   ): Promise<GetPublicKeyResponse> {
-    return this.#deviceActionMessage(IFrameMessageAction.LedgerUnlock, params);
+    return this.#deviceActionMessage(
+      IFrameMessageAction.LedgerUnlock,
+      params,
+    ) as Promise<GetPublicKeyResponse>;
   }
 
   async deviceSignTransaction(
@@ -183,7 +182,7 @@ export class LedgerIframeBridge implements LedgerBridge {
     return this.#deviceActionMessage(
       IFrameMessageAction.LedgerSignTransaction,
       params,
-    );
+    ) as Promise<LedgerSignTransactionResponse>;
   }
 
   async deviceSignMessage(
@@ -192,7 +191,7 @@ export class LedgerIframeBridge implements LedgerBridge {
     return this.#deviceActionMessage(
       IFrameMessageAction.LedgerSignPersonalMessage,
       params,
-    );
+    ) as Promise<LedgerSignMessageResponse>;
   }
 
   async deviceSignTypedData(
@@ -201,21 +200,32 @@ export class LedgerIframeBridge implements LedgerBridge {
     return this.#deviceActionMessage(
       IFrameMessageAction.LedgerSignTypedData,
       params,
-    );
+    ) as Promise<LedgerSignTypedDataResponse>;
   }
 
-  async #deviceActionMessage(action: IFrameMessageAction, params: any) {
-    return new Promise<any>((resolve, reject) => {
+  async #deviceActionMessage(
+    action:
+      | IFrameMessageAction.LedgerUnlock
+      | IFrameMessageAction.LedgerSignTransaction
+      | IFrameMessageAction.LedgerSignPersonalMessage
+      | IFrameMessageAction.LedgerSignTypedData,
+    params:
+      | GetPublicKeyParams
+      | LedgerSignTransactionParams
+      | LedgerSignMessageParams
+      | LedgerSignTypedDataParams,
+  ) {
+    return new Promise((resolve, reject) => {
       this.#sendMessage(
         {
           action,
           params,
         },
-        (response) => {
-          if (response.success) {
-            return resolve(response.payload);
+        ({ success, payload }) => {
+          if (success) {
+            return resolve(payload);
           }
-          return reject(response.payload?.error);
+          return reject(payload.error);
         },
       );
     });
@@ -251,7 +261,10 @@ export class LedgerIframeBridge implements LedgerBridge {
     return tmp.join('/');
   }
 
-  #eventListener(params: { origin: string; data: IFrameMessageResponse }) {
+  #eventListener(params: {
+    origin: string;
+    data: IFrameMessageResponse<IFrameMessageAction>;
+  }) {
     if (params.origin !== this.#getOrigin()) {
       return;
     }
@@ -261,29 +274,28 @@ export class LedgerIframeBridge implements LedgerBridge {
       if (messageCallback) {
         messageCallback(params.data);
       } else if (
-        params.data.action === IFrameMessageAction.LedgerConnectionChange &&
-        params.data.success &&
-        params.data.payload &&
-        isConnectionChangedResponse(params.data.payload)
+        params.data.action === IFrameMessageAction.LedgerConnectionChange
       ) {
         this.isDeviceConnected = params.data.payload.connected;
       }
     }
   }
 
-  #sendMessage(
-    message: IFrameMessage,
-    callback: (response: IFrameMessageResponse) => void,
+  #sendMessage<TAction extends IFrameMessageAction>(
+    message: IFrameMessage<TAction>,
+    callback: (response: IFrameMessageResponse<TAction>) => void,
   ) {
     this.currentMessageId += 1;
 
-    const postMsg: IFramePostMessage = {
+    const postMsg: IFramePostMessage<TAction> = {
       ...message,
       messageId: this.currentMessageId,
       target: LEDGER_IFRAME_ID,
     };
 
-    this.messageCallbacks[this.currentMessageId] = callback;
+    this.messageCallbacks[this.currentMessageId] = callback as (
+      response: IFrameMessageResponse<IFrameMessageAction>,
+    ) => void;
 
     if (!this.iframeLoaded || !this.iframe || !this.iframe.contentWindow) {
       throw new Error('The iframe is not loaded yet');
