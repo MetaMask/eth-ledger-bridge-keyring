@@ -155,10 +155,7 @@ export class LedgerIframeBridge implements LedgerBridge {
   async getPublicKey(
     params: GetPublicKeyParams,
   ): Promise<GetPublicKeyResponse> {
-    return this.#deviceActionMessage(
-      IFrameMessageAction.LedgerUnlock,
-      params,
-    ) as Promise<GetPublicKeyResponse>;
+    return this.#deviceActionMessage(IFrameMessageAction.LedgerUnlock, params);
   }
 
   async deviceSignTransaction(
@@ -167,7 +164,7 @@ export class LedgerIframeBridge implements LedgerBridge {
     return this.#deviceActionMessage(
       IFrameMessageAction.LedgerSignTransaction,
       params,
-    ) as Promise<LedgerSignTransactionResponse>;
+    );
   }
 
   async deviceSignMessage(
@@ -176,7 +173,7 @@ export class LedgerIframeBridge implements LedgerBridge {
     return this.#deviceActionMessage(
       IFrameMessageAction.LedgerSignPersonalMessage,
       params,
-    ) as Promise<LedgerSignMessageResponse>;
+    );
   }
 
   async deviceSignTypedData(
@@ -185,20 +182,35 @@ export class LedgerIframeBridge implements LedgerBridge {
     return this.#deviceActionMessage(
       IFrameMessageAction.LedgerSignTypedData,
       params,
-    ) as Promise<LedgerSignTypedDataResponse>;
+    );
   }
 
   async #deviceActionMessage(
-    action:
-      | IFrameMessageAction.LedgerUnlock
-      | IFrameMessageAction.LedgerSignTransaction
-      | IFrameMessageAction.LedgerSignPersonalMessage
-      | IFrameMessageAction.LedgerSignTypedData,
-    params:
-      | GetPublicKeyParams
-      | LedgerSignTransactionParams
-      | LedgerSignMessageParams
-      | LedgerSignTypedDataParams,
+    action: IFrameMessageAction.LedgerUnlock,
+    params: GetPublicKeyParams,
+  ): Promise<GetPublicKeyResponse>;
+
+  async #deviceActionMessage(
+    action: IFrameMessageAction.LedgerSignTransaction,
+    params: LedgerSignTransactionParams,
+  ): Promise<LedgerSignTransactionResponse>;
+
+  async #deviceActionMessage(
+    action: IFrameMessageAction.LedgerSignPersonalMessage,
+    params: LedgerSignMessageParams,
+  ): Promise<LedgerSignMessageResponse>;
+
+  async #deviceActionMessage(
+    action: IFrameMessageAction.LedgerSignTypedData,
+    params: LedgerSignTypedDataParams,
+  ): Promise<LedgerSignTypedDataResponse>;
+
+  async #deviceActionMessage(
+    ...[action, params]:
+      | [IFrameMessageAction.LedgerUnlock, GetPublicKeyParams]
+      | [IFrameMessageAction.LedgerSignTransaction, LedgerSignTransactionParams]
+      | [IFrameMessageAction.LedgerSignPersonalMessage, LedgerSignMessageParams]
+      | [IFrameMessageAction.LedgerSignTypedData, LedgerSignTypedDataParams]
   ) {
     return new Promise((resolve, reject) => {
       this.#sendMessage(
