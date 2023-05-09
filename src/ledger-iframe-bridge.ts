@@ -78,7 +78,10 @@ export class LedgerIframeBridge implements LedgerBridge {
 
   iframeLoaded = false;
 
-  bridgeUrl = '';
+  eventListener?: (eventMessage: {
+    origin: string;
+    data: IFrameMessageResponse<IFrameMessageAction>;
+  }) => void;
 
   isDeviceConnected = false;
 
@@ -96,15 +99,17 @@ export class LedgerIframeBridge implements LedgerBridge {
   };
 
   async init(bridgeUrl: string) {
-    this.bridgeUrl = bridgeUrl;
+    this.#setupIframe(bridgeUrl);
 
-    this.#setupIframe();
+    this.eventListener = this.#eventListener.bind(this, bridgeUrl);
 
-    window.addEventListener('message', this.#eventListener.bind(this));
+    window.addEventListener('message', this.eventListener);
   }
 
   async destroy() {
-    window.removeEventListener('message', this.#eventListener.bind(this));
+    if (this.eventListener) {
+      window.removeEventListener('message', this.eventListener);
+    }
   }
 
   async attemptMakeApp(): Promise<boolean> {
@@ -228,9 +233,9 @@ export class LedgerIframeBridge implements LedgerBridge {
     });
   }
 
-  #setupIframe() {
+  #setupIframe(bridgeUrl: string) {
     this.iframe = document.createElement('iframe');
-    this.iframe.src = this.bridgeUrl;
+    this.iframe.src = bridgeUrl;
     this.iframe.allow = `hid 'src'`;
     this.iframe.onload = async () => {
       // If the ledger live preference was set before the iframe is loaded,
@@ -252,28 +257,32 @@ export class LedgerIframeBridge implements LedgerBridge {
     document.head.appendChild(this.iframe);
   }
 
-  #getOrigin() {
-    const tmp = this.bridgeUrl.split('/');
+  #getOrigin(bridgeUrl: string) {
+    const tmp = bridgeUrl.split('/');
     tmp.splice(-1, 1);
     return tmp.join('/');
   }
 
-  #eventListener(params: {
-    origin: string;
-    data: IFrameMessageResponse<IFrameMessageAction>;
-  }) {
-    if (params.origin !== this.#getOrigin()) {
+  #eventListener(
+    bridgeUrl: string,
+    eventMessage: {
+      origin: string;
+      data: IFrameMessageResponse<IFrameMessageAction>;
+    },
+  ) {
+    if (eventMessage.origin !== this.#getOrigin(bridgeUrl)) {
       return;
     }
 
-    if (params.data) {
-      const messageCallback = this.messageCallbacks[params.data.messageId];
+    if (eventMessage.data) {
+      const messageCallback =
+        this.messageCallbacks[eventMessage.data.messageId];
       if (messageCallback) {
-        messageCallback(params.data);
+        messageCallback(eventMessage.data);
       } else if (
-        params.data.action === IFrameMessageAction.LedgerConnectionChange
+        eventMessage.data.action === IFrameMessageAction.LedgerConnectionChange
       ) {
-        this.isDeviceConnected = params.data.payload.connected;
+        this.isDeviceConnected = eventMessage.data.payload.connected;
       }
     }
   }

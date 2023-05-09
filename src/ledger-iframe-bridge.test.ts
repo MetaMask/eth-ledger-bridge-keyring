@@ -89,11 +89,9 @@ describe('LedgerIframeBridge', function () {
 
       const addEventListenerSpy = jest.spyOn(global.window, 'addEventListener');
 
-      const bridgeUrl = 'bridgeUrl';
-      await bridge.init(bridgeUrl);
+      await bridge.init('bridgeUrl');
 
       expect(addEventListenerSpy).toHaveBeenCalledTimes(1);
-      expect(bridge.bridgeUrl).toBe(bridgeUrl);
       expect(bridge.iframeLoaded).toBe(false);
 
       await simulateIFrameLoad(bridge.iframe);
