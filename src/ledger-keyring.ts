@@ -1,6 +1,4 @@
 import { TransactionFactory, TxData, TypedTransaction } from '@ethereumjs/tx';
-import type LedgerHwAppEth from '@ledgerhq/hw-app-eth';
-import { hasProperty } from '@metamask/utils';
 // eslint-disable-next-line import/no-nodejs-modules
 import { Buffer } from 'buffer';
 import * as sigUtil from 'eth-sig-util';
@@ -10,6 +8,8 @@ import * as ethUtil from 'ethereumjs-util';
 import { EventEmitter } from 'events';
 import HDKey from 'hdkey';
 
+import { LedgerBridge } from './ledger-bridge';
+
 const pathBase = 'm';
 const hdPathString = `${pathBase}/44'/60'/0'`;
 const keyringType = 'Ledger Hardware';
@@ -18,8 +18,6 @@ const BRIDGE_URL = 'https://metamask.github.io/eth-ledger-bridge-keyring';
 
 const MAX_INDEX = 1000;
 
-const LEDGER_IFRAME_ID = 'LEDGER-IFRAME';
-
 enum NetworkApiUrls {
   Ropsten = 'http://api-ropsten.etherscan.io',
   Kovan = 'http://api-kovan.etherscan.io',
@@ -27,56 +25,9 @@ enum NetworkApiUrls {
   Mainnet = 'https://api.etherscan.io',
 }
 
-enum IFrameMessageAction {
-  LedgerConnectionChange = 'ledger-connection-change',
-  LedgerUnlock = 'ledger-unlock',
-  LedgerMakeApp = 'ledger-make-app',
-  LedgerUpdateTransport = 'ledger-update-transport',
-  LedgerSignTransaction = 'ledger-sign-transaction',
-  LedgerSignPersonalMessage = 'ledger-sign-personal-message',
-  LedgerSignTypedData = 'ledger-sign-typed-data',
-}
-
-type GetAddressPayload = Awaited<ReturnType<LedgerHwAppEth['getAddress']>> & {
-  chainCode: string;
-};
-
-type SignMessagePayload = Awaited<
-  ReturnType<LedgerHwAppEth['signEIP712HashedMessage']>
->;
-
 type SignTransactionPayload = Awaited<
-  ReturnType<LedgerHwAppEth['signTransaction']>
+  ReturnType<LedgerBridge['deviceSignTransaction']>
 >;
-
-type ConnectionChangedPayload = {
-  connected: boolean;
-};
-
-type IFrameMessage = {
-  action: IFrameMessageAction;
-  params?: Readonly<Record<string, unknown>>;
-};
-
-type IFramePostMessage = IFrameMessage & {
-  messageId: number;
-  target: typeof LEDGER_IFRAME_ID;
-};
-
-type IFrameMessageResponsePayload = { error?: Error } & (
-  | GetAddressPayload
-  | SignTransactionPayload
-  | SignMessagePayload
-  | ConnectionChangedPayload
-);
-
-export type IFrameMessageResponse = {
-  success: boolean;
-  action: IFrameMessageAction;
-  messageId: number;
-  payload: IFrameMessageResponsePayload;
-  error?: unknown;
-};
 
 export type AccountDetails = {
   index?: number;
@@ -112,59 +63,7 @@ function isOldStyleEthereumjsTx(
   return 'getChainId' in tx && typeof tx.getChainId === 'function';
 }
 
-/**
- * Check if the given payload is a SignTransactionPayload.
- *
- * @param payload - IFrame message response payload to check.
- * @returns Returns `true` if payload is a SignTransactionPayload.
- */
-function isSignTransactionResponse(
-  payload: IFrameMessageResponsePayload,
-): payload is SignTransactionPayload {
-  return hasProperty(payload, 'v') && typeof payload.v === 'string';
-}
-
-/**
- * Check if the given payload is a SignMessagePayload.
- *
- * @param payload - IFrame message response payload to check.
- * @returns Returns `true` if payload is a SignMessagePayload.
- */
-function isSignMessageResponse(
-  payload: IFrameMessageResponsePayload,
-): payload is SignMessagePayload {
-  return hasProperty(payload, 'v') && typeof payload.v === 'number';
-}
-
-/**
- * Check if the given payload is a GetAddressPayload.
- *
- * @param payload - IFrame message response payload to check.
- * @returns Returns `true` if payload is a GetAddressPayload.
- */
-function isGetAddressMessageResponse(
-  payload: IFrameMessageResponsePayload,
-): payload is GetAddressPayload {
-  return (
-    hasProperty(payload, 'publicKey') && typeof payload.publicKey === 'string'
-  );
-}
-
-/**
- * Check if the given payload is a ConnectionChangedPayload.
- *
- * @param payload - IFrame message response payload to check.
- * @returns Returns `true` if payload is a ConnectionChangedPayload.
- */
-function isConnectionChangedResponse(
-  payload: IFrameMessageResponsePayload,
-): payload is ConnectionChangedPayload {
-  return (
-    hasProperty(payload, 'connected') && typeof payload.connected === 'boolean'
-  );
-}
-
-export class LedgerBridgeKeyring extends EventEmitter {
+export class LedgerKeyring extends EventEmitter {
   static type: string = keyringType;
 
   readonly type: string = keyringType;
@@ -189,34 +88,26 @@ export class LedgerBridgeKeyring extends EventEmitter {
 
   implementFullBIP44 = false;
 
-  iframeLoaded = false;
-
-  isDeviceConnected = false;
-
-  currentMessageId = 0;
-
-  messageCallbacks: Record<number, (response: IFrameMessageResponse) => void> =
-    {};
-
   bridgeUrl: string = BRIDGE_URL;
 
-  iframe?: HTMLIFrameElement;
+  bridge: LedgerBridge;
 
-  delayedPromise?: {
-    resolve: (value: unknown) => void;
-    reject: (error: unknown) => void;
-    transportType: string;
-  };
-
-  constructor(opts: Partial<LedgerBridgeKeyringOptions> = {}) {
+  constructor({ bridge }: { bridge: LedgerBridge }) {
     super();
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.deserialize(opts);
+    if (!bridge) {
+      throw new Error('Bridge is a required dependency for the keyring');
+    }
 
-    this.#setupIframe();
+    this.bridge = bridge;
+  }
 
-    this.#setupListener();
+  async init() {
+    return this.bridge.init(this.bridgeUrl);
+  }
+
+  async destroy() {
+    return this.bridge.destroy();
   }
 
   async serialize() {
@@ -287,7 +178,7 @@ export class LedgerBridgeKeyring extends EventEmitter {
   }
 
   isConnected() {
-    return this.isDeviceConnected;
+    return this.bridge.isDeviceConnected;
   }
 
   setAccountToUnlock(index: number | string) {
@@ -308,27 +199,22 @@ export class LedgerBridgeKeyring extends EventEmitter {
       return 'already unlocked';
     }
     const path = hdPath ? this.#toLedgerPath(hdPath) : this.hdPath;
-    return new Promise((resolve, reject) => {
-      this.#sendMessage(
-        {
-          action: IFrameMessageAction.LedgerUnlock,
-          params: {
-            hdPath: path,
-          },
-        },
-        ({ success, payload }) => {
-          if (success && isGetAddressMessageResponse(payload)) {
-            if (updateHdk) {
-              this.hdk.publicKey = Buffer.from(payload.publicKey, 'hex');
-              this.hdk.chainCode = Buffer.from(payload.chainCode, 'hex');
-            }
-            resolve(payload.address);
-          } else {
-            reject(payload.error ?? new Error('Unknown error'));
-          }
-        },
-      );
-    });
+
+    let payload;
+    try {
+      payload = await this.bridge.getPublicKey({
+        hdPath: path,
+      });
+    } catch (error) {
+      throw error instanceof Error ? error : new Error('Unknown error');
+    }
+
+    if (updateHdk && payload.chainCode) {
+      this.hdk.publicKey = Buffer.from(payload.publicKey, 'hex');
+      this.hdk.chainCode = Buffer.from(payload.chainCode, 'hex');
+    }
+
+    return payload.address;
   }
 
   async addAccounts(amount = 1): Promise<string[]> {
@@ -395,49 +281,11 @@ export class LedgerBridgeKeyring extends EventEmitter {
   }
 
   async attemptMakeApp() {
-    return new Promise((resolve, reject) => {
-      this.#sendMessage(
-        {
-          action: IFrameMessageAction.LedgerMakeApp,
-        },
-        ({ success, error }) => {
-          if (success) {
-            resolve(true);
-          } else {
-            reject(error);
-          }
-        },
-      );
-    });
+    return this.bridge.attemptMakeApp();
   }
 
   async updateTransportMethod(transportType: string) {
-    return new Promise((resolve, reject) => {
-      // If the iframe isn't loaded yet, let's store the desired transportType value and
-      // optimistically return a successful promise
-      if (!this.iframeLoaded) {
-        this.delayedPromise = {
-          resolve,
-          reject,
-          transportType,
-        };
-        return;
-      }
-
-      this.#sendMessage(
-        {
-          action: IFrameMessageAction.LedgerUpdateTransport,
-          params: { transportType },
-        },
-        ({ success }) => {
-          if (success) {
-            resolve(true);
-          } else {
-            reject(new Error('Ledger transport could not be updated'));
-          }
-        },
-      );
-    });
+    return this.bridge.updateTransportMethod(transportType);
   }
 
   // tx is an instance of the ethereumjs-transaction class.
@@ -514,41 +362,30 @@ export class LedgerBridgeKeyring extends EventEmitter {
       payload: SignTransactionPayload,
     ) => TypedTransaction | OldEthJsTransaction,
   ): Promise<TypedTransaction | OldEthJsTransaction> {
-    return new Promise((resolve, reject) => {
-      this.unlockAccountByAddress(address)
-        .then((hdPath) => {
-          this.#sendMessage(
-            {
-              action: IFrameMessageAction.LedgerSignTransaction,
-              params: {
-                tx: rawTxHex,
-                hdPath,
-              },
-            },
-            ({ success, payload }) => {
-              if (success && isSignTransactionResponse(payload)) {
-                const newOrMutatedTx = handleSigning(payload);
-                const valid = newOrMutatedTx.verifySignature();
-                if (valid) {
-                  resolve(newOrMutatedTx);
-                } else {
-                  reject(
-                    new Error('Ledger: The transaction signature is not valid'),
-                  );
-                }
-              } else {
-                reject(
-                  payload.error ??
-                    new Error(
-                      'Ledger: Unknown error while signing transaction',
-                    ),
-                );
-              }
-            },
-          );
-        })
-        .catch(reject);
-    });
+    const hdPath = await this.unlockAccountByAddress(address);
+
+    if (!hdPath) {
+      throw new Error('Ledger: Unknown error while signing transaction');
+    }
+
+    let payload;
+    try {
+      payload = await this.bridge.deviceSignTransaction({
+        tx: rawTxHex,
+        hdPath,
+      });
+    } catch (error) {
+      throw error instanceof Error
+        ? error
+        : new Error('Ledger: Unknown error while signing transaction');
+    }
+
+    const newOrMutatedTx = handleSigning(payload);
+    const valid = newOrMutatedTx.verifySignature();
+    if (valid) {
+      return newOrMutatedTx;
+    }
+    throw new Error('Ledger: The transaction signature is not valid');
   }
 
   async signMessage(withAccount: string, data: string) {
@@ -557,51 +394,41 @@ export class LedgerBridgeKeyring extends EventEmitter {
 
   // For personal_sign, we need to prefix the message:
   async signPersonalMessage(withAccount: string, message: string) {
-    return new Promise((resolve, reject) => {
-      this.unlockAccountByAddress(withAccount)
-        .then((hdPath) => {
-          this.#sendMessage(
-            {
-              action: IFrameMessageAction.LedgerSignPersonalMessage,
-              params: {
-                hdPath,
-                message: ethUtil.stripHexPrefix(message),
-              },
-            },
-            ({ success, payload }) => {
-              if (success && isSignMessageResponse(payload)) {
-                let recoveryId = parseInt(String(payload.v), 10).toString(16);
-                if (recoveryId.length < 2) {
-                  recoveryId = `0${recoveryId}`;
-                }
-                const signature = `0x${payload.r}${payload.s}${recoveryId}`;
-                const addressSignedWith = sigUtil.recoverPersonalSignature({
-                  data: message,
-                  // eslint-disable-next-line id-denylist
-                  sig: signature,
-                });
-                if (
-                  ethUtil.toChecksumAddress(addressSignedWith) !==
-                  ethUtil.toChecksumAddress(withAccount)
-                ) {
-                  reject(
-                    new Error(
-                      'Ledger: The signature doesnt match the right address',
-                    ),
-                  );
-                }
-                resolve(signature);
-              } else {
-                reject(
-                  payload.error ??
-                    new Error('Ledger: Unknown error while signing message'),
-                );
-              }
-            },
-          );
-        })
-        .catch(reject);
+    const hdPath = await this.unlockAccountByAddress(withAccount);
+
+    if (!hdPath) {
+      throw new Error('Ledger: Unknown error while signing message');
+    }
+
+    let payload;
+    try {
+      payload = await this.bridge.deviceSignMessage({
+        hdPath,
+        message: ethUtil.stripHexPrefix(message),
+      });
+    } catch (error) {
+      throw error instanceof Error
+        ? error
+        : new Error('Ledger: Unknown error while signing message');
+    }
+
+    let recoveryId = parseInt(String(payload.v), 10).toString(16);
+    if (recoveryId.length < 2) {
+      recoveryId = `0${recoveryId}`;
+    }
+    const signature = `0x${payload.r}${payload.s}${recoveryId}`;
+    const addressSignedWith = sigUtil.recoverPersonalSignature({
+      data: message,
+      // eslint-disable-next-line id-denylist
+      sig: signature,
     });
+    if (
+      ethUtil.toChecksumAddress(addressSignedWith) !==
+      ethUtil.toChecksumAddress(withAccount)
+    ) {
+      throw new Error('Ledger: The signature doesnt match the right address');
+    }
+    return signature;
   }
 
   async unlockAccountByAddress(address: string) {
@@ -657,47 +484,44 @@ export class LedgerBridgeKeyring extends EventEmitter {
     ).toString('hex');
 
     const hdPath = await this.unlockAccountByAddress(withAccount);
-    const { success, payload }: IFrameMessageResponse = await new Promise(
-      (resolve) => {
-        this.#sendMessage(
-          {
-            action: IFrameMessageAction.LedgerSignTypedData,
-            params: {
-              hdPath,
-              domainSeparatorHex,
-              hashStructMessageHex,
-            },
-          },
-          (result) => resolve(result),
-        );
-      },
-    );
 
-    if (success && isSignMessageResponse(payload)) {
-      let recoveryId = parseInt(String(payload.v), 10).toString(16);
-      if (recoveryId.length < 2) {
-        recoveryId = `0${recoveryId}`;
-      }
-      const signature = `0x${payload.r}${payload.s}${recoveryId}`;
-      // @ts-expect-error recoverTypedSignature_v4 is missing from
-      // @types/eth-sig-util.
-      // See: https://github.com/MetaMask/eth-sig-util/blob/v2.5.4/index.js#L464
-      const addressSignedWith = sigUtil.recoverTypedSignature_v4({
-        data,
-        // eslint-disable-next-line id-denylist
-        sig: signature,
-      });
-      if (
-        ethUtil.toChecksumAddress(addressSignedWith) !==
-        ethUtil.toChecksumAddress(withAccount)
-      ) {
-        throw new Error('Ledger: The signature doesnt match the right address');
-      }
-      return signature;
+    if (!hdPath) {
+      throw new Error('Ledger: Unknown error while signing message');
     }
-    throw (
-      payload.error ?? new Error('Ledger: Unknown error while signing message')
-    );
+
+    let payload;
+    try {
+      payload = await this.bridge.deviceSignTypedData({
+        hdPath,
+        domainSeparatorHex,
+        hashStructMessageHex,
+      });
+    } catch (error) {
+      throw error instanceof Error
+        ? error
+        : new Error('Ledger: Unknown error while signing message');
+    }
+
+    let recoveryId = parseInt(String(payload.v), 10).toString(16);
+    if (recoveryId.length < 2) {
+      recoveryId = `0${recoveryId}`;
+    }
+    const signature = `0x${payload.r}${payload.s}${recoveryId}`;
+    // @ts-expect-error recoverTypedSignature_v4 is missing from
+    // @types/eth-sig-util.
+    // See: https://github.com/MetaMask/eth-sig-util/blob/v2.5.4/index.js#L464
+    const addressSignedWith = sigUtil.recoverTypedSignature_v4({
+      data,
+      // eslint-disable-next-line id-denylist
+      sig: signature,
+    });
+    if (
+      ethUtil.toChecksumAddress(addressSignedWith) !==
+      ethUtil.toChecksumAddress(withAccount)
+    ) {
+      throw new Error('Ledger: The signature doesnt match the right address');
+    }
+    return signature;
   }
 
   exportAccount() {
@@ -714,86 +538,6 @@ export class LedgerBridgeKeyring extends EventEmitter {
   }
 
   /* PRIVATE METHODS */
-
-  #setupIframe() {
-    this.iframe = document.createElement('iframe');
-    this.iframe.src = this.bridgeUrl;
-    this.iframe.allow = `hid 'src'`;
-    this.iframe.onload = async () => {
-      // If the ledger live preference was set before the iframe is loaded,
-      // set it after the iframe has loaded
-      this.iframeLoaded = true;
-      if (this.delayedPromise) {
-        try {
-          const result = await this.updateTransportMethod(
-            this.delayedPromise.transportType,
-          );
-          this.delayedPromise.resolve(result);
-        } catch (error) {
-          this.delayedPromise.reject(error);
-        } finally {
-          delete this.delayedPromise;
-        }
-      }
-    };
-    document.head.appendChild(this.iframe);
-  }
-
-  #getOrigin() {
-    const tmp = this.bridgeUrl.split('/');
-    tmp.splice(-1, 1);
-    return tmp.join('/');
-  }
-
-  #eventListener(params: { origin: string; data: IFrameMessageResponse }) {
-    if (params.origin !== this.#getOrigin()) {
-      return false;
-    }
-
-    if (params.data) {
-      const messageCallback = this.messageCallbacks[params.data.messageId];
-      if (messageCallback) {
-        messageCallback(params.data);
-      } else if (
-        params.data.action === IFrameMessageAction.LedgerConnectionChange &&
-        isConnectionChangedResponse(params.data.payload)
-      ) {
-        this.isDeviceConnected = params.data.payload.connected;
-      }
-    }
-
-    return undefined;
-  }
-
-  #sendMessage(
-    message: IFrameMessage,
-    callback: (response: IFrameMessageResponse) => void,
-  ) {
-    this.currentMessageId += 1;
-
-    const postMsg: IFramePostMessage = {
-      ...message,
-      messageId: this.currentMessageId,
-      target: LEDGER_IFRAME_ID,
-    };
-
-    this.messageCallbacks[this.currentMessageId] = callback;
-
-    if (!this.iframeLoaded || !this.iframe || !this.iframe.contentWindow) {
-      throw new Error('The iframe is not loaded yet');
-    }
-
-    this.iframe.contentWindow.postMessage(postMsg, '*');
-  }
-
-  #setupListener() {
-    window.addEventListener('message', this.#eventListener.bind(this));
-  }
-
-  destroy() {
-    window.removeEventListener('message', this.#eventListener.bind(this));
-  }
-
   async #getPage(increment: number) {
     this.page += increment;
 

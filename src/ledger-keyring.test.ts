@@ -1,22 +1,13 @@
 import { Common, Chain, Hardfork } from '@ethereumjs/common';
 import { TransactionFactory } from '@ethereumjs/tx';
-import { hasProperty } from '@metamask/utils';
 import sigUtil from 'eth-sig-util';
 import EthereumTx from 'ethereumjs-tx';
 import * as ethUtil from 'ethereumjs-util';
 import HDKey from 'hdkey';
 
-import { AccountDetails, LedgerBridgeKeyring } from './ledger-bridge-keyring';
-import documentShim from '../test/document.shim';
-import windowShim from '../test/window.shim';
-
-global.document = documentShim;
-global.window = windowShim;
-
-// eslint-disable-next-line no-restricted-globals
-type HTMLIFrameElementShim = HTMLIFrameElement;
-// eslint-disable-next-line no-restricted-globals
-type WindowShim = Window;
+import { LedgerBridge } from './ledger-bridge';
+import { LedgerIframeBridge } from './ledger-iframe-bridge';
+import { AccountDetails, LedgerKeyring } from './ledger-keyring';
 
 const fakeAccounts = [
   '0xF30952A1c534CDE7bC471380065726fa8686dfB3',
@@ -83,42 +74,9 @@ const fakeTypeTwoTx = TransactionFactory.fromTxData(
   { common: commonEIP1559, freeze: false },
 );
 
-/**
- * Checks if the iframe provided has a valid contentWindow
- * and onload function.
- *
- * @param iframe - The iframe to check.
- * @returns Returns true if the iframe is valid, false otherwise.
- */
-function isIFrameValid(
-  iframe?: HTMLIFrameElementShim,
-): iframe is HTMLIFrameElementShim & { contentWindow: WindowShim } & {
-  onload: () => any;
-} {
-  return (
-    iframe !== undefined &&
-    hasProperty(iframe, 'contentWindow') &&
-    typeof iframe.onload === 'function' &&
-    hasProperty(iframe.contentWindow as WindowShim, 'postMessage')
-  );
-}
-
-/**
- * Simulates the loading of an iframe by calling the onload function.
- *
- * @param iframe - The iframe to simulate the loading of.
- * @returns Returns a promise that resolves when the onload function is called.
- */
-async function simulateIFrameLoad(iframe?: HTMLIFrameElementShim) {
-  if (!isIFrameValid(iframe)) {
-    throw new Error('the iframe is not valid');
-  }
-  // we call manually the onload event to simulate the iframe loading
-  return await iframe.onload();
-}
-
-describe('LedgerBridgeKeyring', function () {
-  let keyring: LedgerBridgeKeyring;
+describe('LedgerKeyring', function () {
+  let keyring: LedgerKeyring;
+  let bridge: LedgerBridge;
 
   /**
    * Sets up the keyring to unlock one account.
@@ -134,30 +92,11 @@ describe('LedgerBridgeKeyring', function () {
       .mockResolvedValue(fakeAccounts[accountIndex] as string);
   }
 
-  /**
-   * Stubs the postMessage function of the keyring iframe.
-   *
-   * @param keyringInstance - The keyring instance to stub.
-   * @param fn - The function to call when the postMessage function is called.
-   */
-  function stubKeyringIFramePostMessage(
-    keyringInstance: LedgerBridgeKeyring,
-    fn: (message: any) => void,
-  ) {
-    if (!isIFrameValid(keyringInstance.iframe)) {
-      throw new Error('the iframe is not valid');
-    }
-
-    jest
-      .spyOn(keyringInstance.iframe.contentWindow, 'postMessage')
-      .mockImplementation(fn);
-  }
-
   beforeEach(async function () {
-    keyring = new LedgerBridgeKeyring();
+    bridge = new LedgerIframeBridge();
+    keyring = new LedgerKeyring({ bridge });
     keyring.hdk = fakeHdKey;
-
-    await simulateIFrameLoad(keyring.iframe);
+    await keyring.deserialize();
   });
 
   afterEach(function () {
@@ -166,24 +105,46 @@ describe('LedgerBridgeKeyring', function () {
 
   describe('Keyring.type', function () {
     it('is a class property that returns the type string.', function () {
-      const { type } = LedgerBridgeKeyring;
+      const { type } = LedgerKeyring;
       expect(typeof type).toBe('string');
     });
 
     it('returns the correct value', function () {
       const { type } = keyring;
-      const correct = LedgerBridgeKeyring.type;
+      const correct = LedgerKeyring.type;
       expect(type).toBe(correct);
     });
   });
 
   describe('constructor', function () {
     it('constructs', async function () {
-      const ledgerKeyring = new LedgerBridgeKeyring({ hdPath: `m/44'/60'/0'` });
+      const ledgerKeyring = new LedgerKeyring({
+        bridge: new LedgerIframeBridge(),
+      });
       expect(typeof ledgerKeyring).toBe('object');
 
       const accounts = await ledgerKeyring.getAccounts();
       expect(Array.isArray(accounts)).toBe(true);
+    });
+
+    it('throws if a bridge is not provided', function () {
+      expect(
+        () =>
+          new LedgerKeyring({
+            bridge: undefined as unknown as LedgerBridge,
+          }),
+      ).toThrow('Bridge is a required dependency for the keyring');
+    });
+  });
+
+  describe('init', function () {
+    it('should call bridge init', async function () {
+      jest.spyOn(bridge, 'init').mockResolvedValue(undefined);
+
+      await keyring.init();
+
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(bridge.init).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -277,53 +238,35 @@ describe('LedgerBridgeKeyring', function () {
     });
 
     it('should update hdk.publicKey if updateHdk is true', async function () {
-      const ledgerKeyring = new LedgerBridgeKeyring();
       // @ts-expect-error we want to bypass the set publicKey property set method
-      ledgerKeyring.hdk = { publicKey: 'ABC' };
-      await simulateIFrameLoad(ledgerKeyring.iframe);
+      keyring.hdk = { publicKey: 'ABC' };
 
-      stubKeyringIFramePostMessage(ledgerKeyring, (message) => {
-        ledgerKeyring.messageCallbacks[message.messageId]?.({
-          action: message.action,
-          messageId: message.messageId,
-          success: true,
-          payload: {
-            publicKey:
-              '04197ced33b63059074b90ddecb9400c45cbc86210a20317b539b8cae84e573342149c3384ae45f27db68e75823323e97e03504b73ecbc47f5922b9b8144345e5a',
-            chainCode:
-              'ba0fb16e01c463d1635ec36f5adeb93a838adcd1526656c55f828f1e34002a8b',
-            address: fakeAccounts[1],
-          },
-        });
+      jest.spyOn(bridge, 'getPublicKey').mockResolvedValue({
+        publicKey:
+          '04197ced33b63059074b90ddecb9400c45cbc86210a20317b539b8cae84e573342149c3384ae45f27db68e75823323e97e03504b73ecbc47f5922b9b8144345e5a',
+        chainCode:
+          'ba0fb16e01c463d1635ec36f5adeb93a838adcd1526656c55f828f1e34002a8b',
+        address: fakeAccounts[1],
       });
 
-      await ledgerKeyring.unlock(`m/44'/60'/0'/1`);
-      expect(ledgerKeyring.hdk.publicKey).not.toBe('ABC');
+      await keyring.unlock(`m/44'/60'/0'/1`);
+      expect(keyring.hdk.publicKey).not.toBe('ABC');
     });
 
     it('should not update hdk.publicKey if updateHdk is false', async function () {
-      const ledgerKeyring = new LedgerBridgeKeyring();
       // @ts-expect-error we want to bypass the publicKey property set method
-      ledgerKeyring.hdk = { publicKey: 'ABC' };
-      await simulateIFrameLoad(ledgerKeyring.iframe);
+      keyring.hdk = { publicKey: 'ABC' };
 
-      stubKeyringIFramePostMessage(ledgerKeyring, (message) => {
-        ledgerKeyring.messageCallbacks[message.messageId]?.({
-          action: message.action,
-          messageId: message.messageId,
-          success: true,
-          payload: {
-            publicKey:
-              '04197ced33b63059074b90ddecb9400c45cbc86210a20317b539b8cae84e573342149c3384ae45f27db68e75823323e97e03504b73ecbc47f5922b9b8144345e5a',
-            chainCode:
-              'ba0fb16e01c463d1635ec36f5adeb93a838adcd1526656c55f828f1e34002a8b',
-            address: fakeAccounts[1],
-          },
-        });
+      jest.spyOn(bridge, 'getPublicKey').mockResolvedValue({
+        publicKey:
+          '04197ced33b63059074b90ddecb9400c45cbc86210a20317b539b8cae84e573342149c3384ae45f27db68e75823323e97e03504b73ecbc47f5922b9b8144345e5a',
+        chainCode:
+          'ba0fb16e01c463d1635ec36f5adeb93a838adcd1526656c55f828f1e34002a8b',
+        address: fakeAccounts[1],
       });
 
-      await ledgerKeyring.unlock(`m/44'/60'/0'/1`, false);
-      expect(ledgerKeyring.hdk.publicKey).toBe('ABC');
+      await keyring.unlock(`m/44'/60'/0'/1`, false);
+      expect(keyring.hdk.publicKey).toBe('ABC');
     });
   });
 
@@ -536,18 +479,15 @@ describe('LedgerBridgeKeyring', function () {
     describe('using old versions of ethereumjs/tx', function () {
       it('should pass serialized transaction to ledger and return signed tx', async function () {
         await basicSetupToUnlockOneAccount();
-        stubKeyringIFramePostMessage(keyring, (message) => {
-          expect(message.params).toStrictEqual({
-            hdPath: "m/44'/60'/0'/0",
-            tx: fakeTx.serialize().toString('hex'),
+        jest
+          .spyOn(keyring.bridge, 'deviceSignTransaction')
+          .mockImplementation(async (params) => {
+            expect(params).toStrictEqual({
+              hdPath: "m/44'/60'/0'/0",
+              tx: fakeTx.serialize().toString('hex'),
+            });
+            return { v: '0x1', r: '0x0', s: '0x0' };
           });
-
-          keyring.messageCallbacks[message.messageId]?.({
-            ...message,
-            success: true,
-            payload: { v: '0x1', r: '0x0', s: '0x0' },
-          });
-        });
 
         jest.spyOn(fakeTx, 'verifySignature').mockReturnValue(true);
 
@@ -555,10 +495,9 @@ describe('LedgerBridgeKeyring', function () {
           fakeAccounts[0],
           fakeTx,
         );
-        expect(
-          // eslint-disable-next-line @typescript-eslint/unbound-method
-          keyring.iframe?.contentWindow?.postMessage,
-        ).toHaveBeenCalled();
+
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        expect(keyring.bridge.deviceSignTransaction).toHaveBeenCalled();
         expect(returnedTx).toHaveProperty('v');
         expect(returnedTx).toHaveProperty('r');
         expect(returnedTx).toHaveProperty('s');
@@ -592,20 +531,17 @@ describe('LedgerBridgeKeyring', function () {
           .spyOn(signedNewFakeTx, 'verifySignature')
           .mockImplementation(() => true);
 
-        stubKeyringIFramePostMessage(keyring, (message) => {
-          expect(message.params).toStrictEqual({
-            hdPath: "m/44'/60'/0'/0",
-            tx: ethUtil.rlp
-              .encode(newFakeTx.getMessageToSign(false))
-              .toString('hex'),
+        jest
+          .spyOn(keyring.bridge, 'deviceSignTransaction')
+          .mockImplementation(async (params) => {
+            expect(params).toStrictEqual({
+              hdPath: "m/44'/60'/0'/0",
+              tx: ethUtil.rlp
+                .encode(newFakeTx.getMessageToSign(false))
+                .toString('hex'),
+            });
+            return expectedRSV;
           });
-
-          keyring.messageCallbacks[message.messageId]?.({
-            ...message,
-            success: true,
-            payload: expectedRSV,
-          });
-        });
 
         const returnedTx = await keyring.signTransaction(
           fakeAccounts[0],
@@ -613,7 +549,7 @@ describe('LedgerBridgeKeyring', function () {
         );
 
         // eslint-disable-next-line @typescript-eslint/unbound-method
-        expect(keyring.iframe?.contentWindow?.postMessage).toHaveBeenCalled();
+        expect(keyring.bridge.deviceSignTransaction).toHaveBeenCalled();
         expect(returnedTx.toJSON()).toStrictEqual(signedNewFakeTx.toJSON());
       });
 
@@ -643,30 +579,23 @@ describe('LedgerBridgeKeyring', function () {
           .mockReturnValue(true);
 
         jest.spyOn(fakeTypeTwoTx, 'verifySignature').mockReturnValue(true);
-
-        stubKeyringIFramePostMessage(keyring, (message) => {
-          expect(message.params).toStrictEqual({
-            hdPath: "m/44'/60'/0'/0",
-            tx: fakeTypeTwoTx.getMessageToSign(false).toString('hex'),
+        jest
+          .spyOn(keyring.bridge, 'deviceSignTransaction')
+          .mockImplementation(async (params) => {
+            expect(params).toStrictEqual({
+              hdPath: "m/44'/60'/0'/0",
+              tx: fakeTypeTwoTx.getMessageToSign(false).toString('hex'),
+            });
+            return expectedRSV;
           });
-
-          keyring.messageCallbacks[message.messageId]?.({
-            ...message,
-            success: true,
-            payload: expectedRSV,
-          });
-        });
 
         const returnedTx = await keyring.signTransaction(
           fakeAccounts[0],
           fakeTypeTwoTx,
         );
 
-        expect(
-          // eslint-disable-next-line @typescript-eslint/unbound-method
-          keyring.iframe?.contentWindow?.postMessage,
-        ).toHaveBeenCalled();
-
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        expect(keyring.bridge.deviceSignTransaction).toHaveBeenCalled();
         expect(returnedTx.toJSON()).toStrictEqual(signedFakeTypeTwoTx.toJSON());
       });
     });
@@ -675,51 +604,48 @@ describe('LedgerBridgeKeyring', function () {
   describe('signPersonalMessage', function () {
     it('should call create a listener waiting for the iframe response', async function () {
       await basicSetupToUnlockOneAccount();
-
-      stubKeyringIFramePostMessage(keyring, (message) => {
-        expect(message.params).toStrictEqual({
-          hdPath: "m/44'/60'/0'/0",
-          message: 'some message',
+      jest
+        .spyOn(keyring.bridge, 'deviceSignMessage')
+        .mockImplementation(async (params) => {
+          expect(params).toStrictEqual({
+            hdPath: "m/44'/60'/0'/0",
+            message: 'some message',
+          });
+          return { v: 1, r: '0x0', s: '0x0' };
         });
-
-        keyring.messageCallbacks[message.messageId]?.({
-          ...message,
-          success: true,
-          payload: { v: 1, r: '0x0', s: '0x0' },
-        });
-      });
 
       jest
         .spyOn(sigUtil, 'recoverPersonalSignature')
         .mockReturnValue(fakeAccounts[0]);
+
       await keyring.signPersonalMessage(fakeAccounts[0], 'some message');
+
       // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(keyring.iframe?.contentWindow?.postMessage).toHaveBeenCalled();
+      expect(keyring.bridge.deviceSignMessage).toHaveBeenCalled();
     });
   });
 
   describe('signMessage', function () {
     it('should call create a listener waiting for the iframe response', async function () {
       await basicSetupToUnlockOneAccount();
-      stubKeyringIFramePostMessage(keyring, (message) => {
-        expect(message.params).toStrictEqual({
-          hdPath: "m/44'/60'/0'/0",
-          message: 'some message',
+      jest
+        .spyOn(keyring.bridge, 'deviceSignMessage')
+        .mockImplementation(async (params) => {
+          expect(params).toStrictEqual({
+            hdPath: "m/44'/60'/0'/0",
+            message: 'some message',
+          });
+          return { v: 1, r: '0x0', s: '0x0' };
         });
-
-        keyring.messageCallbacks[message.messageId]?.({
-          ...message,
-          success: true,
-          payload: { v: 1, r: '0x0', s: '0x0' },
-        });
-      });
 
       jest
         .spyOn(sigUtil, 'recoverPersonalSignature')
         .mockReturnValue(fakeAccounts[0]);
+
       await keyring.signMessage(fakeAccounts[0], 'some message');
+
       // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(keyring.iframe?.contentWindow?.postMessage).toHaveBeenCalled();
+      expect(keyring.bridge.deviceSignMessage).toHaveBeenCalled();
     });
   });
 
@@ -808,17 +734,13 @@ describe('LedgerBridgeKeyring', function () {
     });
 
     it('should resolve properly when called', async function () {
-      stubKeyringIFramePostMessage(keyring, (message) => {
-        keyring.messageCallbacks[message.messageId]?.({
-          ...message,
-          success: true,
-          payload: {
-            v: 27,
-            r: '72d4e38a0e582e09a620fd38e236fe687a1ec782206b56d576f579c026a7e5b9',
-            s: '46759735981cd0c3efb02d36df28bb2feedfec3d90e408efc93f45b894946e32',
-          },
-        });
-      });
+      jest
+        .spyOn(keyring.bridge, 'deviceSignTypedData')
+        .mockImplementation(async () => ({
+          v: 27,
+          r: '72d4e38a0e582e09a620fd38e236fe687a1ec782206b56d576f579c026a7e5b9',
+          s: '46759735981cd0c3efb02d36df28bb2feedfec3d90e408efc93f45b894946e32',
+        }));
 
       const result = await keyring.signTypedData(
         fakeAccounts[15],
@@ -831,17 +753,14 @@ describe('LedgerBridgeKeyring', function () {
     });
 
     it('should error when address does not match', async function () {
-      stubKeyringIFramePostMessage(keyring, (message) => {
-        keyring.messageCallbacks[message.messageId]?.({
-          ...message,
-          success: true,
-          payload: {
-            v: 28,
-            r: '72d4e38a0e582e09a620fd38e236fe687a1ec782206b56d576f579c026a7e5b9',
-            s: '46759735981cd0c3efb02d36df28bb2feedfec3d90e408efc93f45b894946e32',
-          },
-        });
-      });
+      jest
+        .spyOn(keyring.bridge, 'deviceSignTypedData')
+        // Changing v to 28 should cause a validation error
+        .mockImplementation(async () => ({
+          v: 28,
+          r: '72d4e38a0e582e09a620fd38e236fe687a1ec782206b56d576f579c026a7e5b9',
+          s: '46759735981cd0c3efb02d36df28bb2feedfec3d90e408efc93f45b894946e32',
+        }));
 
       await expect(
         keyring.signTypedData(fakeAccounts[15], fixtureData, options),
@@ -850,17 +769,13 @@ describe('LedgerBridgeKeyring', function () {
   });
 
   describe('destroy', function () {
-    it('should remove the message event listener', function () {
-      jest
-        .spyOn(global.window, 'removeEventListener')
-        .mockImplementation((type, listener) => {
-          expect(type).toBe('message');
-          expect(typeof listener).toBe('function');
-          return true;
-        });
-      keyring.destroy();
-      // eslint-disable-next-line no-restricted-globals
-      expect(global.window.removeEventListener).toHaveBeenCalled();
+    it('should call the destroy bridge method', async function () {
+      jest.spyOn(keyring.bridge, 'destroy').mockResolvedValue(undefined);
+
+      await keyring.destroy();
+
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(bridge.destroy).toHaveBeenCalled();
     });
   });
 });
