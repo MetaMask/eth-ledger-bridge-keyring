@@ -12,8 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - The Ledger bridge is now a separate class (`LedgerIframeBridge`), which must be constructed separately from the keyring and passed in as a constructor argument.
   - The bridge initialization has been moved from the keyring constructor to the keyring `init` method. The bridge is expected to be passed to the keyring uninitialized, and the keyring `init` method is expected to be called after keyring construction (before the keyring is used).
   - The keyring constructor no longer accepts keyring state. Instead, any pre-existing keyring state should be passed to the `deserialize` method after construction.
-- **BREAKING:** Export changed from default to named. ([#174](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/174))
-- Add types for exports. ([#174](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/174))
+- **BREAKING:** Export changed from default to named ([#174](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/174))
+  - The keyring is exported as `LedgerKeyring`
+- Add TypeScript types ([#174](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/174))
 
 ## [0.15.0]
 ### Changed
