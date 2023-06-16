@@ -7,16 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ## [1.0.0]
-### Uncategorized
-- Revert "v1.0.0 (#191)" ([#191](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/191))
-- v1.0.0 ([#191](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/191))
-- Refactor keyring to split bridge logic ([#156](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/156))
-- test: add jest-it-up ([#186](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/186))
-- Migrate to Jest ([#185](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/185))
-- Migrate to GH actions ([#183](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/183))
-- TypeScript migration ([#174](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/174))
-- v0.15.0 ([#182](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/182))
-- Reapply update ethereumjs dependencies (#177) ([#177](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/177))
+### Changed
+- **BREAKING:** Separate the bridge from the keyring ([#156](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/156))
+  - The Ledger bridge is now a separate class (`LedgerIframeBridge`), which must be constructed separately from the keyring and passed in as a constructor argument.
+  - The bridge initialization has been moved from the keyring constructor to the keyring `init` method. The bridge is expected to be passed to the keyring uninitialized, and the keyring `init` method is expected to be called after keyring construction (before the keyring is used).
+  - The keyring constructor no longer accepts keyring state. Instead, any pre-existing keyring state should be passed to the `deserialize` method after construction.
+- **BREAKING:** Export changed from default to named ([#174](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/174))
+  - The keyring is exported as `LedgerKeyring`
+- Add TypeScript types ([#174](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/174))
 
 ## [0.15.0]
 ### Changed
