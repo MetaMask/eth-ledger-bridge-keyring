@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0]
+### Uncategorized
+- Revert "v1.0.0 (#191)" ([#191](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/191))
+- v1.0.0 ([#191](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/191))
+- Refactor keyring to split bridge logic ([#156](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/156))
+- test: add jest-it-up ([#186](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/186))
+- Migrate to Jest ([#185](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/185))
+- Migrate to GH actions ([#183](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/183))
+- TypeScript migration ([#174](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/174))
+- v0.15.0 ([#182](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/182))
+- Reapply update ethereumjs dependencies (#177) ([#177](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/177))
+
 ## [0.15.0]
 ### Changed
 - **BREAKING:** @ethereumjs/tx upgraded to major version 4, which includes a shift from storing numerical values as BNs to storing them as native BigInts. This is a breaking change for users of this keyring who access the values of the tx object, or that use those tx objects to interact with other libraries that depend on @ethereumsjs/tx versions under 4.0.0. ([#181](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/181))
@@ -57,7 +69,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Support new versions of ethereumjs/tx ([#68](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/68))
 
-[Unreleased]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v0.15.0...HEAD
+[Unreleased]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v0.15.0...v1.0.0
 [0.15.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v0.12.0...v0.13.0
