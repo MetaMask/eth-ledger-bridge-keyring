@@ -1,59 +1,98 @@
 {
   "name": "@metamask/eth-ledger-bridge-keyring",
-  "version": "0.13.0",
+  "version": "1.0.0",
   "description": "A MetaMask compatible keyring, for ledger hardware wallets",
-  "main": "index.js",
-  "files": [
-    "index.js"
-  ],
-  "engines": {
-    "node": ">=14.0.0"
-  },
-  "scripts": {
-    "test": "mocha",
-    "lint": "eslint . --ext .js",
-    "lint:fix": "eslint --fix . --ext .js"
-  },
-  "publishConfig": {
-    "registry": "https://registry.npmjs.org/",
-    "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/MetaMask/eth-ledger-bridge-keyring.git"
-  },
   "keywords": [
     "ethereum",
     "keyring",
     "ledger",
     "metamask"
   ],
-  "author": "Bruno Barbieri",
-  "license": "ISC",
+  "homepage": "https://github.com/MetaMask/eth-ledger-bridge-keyring#readme",
   "bugs": {
     "url": "https://github.com/MetaMask/eth-ledger-bridge-keyring/issues"
   },
-  "homepage": "https://github.com/MetaMask/eth-ledger-bridge-keyring#readme",
-  "resolutions": {
-    "mocha/**/mkdirp": "^0.5.3"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MetaMask/eth-ledger-bridge-keyring.git"
+  },
+  "license": "ISC",
+  "author": "Bruno Barbieri",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "build": "tsc --project tsconfig.build.json",
+    "build:clean": "rimraf dist && yarn build",
+    "build:docs": "typedoc",
+    "lint": "yarn lint:eslint && yarn lint:misc --check && yarn lint:dependencies",
+    "lint:dependencies": "depcheck",
+    "lint:eslint": "eslint . --cache --ext js,ts",
+    "lint:fix": "yarn lint:eslint --fix && yarn lint:misc --write && yarn lint:dependencies",
+    "lint:misc": "prettier '**/*.json' '**/*.md' '!CHANGELOG.md' '**/*.yml' '!.yarnrc.yml' --ignore-path .gitignore --no-error-on-unmatched-pattern",
+    "prepack": "./scripts/prepack.sh",
+    "test": "jest && jest-it-up",
+    "test:watch": "jest --watch"
   },
   "dependencies": {
-    "@ethereumjs/tx": "^3.2.0",
+    "@ethereumjs/tx": "^4.1.1",
     "@metamask/eth-sig-util": "^5.0.2",
+    "@metamask/utils": "^5.0.0",
     "ethereumjs-util": "^7.0.9",
     "hdkey": "0.8.0"
   },
   "devDependencies": {
-    "@ethereumjs/common": "^2.4.0",
-    "@metamask/eslint-config": "^3.0.0",
-    "babel-eslint": "^10.1.0",
-    "chai": "^4.1.2",
-    "chai-spies": "^1.0.0",
-    "eslint": "^6.8.0",
-    "eslint-plugin-import": "^2.20.1",
-    "eslint-plugin-json": "^1.2.0",
-    "eslint-plugin-mocha": "^6.2.2",
+    "@ethereumjs/common": "^3.1.1",
+    "@lavamoat/allow-scripts": "^2.3.0",
+    "@ledgerhq/hw-app-eth": "^6.32.0",
+    "@metamask/auto-changelog": "^3.1.0",
+    "@metamask/eslint-config": "^11.0.1",
+    "@metamask/eslint-config-browser": "^11.0.0",
+    "@metamask/eslint-config-jest": "^11.0.0",
+    "@metamask/eslint-config-nodejs": "^11.0.0",
+    "@metamask/eslint-config-typescript": "^11.0.0",
+    "@types/ethereumjs-tx": "^1.0.1",
+    "@types/hdkey": "^2.0.1",
+    "@types/jest": "^28.1.6",
+    "@types/node": "^14.0.0",
+    "@typescript-eslint/eslint-plugin": "^5.43.0",
+    "@typescript-eslint/parser": "^5.43.0",
+    "depcheck": "^1.4.3",
+    "eslint": "^8.27.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-jest": "^27.1.5",
+    "eslint-plugin-jsdoc": "^39.6.2",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-prettier": "^4.2.1",
     "ethereumjs-tx": "^1.3.4",
-    "mocha": "^5.0.4"
+    "jest": "^28.1.3",
+    "jest-it-up": "^2.2.0",
+    "prettier": "^2.7.1",
+    "prettier-plugin-packagejson": "^2.2.12",
+    "rimraf": "^4.1.2",
+    "ts-jest": "^28.0.7",
+    "ts-node": "^10.7.0",
+    "typedoc": "^0.23.15",
+    "typescript": "~4.8.4"
+  },
+  "packageManager": "yarn@3.4.1",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "lavamoat": {
+    "allowScripts": {
+      "@lavamoat/preinstall-always-fail": false,
+      "ethereumjs-tx>ethereumjs-util>keccak": false,
+      "ethereumjs-util>ethereum-cryptography>keccak": false,
+      "ethereumjs-util>ethereum-cryptography>secp256k1": false,
+      "hdkey>secp256k1": false
+    }
   }
 }
