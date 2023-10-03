@@ -1,36 +1,42 @@
 module.exports = {
   root: true,
 
-  extends: [
-    '@metamask/eslint-config',
-    '@metamask/eslint-config/config/mocha',
-    '@metamask/eslint-config/config/nodejs',
-  ],
+  extends: ['@metamask/eslint-config'],
 
-  parser: 'babel-eslint',
-
-  parserOptions: {
-    ecmaVersion: 2017,
-  },
-
-  plugins: [
-    'json',
-    'import',
-  ],
-
-  globals: {
-    document: 'readonly',
-    window: 'readonly',
-  },
-
-  overrides: [{
-    files: [
-      '.eslintrc.js',
-    ],
-    parserOptions: {
-      sourceType: 'script',
+  overrides: [
+    {
+      files: ['*.ts'],
+      extends: [
+        '@metamask/eslint-config-typescript',
+        '@metamask/eslint-config-browser',
+      ],
     },
-  }],
 
-  ignorePatterns: ['dist'],
-}
+    {
+      files: ['*.js'],
+      parserOptions: {
+        sourceType: 'script',
+      },
+      extends: ['@metamask/eslint-config-nodejs'],
+    },
+
+    {
+      files: ['*.test.ts'],
+      rules: {
+        'import/no-nodejs-modules': 'off',
+      },
+      extends: [
+        '@metamask/eslint-config-nodejs',
+        '@metamask/eslint-config-jest',
+      ],
+    },
+  ],
+
+  ignorePatterns: [
+    '!.eslintrc.js',
+    '!.prettierrc.js',
+    'dist/',
+    'docs/',
+    '.yarn/',
+  ],
+};
