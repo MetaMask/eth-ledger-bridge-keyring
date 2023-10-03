@@ -1,6 +1,6 @@
 import { Common, Chain, Hardfork } from '@ethereumjs/common';
 import { TransactionFactory } from '@ethereumjs/tx';
-import sigUtil from '@metamask/eth-sig-util';
+import * as sigUtil from '@metamask/eth-sig-util';
 import EthereumTx from 'ethereumjs-tx';
 import * as ethUtil from 'ethereumjs-util';
 import HDKey from 'hdkey';
@@ -8,6 +8,14 @@ import HDKey from 'hdkey';
 import { LedgerBridge } from './ledger-bridge';
 import { LedgerIframeBridge } from './ledger-iframe-bridge';
 import { AccountDetails, LedgerKeyring } from './ledger-keyring';
+
+jest.mock('@metamask/eth-sig-util', () => {
+  return {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    __esModule: true,
+    ...jest.requireActual('@metamask/eth-sig-util'),
+  };
+});
 
 const fakeAccounts = [
   '0xF30952A1c534CDE7bC471380065726fa8686dfB3',
