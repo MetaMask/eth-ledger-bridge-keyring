@@ -91,11 +91,8 @@
   "lavamoat": {
     "allowScripts": {
       "@lavamoat/preinstall-always-fail": false,
-      "eth-sig-util>ethereumjs-abi>ethereumjs-util>keccak": false,
-      "eth-sig-util>ethereumjs-util>keccak": false,
-      "ethereumjs-tx>ethereumjs-util>keccak": false,
-      "ethereumjs-util>ethereum-cryptography>keccak": false,
-      "ethereumjs-util>ethereum-cryptography>secp256k1": false,
+      "eth-sig-util>ethereumjs-util>ethereum-cryptography>keccak": false,
+      "eth-sig-util>ethereumjs-util>ethereum-cryptography>secp256k1": false,
       "hdkey>secp256k1": false
     }
   }
