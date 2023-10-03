@@ -1328,7 +1328,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lavamoat/allow-scripts@npm:^2.3.0":
+"@lavamoat/allow-scripts@npm:^2.5.1":
   version: 2.5.1
   resolution: "@lavamoat/allow-scripts@npm:2.5.1"
   dependencies:
@@ -1599,7 +1599,7 @@ __metadata:
     "@ethereumjs/rlp": ^4.0.0
     "@ethereumjs/tx": ^4.1.1
     "@ethereumjs/util": ^8.0.0
-    "@lavamoat/allow-scripts": ^2.3.0
+    "@lavamoat/allow-scripts": ^2.5.1
     "@ledgerhq/hw-app-eth": ^6.32.0
     "@ledgerhq/types-cryptoassets": ^7.6.0
     "@ledgerhq/types-devices": ^6.22.4
