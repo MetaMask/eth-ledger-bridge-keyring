@@ -701,7 +701,7 @@ describe('LedgerKeyring', function () {
           },
         ],
       },
-      primaryType: 'Mail',
+      primaryType: 'Mail' as const,
       types: {
         EIP712Domain: [
           { name: 'name', type: 'string' },
