@@ -1503,6 +1503,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@ledgerhq/types-cryptoassets@npm:^7.6.0":
+  version: 7.6.0
+  resolution: "@ledgerhq/types-cryptoassets@npm:7.6.0"
+  checksum: a55b0bfaf6b5178259f79a0fd893b251ab57b7c31c64f84ec451976dcd4ca0a7b0f8f442429e4692018cce395116bdb55edefc312069fd1a43cd3f06f319b300
+  languageName: node
+  linkType: hard
+
+"@ledgerhq/types-devices@npm:^6.22.4":
+  version: 6.22.4
+  resolution: "@ledgerhq/types-devices@npm:6.22.4"
+  checksum: 37d1b7460210fabc57d034d8ee56c0699f2f1c59b0a4c2cd70eb9fadf8b6d80b8fb92ccfc37e574e258b20bd4b6d20a1faacb22c814dd0e01a68412a4f943f9e
+  languageName: node
+  linkType: hard
+
 "@ledgerhq/types-live@npm:^6.41.0":
   version: 6.41.0
   resolution: "@ledgerhq/types-live@npm:6.41.0"
@@ -1605,6 +1619,8 @@ __metadata:
     "@ethereumjs/tx": ^4.1.1
     "@lavamoat/allow-scripts": ^2.3.0
     "@ledgerhq/hw-app-eth": ^6.32.0
+    "@ledgerhq/types-cryptoassets": ^7.6.0
+    "@ledgerhq/types-devices": ^6.22.4
     "@metamask/auto-changelog": ^3.1.0
     "@metamask/eslint-config": ^11.0.1
     "@metamask/eslint-config-browser": ^11.0.0
