@@ -38,7 +38,7 @@
   },
   "dependencies": {
     "@ethereumjs/tx": "^4.1.1",
-    "@metamask/eth-sig-util": "^5.0.2",
+    "@metamask/eth-sig-util": "^6.0.1",
     "@metamask/utils": "^5.0.0",
     "ethereumjs-util": "^7.0.9",
     "hdkey": "0.8.0"
@@ -92,7 +92,8 @@
       "ethereumjs-tx>ethereumjs-util>keccak": false,
       "ethereumjs-util>ethereum-cryptography>keccak": false,
       "ethereumjs-util>ethereum-cryptography>secp256k1": false,
-      "hdkey>secp256k1": false
+      "hdkey>secp256k1": false,
+      "@ledgerhq/hw-app-eth>@ledgerhq/domain-service>eip55>keccak": false
     }
   }
 }
