@@ -2,6 +2,7 @@ import { TransactionFactory, TxData, TypedTransaction } from '@ethereumjs/tx';
 import type { MessageTypes, TypedMessage } from '@metamask/eth-sig-util';
 import {
   recoverPersonalSignature,
+  recoverTypedSignature,
   SignTypedDataVersion,
   TypedDataUtils,
 } from '@metamask/eth-sig-util';
@@ -474,10 +475,7 @@ export class LedgerKeyring extends EventEmitter {
       'EIP712Domain',
       domain,
       types,
-      // @ts-expect-error @types/eth-sig-util documents this function
-      // as taking three arguments, but it actually takes four.
-      // See: https://github.com/MetaMask/eth-sig-util/blob/v2.5.4/index.js#L174
-      isV4,
+      SignTypedDataVersion.V4,
     ).toString('hex');
     const hashStructMessageHex = TypedDataUtils.hashStruct(
       primaryType.toString(),
@@ -510,13 +508,10 @@ export class LedgerKeyring extends EventEmitter {
       recoveryId = `0${recoveryId}`;
     }
     const signature = `0x${payload.r}${payload.s}${recoveryId}`;
-    // @ts-expect-error recoverTypedSignature_v4 is missing from
-    // @types/eth-sig-util.
-    // See: https://github.com/MetaMask/eth-sig-util/blob/v2.5.4/index.js#L464
-    const addressSignedWith = recoverTypedSignature_v4({
+    const addressSignedWith = recoverTypedSignature({
       data,
-      // eslint-disable-next-line id-denylist
-      sig: signature,
+      signature,
+      version: SignTypedDataVersion.V4,
     });
     if (
       ethUtil.toChecksumAddress(addressSignedWith) !==
