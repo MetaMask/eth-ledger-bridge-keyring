@@ -1,8 +1,12 @@
 import { TransactionFactory, TxData, TypedTransaction } from '@ethereumjs/tx';
+import type { MessageTypes, TypedMessage } from '@metamask/eth-sig-util';
+import {
+  recoverPersonalSignature,
+  SignTypedDataVersion,
+  TypedDataUtils,
+} from '@metamask/eth-sig-util';
 // eslint-disable-next-line import/no-nodejs-modules
 import { Buffer } from 'buffer';
-import type { MessageTypes, TypedMessage } from '@metamask/eth-sig-util';
-import { recoverPersonalSignature, recoverTypedSignature, SignTypedDataVersion, TypedDataUtils } from '@metamask/eth-sig-util';
 import type OldEthJsTransaction from 'ethereumjs-tx';
 import * as ethUtil from 'ethereumjs-util';
 // eslint-disable-next-line import/no-nodejs-modules
