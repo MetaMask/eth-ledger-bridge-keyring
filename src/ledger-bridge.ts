@@ -3,9 +3,7 @@ import type LedgerHwAppEth from '@ledgerhq/hw-app-eth';
 export type GetPublicKeyParams = { hdPath: string };
 export type GetPublicKeyResponse = Awaited<
   ReturnType<LedgerHwAppEth['getAddress']>
-> & {
-  chainCode: string;
-};
+>;
 
 export type LedgerSignTransactionParams = { hdPath: string; tx: string };
 export type LedgerSignTransactionResponse = Awaited<
@@ -26,15 +24,26 @@ export type LedgerSignTypedDataResponse = Awaited<
   ReturnType<LedgerHwAppEth['signEIP712HashedMessage']>
 >;
 
+export type ITransportMiddleware = {
+  dispose(): Promise<void>;
+};
+
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export interface LedgerBridge {
   isDeviceConnected: boolean;
+  transportMiddleware: ITransportMiddleware | unknown;
 
-  init(bridgeUrl: string): Promise<void>;
+  init(): Promise<void>;
 
   destroy(): Promise<void>;
 
+  getMetadata(): Promise<Record<string, string>>;
+
+  setMetadata(metadata?: Record<string, string>): Promise<void>;
+
   attemptMakeApp(): Promise<boolean>;
+
+  getTransportMiddleware(): Promise<unknown>;
 
   updateTransportMethod(transportType: string): Promise<boolean>;
 

@@ -75,7 +75,7 @@ describe('LedgerIframeBridge', function () {
 
   beforeEach(async function () {
     bridge = new LedgerIframeBridge();
-    await bridge.init('bridgeUrl');
+    await bridge.init();
     await simulateIFrameLoad(bridge.iframe);
   });
 
@@ -89,7 +89,7 @@ describe('LedgerIframeBridge', function () {
 
       const addEventListenerSpy = jest.spyOn(global.window, 'addEventListener');
 
-      await bridge.init('bridgeUrl');
+      await bridge.init();
 
       expect(addEventListenerSpy).toHaveBeenCalledTimes(1);
       expect(bridge.iframeLoaded).toBe(false);

@@ -152,7 +152,7 @@ describe('LedgerKeyring', function () {
     it('serializes an instance', async function () {
       const output = await keyring.serialize();
 
-      expect(output.bridgeUrl).toBe(
+      expect(output.metadata.bridgeUrl).toBe(
         'https://metamask.github.io/eth-ledger-bridge-keyring',
       );
       expect(output.hdPath).toBe(`m/44'/60'/0'`);
@@ -179,7 +179,7 @@ describe('LedgerKeyring', function () {
       const serialized = await keyring.serialize();
 
       expect(serialized.accounts).toHaveLength(1);
-      expect(serialized.bridgeUrl).toBe(
+      expect(serialized.metadata.bridgeUrl).toBe(
         'https://metamask.github.io/eth-ledger-bridge-keyring',
       );
       expect(serialized.hdPath).toBe(someHdPath);
@@ -448,14 +448,6 @@ describe('LedgerKeyring', function () {
     it('returns the expected', function () {
       const expectedAccount = fakeAccounts[accountIndex];
       expect(accounts[0]).toStrictEqual(expectedAccount);
-    });
-  });
-
-  describe('exportAccount', function () {
-    it('should throw an error because it is not supported', function () {
-      expect(() => {
-        keyring.exportAccount();
-      }).toThrow('Not supported on this device');
     });
   });
 

@@ -1,4 +1,5 @@
 import { TransactionFactory, TxData, TypedTransaction } from '@ethereumjs/tx';
+import type Transport from '@ledgerhq/hw-transport';
 // eslint-disable-next-line import/no-nodejs-modules
 import { Buffer } from 'buffer';
 import * as sigUtil from 'eth-sig-util';
@@ -13,8 +14,6 @@ import { LedgerBridge } from './ledger-bridge';
 const pathBase = 'm';
 const hdPathString = `${pathBase}/44'/60'/0'`;
 const keyringType = 'Ledger Hardware';
-
-const BRIDGE_URL = 'https://metamask.github.io/eth-ledger-bridge-keyring';
 
 const MAX_INDEX = 1000;
 
@@ -40,8 +39,8 @@ export type LedgerBridgeKeyringOptions = {
   accounts: readonly string[];
   accountDetails: Readonly<Record<string, AccountDetails>>;
   accountIndexes: Readonly<Record<string, number>>;
-  bridgeUrl: string;
   implementFullBIP44: boolean;
+  metadata: Record<string, string>;
 };
 
 /**
@@ -88,8 +87,6 @@ export class LedgerKeyring extends EventEmitter {
 
   implementFullBIP44 = false;
 
-  bridgeUrl: string = BRIDGE_URL;
-
   bridge: LedgerBridge;
 
   constructor({ bridge }: { bridge: LedgerBridge }) {
@@ -103,7 +100,7 @@ export class LedgerKeyring extends EventEmitter {
   }
 
   async init() {
-    return this.bridge.init(this.bridgeUrl);
+    return this.bridge.init();
   }
 
   async destroy() {
@@ -115,61 +112,61 @@ export class LedgerKeyring extends EventEmitter {
       hdPath: this.hdPath,
       accounts: this.accounts,
       accountDetails: this.accountDetails,
-      bridgeUrl: this.bridgeUrl,
       implementFullBIP44: false,
+      metadata: await this.bridge.getMetadata(),
     };
   }
 
   async deserialize(opts: Partial<LedgerBridgeKeyringOptions> = {}) {
     this.hdPath = opts.hdPath ?? hdPathString;
-    this.bridgeUrl = opts.bridgeUrl ?? BRIDGE_URL;
     this.accounts = opts.accounts ?? [];
     this.accountDetails = opts.accountDetails ?? {};
+
+    await this.bridge.setMetadata(opts.metadata);
+
     if (!opts.accountDetails) {
       this.#migrateAccountDetails(opts);
     }
 
     this.implementFullBIP44 = opts.implementFullBIP44 ?? false;
 
+    const keys = new Set(Object.keys(this.accountDetails));
     // Remove accounts that don't have corresponding account details
     this.accounts = this.accounts.filter((account) =>
-      Object.keys(this.accountDetails).includes(
-        ethUtil.toChecksumAddress(account),
-      ),
+      keys.has(ethUtil.toChecksumAddress(account)),
     );
 
     return Promise.resolve();
   }
 
   #migrateAccountDetails(opts: Partial<LedgerBridgeKeyringOptions>) {
+    const keys = new Set<string>();
     if (this.#isLedgerLiveHdPath() && opts.accountIndexes) {
       for (const [account, index] of Object.entries(opts.accountIndexes)) {
         this.accountDetails[account] = {
           bip44: true,
           hdPath: this.#getPathForIndex(index),
         };
+        keys.add(account);
       }
     }
 
     // try to migrate non-LedgerLive accounts too
     if (!this.#isLedgerLiveHdPath()) {
-      this.accounts
-        .filter(
-          (account) =>
-            !Object.keys(this.accountDetails).includes(
-              ethUtil.toChecksumAddress(account),
-            ),
-        )
-        .forEach((account) => {
-          try {
-            this.accountDetails[ethUtil.toChecksumAddress(account)] = {
+      this.accounts.forEach((account) => {
+        try {
+          const key = ethUtil.toChecksumAddress(account);
+          if (!keys.has(key)) {
+            this.accountDetails[key] = {
               bip44: false,
               hdPath: this.#pathFromAddress(account),
             };
-          } catch (error) {
-            console.log(`failed to migrate account ${account}`);
           }
-        });
+          keys.add(key);
+        } catch (error) {
+          console.log(`failed to migrate account ${account}`);
+        }
+      });
     }
   }
 
@@ -268,15 +265,15 @@ export class LedgerKeyring extends EventEmitter {
   }
 
   removeAccount(address: string) {
-    if (
-      !this.accounts.map((a) => a.toLowerCase()).includes(address.toLowerCase())
-    ) {
+    const filteredAccounts = this.accounts.filter(
+      (a) => a.toLowerCase() !== address.toLowerCase(),
+    );
+
+    if (filteredAccounts.length === this.accounts.length) {
       throw new Error(`Address ${address} not found in this keyring`);
     }
 
-    this.accounts = this.accounts.filter(
-      (a) => a.toLowerCase() !== address.toLowerCase(),
-    );
+    this.accounts = filteredAccounts;
     delete this.accountDetails[ethUtil.toChecksumAddress(address)];
   }
 
@@ -522,10 +519,6 @@ export class LedgerKeyring extends EventEmitter {
       throw new Error('Ledger: The signature doesnt match the right address');
     }
     return signature;
-  }
-
-  exportAccount() {
-    throw new Error('Not supported on this device');
   }
 
   forgetDevice() {

@@ -1318,10 +1318,29 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@ledgerhq/devices@npm:^8.0.7":
+  version: 8.0.7
+  resolution: "@ledgerhq/devices@npm:8.0.7"
+  dependencies:
+    "@ledgerhq/errors": ^6.14.0
+    "@ledgerhq/logs": ^6.10.1
+    rxjs: 6
+    semver: ^7.3.5
+  checksum: 9dff60fc6b443d38a508e3f83b0ee3989fd58061c59345dd6ded524b5fd01b9a2840eb9bde7979829ae6d50d8e0c0e552e21284a1f10d8636a11ed737ca464a2
+  languageName: node
+  linkType: hard
+
 "@ledgerhq/errors@npm:^6.12.3":
   version: 6.12.3
   resolution: "@ledgerhq/errors@npm:6.12.3"
   checksum: 3284cbc85dc2df24f17a6e3899eb5afdff96e63d073b5914906c45ed8f1a93c7daa1e2b847d621610a1088b63c0abb9379e6b6ca395144c2d50855a4606c1d3f
+  languageName: node
+  linkType: hard
+
+"@ledgerhq/errors@npm:^6.14.0":
+  version: 6.14.0
+  resolution: "@ledgerhq/errors@npm:6.14.0"
+  checksum: 2c4e7bf126952a781d9226752b9401e842a5a773861128d182e9f40f1f46bf6cd8667c2ca64a1c52254d151bc6bec6d85ea62ba8b3dd35e46bbe47a90c291830
   languageName: node
   linkType: hard
 
@@ -1361,6 +1380,17 @@ __metadata:
     "@ledgerhq/errors": ^6.12.3
     events: ^3.3.0
   checksum: 69bf0f72e112c0c2f538c66d0b1dd2b24b19f1fcf5d671fdcfd50838e86dc55702555e0c639bbc55889a42a8ebd07243ad31798c2ff237dc21a1573581caf5ab
+  languageName: node
+  linkType: hard
+
+"@ledgerhq/hw-transport@npm:^6.28.8":
+  version: 6.28.8
+  resolution: "@ledgerhq/hw-transport@npm:6.28.8"
+  dependencies:
+    "@ledgerhq/devices": ^8.0.7
+    "@ledgerhq/errors": ^6.14.0
+    events: ^3.3.0
+  checksum: 636a1d8229e10673745a322ed4714f85ef395c8bdf39ed14bef859fbc8132ee271a2cf164042a06d7a4d24ee0bbb77c6c29e15c950b3f58af53ad161f9854c51
   languageName: node
   linkType: hard
 
@@ -1452,6 +1482,7 @@ __metadata:
     "@ethereumjs/tx": ^4.1.1
     "@lavamoat/allow-scripts": ^2.3.0
     "@ledgerhq/hw-app-eth": ^6.32.0
+    "@ledgerhq/hw-transport": ^6.28.8
     "@metamask/auto-changelog": ^3.1.0
     "@metamask/eslint-config": ^11.0.1
     "@metamask/eslint-config-browser": ^11.0.0
