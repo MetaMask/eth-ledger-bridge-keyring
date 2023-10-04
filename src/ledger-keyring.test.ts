@@ -2,7 +2,8 @@ import { Common, Chain, Hardfork } from '@ethereumjs/common';
 import { TransactionFactory } from '@ethereumjs/tx';
 import sigUtil from 'eth-sig-util';
 import EthereumTx from 'ethereumjs-tx';
-import * as ethUtil from 'ethereumjs-util';
+import * as ethUtil from '@ethereumjs/util';
+import {RLP} from '@ethereumjs/rlp'
 import HDKey from 'hdkey';
 
 import { LedgerBridge } from './ledger-bridge';
@@ -536,9 +537,9 @@ describe('LedgerKeyring', function () {
           .mockImplementation(async (params) => {
             expect(params).toStrictEqual({
               hdPath: "m/44'/60'/0'/0",
-              tx: ethUtil.rlp
+              tx: RLP
                 .encode(newFakeTx.getMessageToSign(false))
-                .toString('hex'),
+                .toString(),
             });
             return expectedRSV;
           });
