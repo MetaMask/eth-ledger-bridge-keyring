@@ -1,5 +1,4 @@
 import { TransactionFactory, TxData, TypedTransaction } from '@ethereumjs/tx';
-import type Transport from '@ledgerhq/hw-transport';
 // eslint-disable-next-line import/no-nodejs-modules
 import { Buffer } from 'buffer';
 import * as sigUtil from 'eth-sig-util';
