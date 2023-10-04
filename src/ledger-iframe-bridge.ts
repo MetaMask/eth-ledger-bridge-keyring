@@ -75,14 +75,18 @@ type IFramePostMessage<TAction extends IFrameMessageAction> =
 
 const BRIDGE_URL = 'https://metamask.github.io/eth-ledger-bridge-keyring';
 
-export class LedgerIframeBridge implements LedgerBridge {
-  iframe?: HTMLIFrameElement;
+export type LedgerIframeBridgeOptions = {
+  bridgeUrl: string;
+};
 
-  transportMiddleware: unknown;
+export class LedgerIframeBridge
+  implements LedgerBridge<LedgerIframeBridgeOptions>
+{
+  iframe?: HTMLIFrameElement;
 
   iframeLoaded = false;
 
-  bridgeUrl = BRIDGE_URL;
+  bridgeUrl = '';
 
   eventListener?: (eventMessage: {
     origin: string;
@@ -104,6 +108,12 @@ export class LedgerIframeBridge implements LedgerBridge {
     transportType: string;
   };
 
+  constructor(opts?: LedgerIframeBridgeOptions) {
+    if (opts) {
+      this.setOptions(opts);
+    }
+  }
+
   async init() {
     this.#setupIframe(this.bridgeUrl);
 
@@ -118,16 +128,14 @@ export class LedgerIframeBridge implements LedgerBridge {
     }
   }
 
-  async getMetadata(): Promise<Record<string, string>> {
-    return Promise.resolve({
+  getOptions(): LedgerIframeBridgeOptions {
+    return {
       bridgeUrl: this.bridgeUrl,
-    });
+    };
   }
 
-  async setMetadata(metadata?: Record<string, string>): Promise<void> {
-    if (metadata) {
-      this.bridgeUrl = metadata.bridgeUrl ?? BRIDGE_URL;
-    }
+  setOptions(opts: LedgerIframeBridgeOptions): void {
+    this.bridgeUrl = opts.bridgeUrl ?? BRIDGE_URL;
   }
 
   async attemptMakeApp(): Promise<boolean> {
@@ -173,10 +181,6 @@ export class LedgerIframeBridge implements LedgerBridge {
         },
       );
     });
-  }
-
-  async getTransportMiddleware(): Promise<unknown> {
-    return this.transportMiddleware;
   }
 
   async getPublicKey(

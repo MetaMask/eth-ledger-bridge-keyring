@@ -24,26 +24,19 @@ export type LedgerSignTypedDataResponse = Awaited<
   ReturnType<LedgerHwAppEth['signEIP712HashedMessage']>
 >;
 
-export type ITransportMiddleware = {
-  dispose(): Promise<void>;
-};
-
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-export interface LedgerBridge {
+export interface LedgerBridge<T extends Record<string, unknown>> {
   isDeviceConnected: boolean;
-  transportMiddleware: ITransportMiddleware | unknown;
 
   init(): Promise<void>;
 
   destroy(): Promise<void>;
 
-  getMetadata(): Promise<Record<string, string>>;
+  getOptions(): T;
 
-  setMetadata(metadata?: Record<string, string>): Promise<void>;
+  setOptions(opts: T): void;
 
   attemptMakeApp(): Promise<boolean>;
-
-  getTransportMiddleware(): Promise<unknown>;
 
   updateTransportMethod(transportType: string): Promise<boolean>;
 

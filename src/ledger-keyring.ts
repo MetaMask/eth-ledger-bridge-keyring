@@ -24,7 +24,7 @@ enum NetworkApiUrls {
 }
 
 type SignTransactionPayload = Awaited<
-  ReturnType<LedgerBridge['deviceSignTransaction']>
+  ReturnType<LedgerBridge<Record<string, unknown>>['deviceSignTransaction']>
 >;
 
 export type AccountDetails = {
@@ -39,7 +39,7 @@ export type LedgerBridgeKeyringOptions = {
   accountDetails: Readonly<Record<string, AccountDetails>>;
   accountIndexes: Readonly<Record<string, number>>;
   implementFullBIP44: boolean;
-  metadata: Record<string, string>;
+  bridgeOptions: Record<string, unknown>;
 };
 
 /**
@@ -86,9 +86,9 @@ export class LedgerKeyring extends EventEmitter {
 
   implementFullBIP44 = false;
 
-  bridge: LedgerBridge;
+  bridge: LedgerBridge<Record<string, unknown>>;
 
-  constructor({ bridge }: { bridge: LedgerBridge }) {
+  constructor({ bridge }: { bridge: LedgerBridge<Record<string, unknown>> }) {
     super();
 
     if (!bridge) {
@@ -112,7 +112,7 @@ export class LedgerKeyring extends EventEmitter {
       accounts: this.accounts,
       accountDetails: this.accountDetails,
       implementFullBIP44: false,
-      metadata: await this.bridge.getMetadata(),
+      bridgeOptions: this.bridge.getOptions(),
     };
   }
 
@@ -121,7 +121,7 @@ export class LedgerKeyring extends EventEmitter {
     this.accounts = opts.accounts ?? [];
     this.accountDetails = opts.accountDetails ?? {};
 
-    await this.bridge.setMetadata(opts.metadata);
+    this.bridge.setOptions(opts.bridgeOptions ?? {});
 
     if (!opts.accountDetails) {
       this.#migrateAccountDetails(opts);

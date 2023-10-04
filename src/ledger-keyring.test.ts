@@ -6,7 +6,10 @@ import * as ethUtil from 'ethereumjs-util';
 import HDKey from 'hdkey';
 
 import { LedgerBridge } from './ledger-bridge';
-import { LedgerIframeBridge } from './ledger-iframe-bridge';
+import {
+  LedgerIframeBridge,
+  LedgerIframeBridgeOptions,
+} from './ledger-iframe-bridge';
 import { AccountDetails, LedgerKeyring } from './ledger-keyring';
 
 const fakeAccounts = [
@@ -76,8 +79,8 @@ const fakeTypeTwoTx = TransactionFactory.fromTxData(
 
 describe('LedgerKeyring', function () {
   let keyring: LedgerKeyring;
-  let bridge: LedgerBridge;
-
+  let bridge: LedgerBridge<Record<string, unknown>>;
+  const opts = { bridgeUrl: 'bridgeUrl' };
   /**
    * Sets up the keyring to unlock one account.
    *
@@ -93,7 +96,7 @@ describe('LedgerKeyring', function () {
   }
 
   beforeEach(async function () {
-    bridge = new LedgerIframeBridge();
+    bridge = new LedgerIframeBridge(opts);
     keyring = new LedgerKeyring({ bridge });
     keyring.hdk = fakeHdKey;
     await keyring.deserialize();
@@ -119,7 +122,7 @@ describe('LedgerKeyring', function () {
   describe('constructor', function () {
     it('constructs', async function () {
       const ledgerKeyring = new LedgerKeyring({
-        bridge: new LedgerIframeBridge(),
+        bridge: new LedgerIframeBridge(opts),
       });
       expect(typeof ledgerKeyring).toBe('object');
 
@@ -131,7 +134,8 @@ describe('LedgerKeyring', function () {
       expect(
         () =>
           new LedgerKeyring({
-            bridge: undefined as unknown as LedgerBridge,
+            bridge:
+              undefined as unknown as LedgerBridge<LedgerIframeBridgeOptions>,
           }),
       ).toThrow('Bridge is a required dependency for the keyring');
     });
@@ -152,7 +156,7 @@ describe('LedgerKeyring', function () {
     it('serializes an instance', async function () {
       const output = await keyring.serialize();
 
-      expect(output.metadata.bridgeUrl).toBe(
+      expect(output.bridgeOptions.bridgeUrl).toBe(
         'https://metamask.github.io/eth-ledger-bridge-keyring',
       );
       expect(output.hdPath).toBe(`m/44'/60'/0'`);
@@ -179,7 +183,7 @@ describe('LedgerKeyring', function () {
       const serialized = await keyring.serialize();
 
       expect(serialized.accounts).toHaveLength(1);
-      expect(serialized.metadata.bridgeUrl).toBe(
+      expect(serialized.bridgeOptions.bridgeUrl).toBe(
         'https://metamask.github.io/eth-ledger-bridge-keyring',
       );
       expect(serialized.hdPath).toBe(someHdPath);

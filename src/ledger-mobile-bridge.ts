@@ -14,14 +14,12 @@ import {
   LedgerSignTransactionResponse,
   LedgerSignTypedDataParams,
   LedgerSignTypedDataResponse,
-  ITransportMiddleware,
 } from './ledger-bridge';
 
 type GetEthAppNameAndVersionResponse = { appName: string; version: string };
 
-export type ILedgerMobileBridge = {
-  setDeviceId(deviceId: string): void;
-  getDeviceId(): string;
+export type ITransportMiddleware = {
+  dispose(): Promise<void>;
 };
 
 export type ILedgerMobileTransportMiddleware = {
@@ -33,6 +31,15 @@ export type ILedgerMobileTransportMiddleware = {
   getEthApp(): Promise<LedgerHwAppEth>;
   initEthApp(): Promise<void>;
 } & ITransportMiddleware;
+
+export type LedgerMobileBridgeOptions = {
+  deviceId: string;
+};
+
+export type ILedgerMobileBridge = {
+  setDeviceId(deviceId: string): void;
+  getDeviceId(): string;
+} & LedgerBridge<LedgerMobileBridgeOptions>;
 
 /**
  * LedgerMobileTransportMiddleware is a middleware to communicate with the Ledger device via transport or LedgerHwAppEth
@@ -132,16 +139,17 @@ export class LedgerMobileTransportMiddleware
 /**
  * LedgerMobileBridge is a bridge between the LedgerKeyring and the LedgerMobileTransportMiddleware.
  */
-export default class LedgerMobileBridge
-  implements LedgerBridge, ILedgerMobileBridge
-{
+export default class LedgerMobileBridge implements ILedgerMobileBridge {
   transportMiddleware: ILedgerMobileTransportMiddleware;
 
   deviceId = '';
 
   isDeviceConnected = false;
 
-  constructor() {
+  constructor(opts?: LedgerMobileBridgeOptions) {
+    if (opts) {
+      this.setOptions(opts);
+    }
     this.transportMiddleware = new LedgerMobileTransportMiddleware();
   }
 
@@ -162,17 +170,12 @@ export default class LedgerMobileBridge
     return this.deviceId;
   }
 
-  async getTransportMiddleware(): Promise<ILedgerMobileTransportMiddleware> {
-    return this.transportMiddleware;
-  }
-
   async updateTransportMethod(): Promise<boolean> {
     throw new Error('Method not supported.');
   }
 
   async attemptMakeApp(): Promise<boolean> {
-    await this.transportMiddleware.initEthApp();
-    return true;
+    throw new Error('Method not supported.');
   }
 
   async destroy(): Promise<void> {
@@ -185,16 +188,14 @@ export default class LedgerMobileBridge
     this.isDeviceConnected = false;
   }
 
-  async getMetadata(): Promise<Record<string, string>> {
-    return Promise.resolve({
+  getOptions(): LedgerMobileBridgeOptions {
+    return {
       deviceId: this.deviceId,
-    });
+    };
   }
 
-  async setMetadata(metadata?: Record<string, string>): Promise<void> {
-    if (metadata) {
-      this.deviceId = metadata.deviceId ?? '';
-    }
+  setOptions(opts: LedgerMobileBridgeOptions): void {
+    this.deviceId = opts.deviceId ?? '';
   }
 
   async deviceSignMessage({
