@@ -1,4 +1,5 @@
 import ledgerService from '@ledgerhq/hw-app-eth/lib/services/ledger';
+import Transport from '@ledgerhq/hw-transport';
 
 import {
   LedgerMobileBridge,
@@ -7,10 +8,23 @@ import {
 
 const DEVICE_ID = 'DEVICE_ID';
 
+const mockTransport = {
+  deviceModel: {
+    id: DEVICE_ID,
+  },
+  send: jest.fn(),
+  close: jest.fn(),
+  decorateAppAPIMethods: jest.fn(),
+};
+
 describe('LedgerMobileBridge', function () {
   let bridge: LedgerMobileBridge;
   let transportMiddleware: LedgerTransportMiddleware;
   let transportMiddlewareDisposeSpy: jest.SpyInstance;
+  let transportMiddlewareSetTransportSpy: jest.SpyInstance;
+  let transportMiddlewareOpenEthAppSpy: jest.SpyInstance;
+  let transportMiddlewareCloseAppsSpy: jest.SpyInstance;
+  let transportMiddlewareGetEthAppNameAndVersionSpy: jest.SpyInstance;
   let transportMiddlewareGetEthAppSpy: jest.SpyInstance;
   const mockEthApp = {
     signEIP712HashedMessage: jest.fn(),
@@ -24,6 +38,23 @@ describe('LedgerMobileBridge', function () {
     transportMiddlewareDisposeSpy = jest
       .spyOn(transportMiddleware, 'dispose')
       .mockImplementation(async () => Promise.resolve());
+    transportMiddlewareSetTransportSpy = jest
+      .spyOn(transportMiddleware, 'setTransport')
+      .mockImplementation(async () => Promise.resolve());
+    transportMiddlewareOpenEthAppSpy = jest
+      .spyOn(transportMiddleware, 'openEthApp')
+      .mockImplementation(async () => Promise.resolve());
+    transportMiddlewareCloseAppsSpy = jest
+      .spyOn(transportMiddleware, 'closeApps')
+      .mockImplementation(async () => Promise.resolve());
+    transportMiddlewareGetEthAppNameAndVersionSpy = jest
+      .spyOn(transportMiddleware, 'getEthAppNameAndVersion')
+      .mockImplementation(async () =>
+        Promise.resolve({
+          appName: 'appName',
+          version: 'version',
+        }),
+      );
     transportMiddlewareGetEthAppSpy = jest
       .spyOn(transportMiddleware, 'getEthApp')
       .mockImplementation(async () => Promise.resolve(mockEthApp as any));
@@ -32,6 +63,7 @@ describe('LedgerMobileBridge', function () {
 
   afterEach(function () {
     jest.clearAllMocks();
+    mockTransport.deviceModel.id = DEVICE_ID;
   });
 
   describe('getTransportMiddleWare', function () {
@@ -183,12 +215,61 @@ describe('LedgerMobileBridge', function () {
     });
   });
 
+  describe('connect', function () {
+    it('connect with correct parameters', async function () {
+      await bridge.connect(mockTransport as unknown as Transport, DEVICE_ID);
+      expect(transportMiddlewareSetTransportSpy).toHaveBeenCalledTimes(1);
+      expect(transportMiddlewareSetTransportSpy).toHaveBeenCalledWith(
+        mockTransport,
+      );
+      expect(bridge.deviceId).toBe(DEVICE_ID);
+      expect(bridge.isDeviceConnected).toBe(true);
+      mockTransport.deviceModel.id = '';
+    });
+
+    it('throw error when device id not set from transport', async function () {
+      mockTransport.deviceModel.id = '';
+      await expect(
+        bridge.connect(mockTransport as unknown as Transport, DEVICE_ID),
+      ).rejects.toThrow('device id is not defined.');
+    });
+  });
+
+  describe('getEthAppNameAndVersion', function () {
+    it('should call transportMiddleware getEthAppNameAndVersion and return appname and version', async function () {
+      await bridge.connect(mockTransport as unknown as Transport, DEVICE_ID);
+      const result = await bridge.getEthAppNameAndVersion();
+      expect(
+        transportMiddlewareGetEthAppNameAndVersionSpy,
+      ).toHaveBeenCalledTimes(1);
+      expect(result).toStrictEqual({
+        appName: 'appName',
+        version: 'version',
+      });
+    });
+  });
+
+  describe('openEthApp', function () {
+    it('should call transportMiddleware openEthApp', async function () {
+      await bridge.connect(mockTransport as unknown as Transport, DEVICE_ID);
+      await bridge.openEthApp();
+      expect(transportMiddlewareOpenEthAppSpy).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('closeApps', function () {
+    it('should call transportMiddleware closeApps', async function () {
+      await bridge.connect(mockTransport as unknown as Transport, DEVICE_ID);
+      await bridge.closeApps();
+      expect(transportMiddlewareCloseAppsSpy).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('setOption', function () {
     it('option set correctly', async function () {
       bridge.deviceId = '';
       await bridge.setOptions({ deviceId: DEVICE_ID });
       expect(bridge.deviceId).toBe(DEVICE_ID);
-      expect(bridge.isDeviceConnected).toBe(true);
     });
 
     it('throw error when device id has set but different device id given', async function () {
@@ -213,11 +294,6 @@ describe('LedgerMobileBridge', function () {
 
 describe('LedgerTransportMiddleware', function () {
   let transportMiddleware: LedgerTransportMiddleware;
-  const mockTransport = {
-    send: jest.fn(),
-    close: jest.fn(),
-    decorateAppAPIMethods: jest.fn(),
-  };
 
   beforeEach(async function () {
     transportMiddleware = new LedgerTransportMiddleware();

@@ -21,7 +21,7 @@ export interface LedgerTransportMiddleware {
   getEthAppNameAndVersion(): Promise<GetEthAppNameAndVersionResponse>;
   openEthApp(): Promise<void>;
   closeApps(): Promise<void>;
-  setTransport(transport: Transport): Promise<boolean>;
+  setTransport(transport: Transport): Promise<void>;
   getTransport(): Promise<Transport>;
   getEthApp(): Promise<LedgerHwAppEth>;
   initEthApp(): Promise<void>;
@@ -33,6 +33,10 @@ export interface LedgerMobileBridge
   extends LedgerBridge<LedgerMobileBridgeOptions> {
   setDeviceId(deviceId: string): void;
   getTransportMiddleWare(): LedgerTransportMiddleware;
+  connect(transport: Transport, deviceId: string): Promise<void>;
+  getEthAppNameAndVersion(): Promise<GetEthAppNameAndVersionResponse>;
+  openEthApp(): Promise<void>;
+  closeApps(): Promise<void>;
 }
 
 export type GetEthAppNameAndVersionResponse = {
@@ -63,9 +67,8 @@ export class LedgerTransportMiddleware implements LedgerTransportMiddleware {
     await transport.close();
   }
 
-  async setTransport(transport: Transport): Promise<boolean> {
+  async setTransport(transport: Transport): Promise<void> {
     this.#transport = transport;
-    return true;
   }
 
   async getTransport(): Promise<Transport> {
@@ -162,13 +165,33 @@ export class LedgerMobileBridge implements LedgerMobileBridge {
     return Promise.resolve();
   }
 
+  async connect(transport: Transport, deviceId: string): Promise<void> {
+    if (!transport.deviceModel?.id) {
+      throw new Error('device id is not defined.');
+    }
+    await this.getTransportMiddleWare().setTransport(transport);
+    this.setDeviceId(deviceId);
+    this.isDeviceConnected = true;
+  }
+
+  async getEthAppNameAndVersion(): Promise<GetEthAppNameAndVersionResponse> {
+    return await this.getTransportMiddleWare().getEthAppNameAndVersion();
+  }
+
+  async openEthApp(): Promise<void> {
+    await this.getTransportMiddleWare().openEthApp();
+  }
+
+  async closeApps(): Promise<void> {
+    await this.getTransportMiddleWare().closeApps();
+  }
+
   setDeviceId(deviceId: string): void {
     if (deviceId) {
       if (this.deviceId && this.deviceId !== deviceId) {
         throw new Error('deviceId mismatch.');
       }
       this.deviceId = deviceId;
-      this.isDeviceConnected = true;
     }
   }
 
