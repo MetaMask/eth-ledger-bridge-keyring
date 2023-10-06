@@ -10,10 +10,7 @@ import {
   LedgerIframeBridge,
   LedgerIframeBridgeOptions,
 } from './ledger-iframe-bridge';
-import {
-  AccountDetails,
-  LedgerKeyring,
-} from './ledger-keyring';
+import { AccountDetails, LedgerKeyring } from './ledger-keyring';
 
 const fakeAccounts = [
   '0xF30952A1c534CDE7bC471380065726fa8686dfB3',
@@ -80,7 +77,7 @@ const fakeTypeTwoTx = TransactionFactory.fromTxData(
   { common: commonEIP1559, freeze: false },
 );
 
-const BRIDGE_URL = 'BRIDGE_URL'
+const BRIDGE_URL = 'BRIDGE_URL';
 
 describe('LedgerKeyring', function () {
   let keyring: LedgerKeyring;
@@ -161,9 +158,7 @@ describe('LedgerKeyring', function () {
     it('serializes an instance', async function () {
       const output = await keyring.serialize();
 
-      expect(output.bridgeOptions.bridgeUrl).toBe(
-        BRIDGE_URL,
-      );
+      expect(output.bridgeOptions.bridgeUrl).toStrictEqual(BRIDGE_URL);
       expect(output.hdPath).toBe(`m/44'/60'/0'`);
       expect(Array.isArray(output.accounts)).toBe(true);
       expect(output.accounts).toHaveLength(0);
@@ -188,9 +183,7 @@ describe('LedgerKeyring', function () {
       const serialized = await keyring.serialize();
 
       expect(serialized.accounts).toHaveLength(1);
-      expect(serialized.bridgeOptions.bridgeUrl).toBe(
-        BRIDGE_URL,
-      );
+      expect(serialized.bridgeOptions.bridgeUrl).toBe(BRIDGE_URL);
       expect(serialized.hdPath).toBe(someHdPath);
       expect(serialized.accountDetails).toStrictEqual(accountDetails);
     });
