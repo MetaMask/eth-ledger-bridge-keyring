@@ -109,9 +109,7 @@ export class LedgerIframeBridge
   };
 
   constructor(opts?: LedgerIframeBridgeOptions) {
-    if (opts) {
-      this.setOptions(opts);
-    }
+    this.bridgeUrl = opts?.bridgeUrl ?? BRIDGE_URL;
   }
 
   async init() {
@@ -128,14 +126,26 @@ export class LedgerIframeBridge
     }
   }
 
-  getOptions(): LedgerIframeBridgeOptions {
+  async deserializeData(serializeData: Record<string, unknown>): Promise<void> {
+    this.bridgeUrl = (serializeData.bridgeUrl as string) ?? this.bridgeUrl;
+  }
+
+  async serializeData(): Promise<Record<string, unknown>> {
     return {
       bridgeUrl: this.bridgeUrl,
     };
   }
 
-  setOptions(opts: LedgerIframeBridgeOptions): void {
-    this.bridgeUrl = opts.bridgeUrl ?? BRIDGE_URL;
+  async getOptions(): Promise<LedgerIframeBridgeOptions> {
+    return { bridgeUrl: this.bridgeUrl };
+  }
+
+  async setOptions(opts: LedgerIframeBridgeOptions): Promise<void> {
+    if (opts.bridgeUrl && this.bridgeUrl !== opts.bridgeUrl) {
+      this.bridgeUrl = opts.bridgeUrl;
+      await this.destroy();
+      await this.init();
+    }
   }
 
   async attemptMakeApp(): Promise<boolean> {

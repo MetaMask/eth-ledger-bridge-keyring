@@ -50,6 +50,7 @@ async function simulateIFrameLoad(iframe?: HTMLIFrameElementShim) {
 }
 
 const LEDGER_IFRAME_ID = 'LEDGER-IFRAME';
+const BRIDGE_URL = 'BRIDGE_URL';
 
 describe('LedgerIframeBridge', function () {
   let bridge: LedgerIframeBridge;
@@ -74,7 +75,9 @@ describe('LedgerIframeBridge', function () {
   }
 
   beforeEach(async function () {
-    bridge = new LedgerIframeBridge();
+    bridge = new LedgerIframeBridge({
+      bridgeUrl: BRIDGE_URL,
+    });
     await bridge.init();
     await simulateIFrameLoad(bridge.iframe);
   });
@@ -477,6 +480,65 @@ describe('LedgerIframeBridge', function () {
 
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(bridge.iframe?.contentWindow?.postMessage).toHaveBeenCalled();
+    });
+  });
+
+  describe('deserializeData', function () {
+    it('data has assigned to instance', async function () {
+      bridge.bridgeUrl = '';
+      await bridge.deserializeData({ bridgeUrl: BRIDGE_URL });
+      expect(bridge.bridgeUrl).toBe(BRIDGE_URL);
+    });
+  });
+
+  describe('serializeData', function () {
+    it('return struct data', async function () {
+      await bridge.deserializeData({ bridgeUrl: BRIDGE_URL });
+      const result = await bridge.serializeData();
+      expect(result).toStrictEqual({
+        bridgeUrl: BRIDGE_URL,
+      });
+    });
+  });
+
+  describe('setOption', function () {
+    let removeEventListenerSpy: jest.SpyInstance;
+    let addEventListenerSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      removeEventListenerSpy = jest.spyOn(global.window, 'removeEventListener');
+      addEventListenerSpy = jest.spyOn(global.window, 'addEventListener');
+      bridge = new LedgerIframeBridge({
+        bridgeUrl: BRIDGE_URL,
+      });
+    });
+
+    it('option set correctly', async function () {
+      await bridge.init();
+      await bridge.setOptions({ bridgeUrl: 'another url' });
+      await simulateIFrameLoad(bridge.iframe);
+      expect(bridge.bridgeUrl).toBe('another url');
+      expect(addEventListenerSpy).toHaveBeenCalledTimes(2);
+      expect(removeEventListenerSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('option will not set when given bridgeUrl is same', async function () {
+      await bridge.init();
+      await bridge.setOptions({ bridgeUrl: BRIDGE_URL });
+      await simulateIFrameLoad(bridge.iframe);
+      expect(bridge.bridgeUrl).toBe(BRIDGE_URL);
+      expect(addEventListenerSpy).toHaveBeenCalledTimes(1);
+      expect(removeEventListenerSpy).toHaveBeenCalledTimes(0);
+    });
+  });
+
+  describe('getOption', function () {
+    it('return instance options', async function () {
+      bridge.bridgeUrl = BRIDGE_URL;
+      const result = await bridge.getOptions();
+      expect(result).toStrictEqual({
+        bridgeUrl: BRIDGE_URL,
+      });
     });
   });
 });

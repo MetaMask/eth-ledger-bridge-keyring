@@ -16,13 +16,8 @@ import {
   LedgerSignTypedDataResponse,
 } from './ledger-bridge';
 
-type GetEthAppNameAndVersionResponse = { appName: string; version: string };
-
-export type ITransportMiddleware = {
-  dispose(): Promise<void>;
-};
-
-export type ILedgerMobileTransportMiddleware = {
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+export interface LedgerTransportMiddleware {
   getEthAppNameAndVersion(): Promise<GetEthAppNameAndVersionResponse>;
   openEthApp(): Promise<void>;
   closeApps(): Promise<void>;
@@ -30,32 +25,38 @@ export type ILedgerMobileTransportMiddleware = {
   getTransport(): Promise<Transport>;
   getEthApp(): Promise<LedgerHwAppEth>;
   initEthApp(): Promise<void>;
-} & ITransportMiddleware;
+  dispose(): Promise<void>;
+}
 
-export type LedgerMobileBridgeOptions = {
-  deviceId: string;
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+export interface LedgerMobileBridge
+  extends LedgerBridge<LedgerMobileBridgeOptions> {
+  setDeviceId(deviceId: string): void;
+  getTransportMiddleWare(): LedgerTransportMiddleware;
+}
+
+export type GetEthAppNameAndVersionResponse = {
+  appName: string;
+  version: string;
 };
 
-export type ILedgerMobileBridge = {
-  setDeviceId(deviceId: string): void;
-  getDeviceId(): string;
-} & LedgerBridge<LedgerMobileBridgeOptions>;
+export type LedgerMobileBridgeOptions = {
+  deviceId?: string;
+};
 
 /**
- * LedgerMobileTransportMiddleware is a middleware to communicate with the Ledger device via transport or LedgerHwAppEth
+ * LedgerTransportMiddleware is a middleware to communicate with the Ledger device via transport or LedgerHwAppEth
  */
-export class LedgerMobileTransportMiddleware
-  implements ILedgerMobileTransportMiddleware
-{
+export class LedgerTransportMiddleware implements LedgerTransportMiddleware {
   readonly mainAppName = 'BOLOS';
 
   readonly ethAppName = 'Ethereum';
 
   readonly transportEncoding = 'ascii';
 
-  app?: LedgerHwAppEth;
+  #app?: LedgerHwAppEth;
 
-  transport?: Transport;
+  #transport?: Transport;
 
   async dispose(): Promise<void> {
     const transport = await this.getTransport();
@@ -63,30 +64,30 @@ export class LedgerMobileTransportMiddleware
   }
 
   async setTransport(transport: Transport): Promise<boolean> {
-    this.transport = transport;
-    return Promise.resolve(true);
+    this.#transport = transport;
+    return true;
   }
 
   async getTransport(): Promise<Transport> {
-    if (!this.transport) {
+    if (!this.#transport) {
       throw new Error(
         'Ledger transport is not initialized. You must call setTransport first.',
       );
     }
-    return Promise.resolve(this.transport);
+    return this.#transport;
   }
 
   async getEthApp(): Promise<LedgerHwAppEth> {
-    if (!this.app) {
+    if (!this.#app) {
       throw new Error(
         'Ledger app is not initialized. You must call setTransport first.',
       );
     }
-    return Promise.resolve(this.app);
+    return this.#app;
   }
 
   async initEthApp(): Promise<void> {
-    this.app = new LedgerHwAppEth(await this.getTransport());
+    this.#app = new LedgerHwAppEth(await this.getTransport());
   }
 
   async openEthApp(): Promise<void> {
@@ -110,21 +111,23 @@ export class LedgerMobileTransportMiddleware
 
     const response = await transport.send(0xb0, 0x01, 0x00, 0x00);
 
-    let i = 1;
+    let i = 0;
     const format = response[i];
-
+    i += 1;
     if (format !== 1) {
       throw new Error('getEthAppNameAndVersion: format not supported');
     }
 
-    i += 1;
     const nameLength = response[i] ?? 0;
+    i += 1;
+
     const appName = response
       .slice(i, (i += nameLength))
       .toString(this.transportEncoding);
 
-    i += 1;
     const versionLength = response[i] ?? 0;
+    i += 1;
+
     const version = response
       .slice(i, (i += versionLength))
       .toString(this.transportEncoding);
@@ -137,20 +140,21 @@ export class LedgerMobileTransportMiddleware
 }
 
 /**
- * LedgerMobileBridge is a bridge between the LedgerKeyring and the LedgerMobileTransportMiddleware.
+ * LedgerMobileBridge is a bridge between the LedgerKeyring and the LedgerTransportMiddleware.
  */
-export default class LedgerMobileBridge implements ILedgerMobileBridge {
-  transportMiddleware: ILedgerMobileTransportMiddleware;
+export class LedgerMobileBridge implements LedgerMobileBridge {
+  #transportMiddleware?: LedgerTransportMiddleware;
 
   deviceId = '';
 
   isDeviceConnected = false;
 
-  constructor(opts?: LedgerMobileBridgeOptions) {
-    if (opts) {
-      this.setOptions(opts);
-    }
-    this.transportMiddleware = new LedgerMobileTransportMiddleware();
+  constructor(
+    transportMiddleware: LedgerTransportMiddleware,
+    opts?: LedgerMobileBridgeOptions,
+  ) {
+    this.deviceId = opts?.deviceId ?? '';
+    this.#transportMiddleware = transportMiddleware;
   }
 
   // init will be called by the eth keyring controller when new account added
@@ -159,15 +163,20 @@ export default class LedgerMobileBridge implements ILedgerMobileBridge {
   }
 
   setDeviceId(deviceId: string): void {
-    if (this.deviceId && this.deviceId !== deviceId) {
-      throw new Error('LedgerKeyring: deviceId mismatch.');
+    if (deviceId) {
+      if (this.deviceId && this.deviceId !== deviceId) {
+        throw new Error('deviceId mismatch.');
+      }
+      this.deviceId = deviceId;
+      this.isDeviceConnected = true;
     }
-    this.deviceId = deviceId;
-    this.isDeviceConnected = true;
   }
 
-  getDeviceId(): string {
-    return this.deviceId;
+  getTransportMiddleWare(): LedgerTransportMiddleware {
+    if (this.#transportMiddleware) {
+      return this.#transportMiddleware;
+    }
+    throw new Error('transportMiddleware is not initialized.');
   }
 
   async updateTransportMethod(): Promise<boolean> {
@@ -179,7 +188,7 @@ export default class LedgerMobileBridge implements ILedgerMobileBridge {
   }
 
   async destroy(): Promise<void> {
-    await this.transportMiddleware.dispose();
+    await this.getTransportMiddleWare().dispose();
     this.isDeviceConnected = false;
   }
 
@@ -188,21 +197,31 @@ export default class LedgerMobileBridge implements ILedgerMobileBridge {
     this.isDeviceConnected = false;
   }
 
-  getOptions(): LedgerMobileBridgeOptions {
+  async deserializeData(serializeData: Record<string, unknown>): Promise<void> {
+    this.deviceId = (serializeData.deviceId as string) ?? this.deviceId;
+  }
+
+  async serializeData(): Promise<Record<string, unknown>> {
     return {
       deviceId: this.deviceId,
     };
   }
 
-  setOptions(opts: LedgerMobileBridgeOptions): void {
-    this.deviceId = opts.deviceId ?? '';
+  async getOptions(): Promise<LedgerMobileBridgeOptions> {
+    return {
+      deviceId: this.deviceId,
+    };
+  }
+
+  async setOptions(opts: LedgerMobileBridgeOptions): Promise<void> {
+    this.setDeviceId(opts.deviceId ?? '');
   }
 
   async deviceSignMessage({
     hdPath,
     message,
   }: LedgerSignMessageParams): Promise<LedgerSignMessageResponse> {
-    const app = await this.transportMiddleware.getEthApp();
+    const app = await this.getTransportMiddleWare().getEthApp();
     return app.signPersonalMessage(hdPath, message);
   }
 
@@ -211,7 +230,7 @@ export default class LedgerMobileBridge implements ILedgerMobileBridge {
     domainSeparatorHex,
     hashStructMessageHex,
   }: LedgerSignTypedDataParams): Promise<LedgerSignTypedDataResponse> {
-    const app = await this.transportMiddleware.getEthApp();
+    const app = await this.getTransportMiddleWare().getEthApp();
     return app.signEIP712HashedMessage(
       hdPath,
       domainSeparatorHex,
@@ -224,14 +243,14 @@ export default class LedgerMobileBridge implements ILedgerMobileBridge {
     hdPath,
   }: LedgerSignTransactionParams): Promise<LedgerSignTransactionResponse> {
     const resolution = await ledgerService.resolveTransaction(tx, {}, {});
-    const app = await this.transportMiddleware.getEthApp();
+    const app = await this.getTransportMiddleWare().getEthApp();
     return app.signTransaction(hdPath, tx, resolution);
   }
 
   async getPublicKey({
     hdPath,
   }: GetPublicKeyParams): Promise<GetPublicKeyResponse> {
-    const app = await this.transportMiddleware.getEthApp();
+    const app = await this.getTransportMiddleWare().getEthApp();
     return app.getAddress(hdPath, false, true);
   }
 }

@@ -112,7 +112,7 @@ export class LedgerKeyring extends EventEmitter {
       accounts: this.accounts,
       accountDetails: this.accountDetails,
       implementFullBIP44: false,
-      bridgeOptions: this.bridge.getOptions(),
+      bridgeOptions: await this.bridge.serializeData(),
     };
   }
 
@@ -121,7 +121,7 @@ export class LedgerKeyring extends EventEmitter {
     this.accounts = opts.accounts ?? [];
     this.accountDetails = opts.accountDetails ?? {};
 
-    this.bridge.setOptions(opts.bridgeOptions ?? {});
+    await this.bridge.deserializeData(opts.bridgeOptions ?? {});
 
     if (!opts.accountDetails) {
       this.#migrateAccountDetails(opts);

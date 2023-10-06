@@ -32,9 +32,13 @@ export interface LedgerBridge<T extends Record<string, unknown>> {
 
   destroy(): Promise<void>;
 
-  getOptions(): T;
+  serializeData(): Promise<Record<string, unknown>>;
 
-  setOptions(opts: T): void;
+  deserializeData(opts: Record<string, unknown>): Promise<void>;
+
+  getOptions(): Promise<T>;
+
+  setOptions(opts: T): Promise<void>;
 
   attemptMakeApp(): Promise<boolean>;
 
