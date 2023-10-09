@@ -32,6 +32,7 @@ export interface LedgerTransportMiddleware {
 export interface LedgerMobileBridge
   extends LedgerBridge<LedgerMobileBridgeOptions> {
   setDeviceId(deviceId: string): void;
+  getDeviceId(): string;
   getTransportMiddleWare(): LedgerTransportMiddleware;
   connect(transport: Transport, deviceId: string): Promise<void>;
   getEthAppNameAndVersion(): Promise<GetEthAppNameAndVersionResponse>;
@@ -175,7 +176,7 @@ export class LedgerMobileBridge implements LedgerMobileBridge {
   }
 
   getDeviceId(): string {
-    return this.#deviceId
+    return this.#deviceId;
   }
 
   setDeviceId(deviceId: string): void {
