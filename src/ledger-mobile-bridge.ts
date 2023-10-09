@@ -148,7 +148,7 @@ export class LedgerTransportMiddleware implements LedgerTransportMiddleware {
 export class LedgerMobileBridge implements LedgerMobileBridge {
   #transportMiddleware?: LedgerTransportMiddleware;
 
-  deviceId = '';
+  #deviceId = '';
 
   isDeviceConnected = false;
 
@@ -156,7 +156,7 @@ export class LedgerMobileBridge implements LedgerMobileBridge {
     transportMiddleware: LedgerTransportMiddleware,
     opts?: LedgerMobileBridgeOptions,
   ) {
-    this.deviceId = opts?.deviceId ?? '';
+    this.#deviceId = opts?.deviceId ?? '';
     this.#transportMiddleware = transportMiddleware;
   }
 
@@ -174,24 +174,16 @@ export class LedgerMobileBridge implements LedgerMobileBridge {
     this.isDeviceConnected = true;
   }
 
-  async getEthAppNameAndVersion(): Promise<GetEthAppNameAndVersionResponse> {
-    return await this.getTransportMiddleWare().getEthAppNameAndVersion();
-  }
-
-  async openEthApp(): Promise<void> {
-    await this.getTransportMiddleWare().openEthApp();
-  }
-
-  async closeApps(): Promise<void> {
-    await this.getTransportMiddleWare().closeApps();
+  getDeviceId(): string {
+    return this.#deviceId
   }
 
   setDeviceId(deviceId: string): void {
     if (deviceId) {
-      if (this.deviceId && this.deviceId !== deviceId) {
+      if (this.#deviceId && this.#deviceId !== deviceId) {
         throw new Error('deviceId mismatch.');
       }
-      this.deviceId = deviceId;
+      this.#deviceId = deviceId;
     }
   }
 
@@ -216,23 +208,23 @@ export class LedgerMobileBridge implements LedgerMobileBridge {
   }
 
   async forgetDevice(): Promise<void> {
-    this.deviceId = '';
+    this.#deviceId = '';
     this.isDeviceConnected = false;
   }
 
   async deserializeData(serializeData: Record<string, unknown>): Promise<void> {
-    this.deviceId = (serializeData.deviceId as string) ?? this.deviceId;
+    this.#deviceId = (serializeData.deviceId as string) ?? this.#deviceId;
   }
 
   async serializeData(): Promise<Record<string, unknown>> {
     return {
-      deviceId: this.deviceId,
+      deviceId: this.#deviceId,
     };
   }
 
   async getOptions(): Promise<LedgerMobileBridgeOptions> {
     return {
-      deviceId: this.deviceId,
+      deviceId: this.#deviceId,
     };
   }
 
@@ -275,5 +267,17 @@ export class LedgerMobileBridge implements LedgerMobileBridge {
   }: GetPublicKeyParams): Promise<GetPublicKeyResponse> {
     const app = await this.getTransportMiddleWare().getEthApp();
     return app.getAddress(hdPath, false, true);
+  }
+
+  async getEthAppNameAndVersion(): Promise<GetEthAppNameAndVersionResponse> {
+    return await this.getTransportMiddleWare().getEthAppNameAndVersion();
+  }
+
+  async openEthApp(): Promise<void> {
+    await this.getTransportMiddleWare().openEthApp();
+  }
+
+  async closeApps(): Promise<void> {
+    await this.getTransportMiddleWare().closeApps();
   }
 }

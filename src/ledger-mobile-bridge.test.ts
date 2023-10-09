@@ -111,7 +111,7 @@ describe('LedgerMobileBridge', function () {
       bridge.setDeviceId(DEVICE_ID);
       await bridge.forgetDevice();
       expect(bridge.isDeviceConnected).toBe(false);
-      expect(bridge.deviceId).toBe('');
+      expect(bridge.getDeviceId()).toBe('');
     });
   });
 
@@ -199,9 +199,9 @@ describe('LedgerMobileBridge', function () {
 
   describe('deserializeData', function () {
     it('data has assigned to instance', async function () {
-      bridge.deviceId = '';
+      bridge.setDeviceId('');
       await bridge.deserializeData({ deviceId: DEVICE_ID });
-      expect(bridge.deviceId).toBe(DEVICE_ID);
+      expect(bridge.getDeviceId()).toBe(DEVICE_ID);
     });
   });
 
@@ -222,7 +222,7 @@ describe('LedgerMobileBridge', function () {
       expect(transportMiddlewareSetTransportSpy).toHaveBeenCalledWith(
         mockTransport,
       );
-      expect(bridge.deviceId).toBe(DEVICE_ID);
+      expect(bridge.getDeviceId()).toBe(DEVICE_ID);
       expect(bridge.isDeviceConnected).toBe(true);
       mockTransport.deviceModel.id = '';
     });
@@ -267,13 +267,12 @@ describe('LedgerMobileBridge', function () {
 
   describe('setOption', function () {
     it('option set correctly', async function () {
-      bridge.deviceId = '';
+      bridge.setDeviceId('');
       await bridge.setOptions({ deviceId: DEVICE_ID });
-      expect(bridge.deviceId).toBe(DEVICE_ID);
+      expect(bridge.getDeviceId()).toBe(DEVICE_ID);
     });
 
     it('throw error when device id has set but different device id given', async function () {
-      bridge.deviceId = '';
       await bridge.setOptions({ deviceId: DEVICE_ID });
       await expect(
         bridge.setOptions({ deviceId: 'another id' }),
