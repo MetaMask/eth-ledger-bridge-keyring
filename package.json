@@ -37,10 +37,11 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
+    "@ethereumjs/rlp": "^4.0.0",
     "@ethereumjs/tx": "^4.1.1",
+    "@ethereumjs/util": "^8.0.0",
     "@metamask/utils": "^5.0.0",
     "eth-sig-util": "^2.0.0",
-    "ethereumjs-util": "^7.0.9",
     "hdkey": "0.8.0"
   },
   "devDependencies": {
@@ -90,11 +91,8 @@
   "lavamoat": {
     "allowScripts": {
       "@lavamoat/preinstall-always-fail": false,
-      "eth-sig-util>ethereumjs-abi>ethereumjs-util>keccak": false,
-      "eth-sig-util>ethereumjs-util>keccak": false,
-      "ethereumjs-tx>ethereumjs-util>keccak": false,
-      "ethereumjs-util>ethereum-cryptography>keccak": false,
-      "ethereumjs-util>ethereum-cryptography>secp256k1": false,
+      "eth-sig-util>ethereumjs-util>ethereum-cryptography>keccak": false,
+      "eth-sig-util>ethereumjs-util>ethereum-cryptography>secp256k1": false,
       "hdkey>secp256k1": false
     }
   }
