@@ -1,4 +1,6 @@
+import { RLP } from '@ethereumjs/rlp';
 import { TransactionFactory, TxData, TypedTransaction } from '@ethereumjs/tx';
+import * as ethUtil from '@ethereumjs/util';
 import type { MessageTypes, TypedMessage } from '@metamask/eth-sig-util';
 import {
   recoverPersonalSignature,
@@ -9,7 +11,6 @@ import {
 // eslint-disable-next-line import/no-nodejs-modules
 import { Buffer } from 'buffer';
 import type OldEthJsTransaction from 'ethereumjs-tx';
-import * as ethUtil from 'ethereumjs-util';
 // eslint-disable-next-line import/no-nodejs-modules
 import { EventEmitter } from 'events';
 import HDKey from 'hdkey';
@@ -339,7 +340,7 @@ export class LedgerKeyring extends EventEmitter {
 
     rawTxHex = Buffer.isBuffer(messageToSign)
       ? messageToSign.toString('hex')
-      : ethUtil.rlp.encode(messageToSign).toString('hex');
+      : RLP.encode(messageToSign).toString();
 
     return this.#signTransaction(address, rawTxHex, (payload) => {
       // Because tx will be immutable, first get a plain javascript object that
