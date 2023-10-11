@@ -18,12 +18,15 @@ import {
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export interface LedgerTransportMiddleware {
-  getEthAppNameAndVersion(): Promise<GetEthAppNameAndVersionResponse>;
-  openEthApp(): Promise<void>;
-  closeApps(): Promise<void>;
   setTransport(transport: Transport): Promise<void>;
   getTransport(): Promise<Transport>;
-  getEthApp(): Promise<LedgerHwAppEth>;
+  send(
+    cla: number,
+    ins: number,
+    p1: number,
+    p2: number,
+    data: Buffer,
+  ): Promise<Buffer>;
   initEthApp(): Promise<void>;
   dispose(): Promise<void>;
 }
@@ -33,7 +36,6 @@ export interface LedgerMobileBridge
   extends LedgerBridge<LedgerMobileBridgeOptions> {
   setDeviceId(deviceId: string): void;
   getDeviceId(): string;
-  getTransportMiddleWare(): LedgerTransportMiddleware;
   connect(transport: Transport, deviceId: string): Promise<void>;
   getEthAppNameAndVersion(): Promise<GetEthAppNameAndVersionResponse>;
   openEthApp(): Promise<void>;
@@ -94,52 +96,15 @@ export class LedgerTransportMiddleware implements LedgerTransportMiddleware {
     this.#app = new LedgerHwAppEth(await this.getTransport());
   }
 
-  async openEthApp(): Promise<void> {
+  async send(
+    cla: number,
+    ins: number,
+    p1: number,
+    p2: number,
+    data: Buffer = Buffer.alloc(0),
+  ): Promise<Buffer> {
     const transport = await this.getTransport();
-    await transport.send(
-      0xe0,
-      0xd8,
-      0x00,
-      0x00,
-      Buffer.from(this.ethAppName, this.transportEncoding),
-    );
-  }
-
-  async closeApps(): Promise<void> {
-    const transport = await this.getTransport();
-    await transport.send(0xb0, 0xa7, 0x00, 0x00);
-  }
-
-  async getEthAppNameAndVersion(): Promise<GetEthAppNameAndVersionResponse> {
-    const transport = await this.getTransport();
-
-    const response = await transport.send(0xb0, 0x01, 0x00, 0x00);
-
-    let i = 0;
-    const format = response[i];
-    i += 1;
-    if (format !== 1) {
-      throw new Error('getEthAppNameAndVersion: format not supported');
-    }
-
-    const nameLength = response[i] ?? 0;
-    i += 1;
-
-    const appName = response
-      .slice(i, (i += nameLength))
-      .toString(this.transportEncoding);
-
-    const versionLength = response[i] ?? 0;
-    i += 1;
-
-    const version = response
-      .slice(i, (i += versionLength))
-      .toString(this.transportEncoding);
-
-    return {
-      appName,
-      version,
-    };
+    return await transport.send(cla, ins, p1, p2, data);
   }
 }
 
@@ -170,7 +135,7 @@ export class LedgerMobileBridge implements LedgerMobileBridge {
     if (!transport.deviceModel?.id) {
       throw new Error('device id is not defined.');
     }
-    await this.getTransportMiddleWare().setTransport(transport);
+    await this.#getTransportMiddleWare().setTransport(transport);
     this.setDeviceId(deviceId);
     this.isDeviceConnected = true;
   }
@@ -188,7 +153,7 @@ export class LedgerMobileBridge implements LedgerMobileBridge {
     }
   }
 
-  getTransportMiddleWare(): LedgerTransportMiddleware {
+  #getTransportMiddleWare(): LedgerTransportMiddleware {
     if (this.#transportMiddleware) {
       return this.#transportMiddleware;
     }
@@ -204,7 +169,7 @@ export class LedgerMobileBridge implements LedgerMobileBridge {
   }
 
   async destroy(): Promise<void> {
-    await this.getTransportMiddleWare().dispose();
+    await this.#getTransportMiddleWare().dispose();
     this.isDeviceConnected = false;
   }
 
@@ -237,7 +202,7 @@ export class LedgerMobileBridge implements LedgerMobileBridge {
     hdPath,
     message,
   }: LedgerSignMessageParams): Promise<LedgerSignMessageResponse> {
-    const app = await this.getTransportMiddleWare().getEthApp();
+    const app = await this.#getTransportMiddleWare().getEthApp();
     return app.signPersonalMessage(hdPath, message);
   }
 
@@ -246,7 +211,7 @@ export class LedgerMobileBridge implements LedgerMobileBridge {
     domainSeparatorHex,
     hashStructMessageHex,
   }: LedgerSignTypedDataParams): Promise<LedgerSignTypedDataResponse> {
-    const app = await this.getTransportMiddleWare().getEthApp();
+    const app = await this.#getTransportMiddleWare().getEthApp();
     return app.signEIP712HashedMessage(
       hdPath,
       domainSeparatorHex,
@@ -259,26 +224,66 @@ export class LedgerMobileBridge implements LedgerMobileBridge {
     hdPath,
   }: LedgerSignTransactionParams): Promise<LedgerSignTransactionResponse> {
     const resolution = await ledgerService.resolveTransaction(tx, {}, {});
-    const app = await this.getTransportMiddleWare().getEthApp();
+    const app = await this.#getTransportMiddleWare().getEthApp();
     return app.signTransaction(hdPath, tx, resolution);
   }
 
   async getPublicKey({
     hdPath,
   }: GetPublicKeyParams): Promise<GetPublicKeyResponse> {
-    const app = await this.getTransportMiddleWare().getEthApp();
+    const app = await this.#getTransportMiddleWare().getEthApp();
     return app.getAddress(hdPath, false, true);
   }
 
-  async getEthAppNameAndVersion(): Promise<GetEthAppNameAndVersionResponse> {
-    return await this.getTransportMiddleWare().getEthAppNameAndVersion();
-  }
-
   async openEthApp(): Promise<void> {
-    await this.getTransportMiddleWare().openEthApp();
+    await this.#getTransportMiddleWare().send(
+      0xe0,
+      0xd8,
+      0x00,
+      0x00,
+      Buffer.from(
+        this.#getTransportMiddleWare().ethAppName,
+        this.#getTransportMiddleWare().transportEncoding,
+      ),
+    );
   }
 
   async closeApps(): Promise<void> {
-    await this.getTransportMiddleWare().closeApps();
+    await this.#getTransportMiddleWare().send(0xb0, 0xa7, 0x00, 0x00);
+  }
+
+  async getEthAppNameAndVersion(): Promise<GetEthAppNameAndVersionResponse> {
+    const response = await this.#getTransportMiddleWare().send(
+      0xb0,
+      0x01,
+      0x00,
+      0x00,
+    );
+
+    let i = 0;
+    const format = response[i];
+    i += 1;
+    if (format !== 1) {
+      throw new Error('getEthAppNameAndVersion: format not supported');
+    }
+
+    const nameLength = response[i] ?? 0;
+    i += 1;
+
+    const appName = response
+      .slice(i, (i += nameLength))
+      .toString(this.#getTransportMiddleWare().transportEncoding);
+
+    const versionLength = response[i] ?? 0;
+    i += 1;
+
+    const version = response
+      .slice(i, (i += versionLength))
+      .toString(this.#getTransportMiddleWare().transportEncoding);
+
+    return {
+      appName,
+      version,
+    };
   }
 }

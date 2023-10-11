@@ -22,9 +22,6 @@ describe('LedgerMobileBridge', function () {
   let transportMiddleware: LedgerTransportMiddleware;
   let transportMiddlewareDisposeSpy: jest.SpyInstance;
   let transportMiddlewareSetTransportSpy: jest.SpyInstance;
-  let transportMiddlewareOpenEthAppSpy: jest.SpyInstance;
-  let transportMiddlewareCloseAppsSpy: jest.SpyInstance;
-  let transportMiddlewareGetEthAppNameAndVersionSpy: jest.SpyInstance;
   let transportMiddlewareGetEthAppSpy: jest.SpyInstance;
   const mockEthApp = {
     signEIP712HashedMessage: jest.fn(),
@@ -41,20 +38,6 @@ describe('LedgerMobileBridge', function () {
     transportMiddlewareSetTransportSpy = jest
       .spyOn(transportMiddleware, 'setTransport')
       .mockImplementation(async () => Promise.resolve());
-    transportMiddlewareOpenEthAppSpy = jest
-      .spyOn(transportMiddleware, 'openEthApp')
-      .mockImplementation(async () => Promise.resolve());
-    transportMiddlewareCloseAppsSpy = jest
-      .spyOn(transportMiddleware, 'closeApps')
-      .mockImplementation(async () => Promise.resolve());
-    transportMiddlewareGetEthAppNameAndVersionSpy = jest
-      .spyOn(transportMiddleware, 'getEthAppNameAndVersion')
-      .mockImplementation(async () =>
-        Promise.resolve({
-          appName: 'appName',
-          version: 'version',
-        }),
-      );
     transportMiddlewareGetEthAppSpy = jest
       .spyOn(transportMiddleware, 'getEthApp')
       .mockImplementation(async () => Promise.resolve(mockEthApp as any));
@@ -64,22 +47,6 @@ describe('LedgerMobileBridge', function () {
   afterEach(function () {
     jest.clearAllMocks();
     mockTransport.deviceModel.id = DEVICE_ID;
-  });
-
-  describe('getTransportMiddleWare', function () {
-    it('return tansportMiddleware', async function () {
-      const result = bridge.getTransportMiddleWare();
-      expect(result).toStrictEqual(transportMiddleware);
-    });
-
-    it('throw error if tansportMiddleware not set', async function () {
-      bridge = new LedgerMobileBridge(
-        undefined as unknown as LedgerTransportMiddleware,
-      );
-      expect(() => bridge.getTransportMiddleWare()).toThrow(
-        'transportMiddleware is not initialized.',
-      );
-    });
   });
 
   describe('destroy', function () {
@@ -235,33 +202,84 @@ describe('LedgerMobileBridge', function () {
     });
   });
 
-  describe('getEthAppNameAndVersion', function () {
-    it('should call transportMiddleware getEthAppNameAndVersion and return appname and version', async function () {
-      await bridge.connect(mockTransport as unknown as Transport, DEVICE_ID);
-      const result = await bridge.getEthAppNameAndVersion();
-      expect(
-        transportMiddlewareGetEthAppNameAndVersionSpy,
-      ).toHaveBeenCalledTimes(1);
-      expect(result).toStrictEqual({
-        appName: 'appName',
-        version: 'version',
-      });
-    });
-  });
-
   describe('openEthApp', function () {
-    it('should call transportMiddleware openEthApp', async function () {
-      await bridge.connect(mockTransport as unknown as Transport, DEVICE_ID);
+    it('transport command should send correctly', async function () {
+      const transportMiddlewareSendSpy = jest
+        .spyOn(transportMiddleware, 'send')
+        .mockImplementation(async () => Promise.resolve(Buffer.alloc(1)));
       await bridge.openEthApp();
-      expect(transportMiddlewareOpenEthAppSpy).toHaveBeenCalledTimes(1);
+      expect(transportMiddlewareSendSpy).toHaveBeenCalledTimes(1);
+      expect(transportMiddlewareSendSpy).toHaveBeenCalledWith(
+        0xe0,
+        0xd8,
+        0x00,
+        0x00,
+        Buffer.from(
+          transportMiddleware.ethAppName,
+          transportMiddleware.transportEncoding,
+        ),
+      );
     });
   });
 
   describe('closeApps', function () {
-    it('should call transportMiddleware closeApps', async function () {
-      await bridge.connect(mockTransport as unknown as Transport, DEVICE_ID);
+    it('transport command should send correctly', async function () {
+      const transportMiddlewareSendSpy = jest
+        .spyOn(transportMiddleware, 'send')
+        .mockImplementation(async () => Promise.resolve(Buffer.alloc(1)));
       await bridge.closeApps();
-      expect(transportMiddlewareCloseAppsSpy).toHaveBeenCalledTimes(1);
+      expect(transportMiddlewareSendSpy).toHaveBeenCalledTimes(1);
+      expect(transportMiddlewareSendSpy).toHaveBeenCalledWith(
+        0xb0,
+        0xa7,
+        0x00,
+        0x00,
+      );
+    });
+  });
+
+  describe('getEthAppNameAndVersion', function () {
+    it('transport command should send correctly', async function () {
+      const appNameBuf = Buffer.alloc(7, 'appName', 'ascii');
+      const verionBuf = Buffer.alloc(6, 'verion', 'ascii');
+      const buffer = Buffer.alloc(20);
+      buffer[0] = 1;
+      buffer[1] = appNameBuf.length;
+      let j = 2;
+      for (let i = 0; i < appNameBuf.length; i++, j++) {
+        buffer[j] = appNameBuf[i] ?? 0;
+      }
+      buffer[j] = verionBuf.length;
+      j += 1;
+      for (let i = 0; i < verionBuf.length; i++, j++) {
+        buffer[j] = verionBuf[i] ?? 0;
+      }
+
+      const transportMiddlewareSendSpy = jest
+        .spyOn(transportMiddleware, 'send')
+        .mockImplementation(async () => Promise.resolve(buffer));
+
+      const result = await bridge.getEthAppNameAndVersion();
+      expect(transportMiddlewareSendSpy).toHaveBeenCalledTimes(1);
+      expect(transportMiddlewareSendSpy).toHaveBeenCalledWith(
+        0xb0,
+        0x01,
+        0x00,
+        0x00,
+      );
+      expect(result).toStrictEqual({
+        appName: 'appName',
+        version: 'verion',
+      });
+    });
+
+    it('throw error when buffer incorrect', async function () {
+      jest
+        .spyOn(transportMiddleware, 'send')
+        .mockImplementation(async () => Promise.resolve(Buffer.alloc(1)));
+      await expect(bridge.getEthAppNameAndVersion()).rejects.toThrow(
+        'getEthAppNameAndVersion: format not supported',
+      );
     });
   });
 
@@ -364,65 +382,17 @@ describe('LedgerTransportMiddleware', function () {
     });
   });
 
-  describe('openEthApp', function () {
-    it('transport command should send correctly', async function () {
-      await transportMiddleware.openEthApp();
+  describe('send', function () {
+    it('transport cmd should send correctly', async function () {
+      await transportMiddleware.send(0xb0, 0x01, 0x00, 0x00);
       expect(mockTransport.send).toHaveBeenCalledTimes(1);
       expect(mockTransport.send).toHaveBeenCalledWith(
-        0xe0,
-        0xd8,
+        0xb0,
+        0x01,
         0x00,
         0x00,
-        Buffer.from(
-          transportMiddleware.ethAppName,
-          transportMiddleware.transportEncoding,
-        ),
+        Buffer.alloc(0),
       );
-    });
-  });
-
-  describe('closeApps', function () {
-    it('transport command should send correctly', async function () {
-      await transportMiddleware.closeApps();
-      expect(mockTransport.send).toHaveBeenCalledTimes(1);
-      expect(mockTransport.send).toHaveBeenCalledWith(0xb0, 0xa7, 0x00, 0x00);
-    });
-  });
-
-  describe('getEthAppNameAndVersion', function () {
-    it('transport command should send correctly', async function () {
-      const appNameBuf = Buffer.alloc(7, 'appName', 'ascii');
-      const verionBuf = Buffer.alloc(6, 'verion', 'ascii');
-      const buffer = Buffer.alloc(20);
-      buffer[0] = 1;
-      buffer[1] = appNameBuf.length;
-      let j = 2;
-      for (let i = 0; i < appNameBuf.length; i++, j++) {
-        buffer[j] = appNameBuf[i] ?? 0;
-      }
-      buffer[j] = verionBuf.length;
-      j += 1;
-      for (let i = 0; i < verionBuf.length; i++, j++) {
-        buffer[j] = verionBuf[i] ?? 0;
-      }
-
-      jest.spyOn(mockTransport, 'send').mockReturnValueOnce(buffer);
-      const result = await transportMiddleware.getEthAppNameAndVersion();
-
-      expect(mockTransport.send).toHaveBeenCalledTimes(1);
-      expect(mockTransport.send).toHaveBeenCalledWith(0xb0, 0x01, 0x00, 0x00);
-      expect(result).toStrictEqual({
-        appName: 'appName',
-        version: 'verion',
-      });
-    });
-
-    it('throw error when buffer incorrect', async function () {
-      const buffer = Buffer.alloc(1);
-      jest.spyOn(mockTransport, 'send').mockReturnValueOnce(buffer);
-      await expect(
-        transportMiddleware.getEthAppNameAndVersion(),
-      ).rejects.toThrow('getEthAppNameAndVersion: format not supported');
     });
   });
 });
