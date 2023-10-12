@@ -37,10 +37,10 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
-    "@ledgerhq/hw-app-eth": "^6.32.0",
     "@ethereumjs/rlp": "^4.0.0",
     "@ethereumjs/tx": "^4.1.1",
     "@ethereumjs/util": "^8.0.0",
+    "@ledgerhq/hw-app-eth": "^6.32.0",
     "@metamask/utils": "^5.0.0",
     "eth-sig-util": "^2.0.0",
     "hdkey": "0.8.0"
