@@ -32,8 +32,7 @@ export interface LedgerTransportMiddleware {
 }
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-export interface LedgerMobileBridge
-  extends LedgerBridge<LedgerMobileBridgeOptions> {
+export interface LedgerMobileBridge {
   setDeviceId(deviceId: string): void;
   getDeviceId(): string;
   connect(transport: Transport, deviceId: string): Promise<void>;
@@ -111,7 +110,9 @@ export class LedgerTransportMiddleware implements LedgerTransportMiddleware {
 /**
  * LedgerMobileBridge is a bridge between the LedgerKeyring and the LedgerTransportMiddleware.
  */
-export class LedgerMobileBridge implements LedgerMobileBridge {
+export class LedgerMobileBridge
+  implements LedgerBridge<LedgerMobileBridgeOptions>, LedgerMobileBridge
+{
   #transportMiddleware?: LedgerTransportMiddleware;
 
   #deviceId = '';
@@ -136,6 +137,7 @@ export class LedgerMobileBridge implements LedgerMobileBridge {
       throw new Error('device id is not defined.');
     }
     await this.#getTransportMiddleWare().setTransport(transport);
+    await this.#getTransportMiddleWare().initEthApp();
     this.setDeviceId(deviceId);
     this.isDeviceConnected = true;
   }
@@ -168,8 +170,14 @@ export class LedgerMobileBridge implements LedgerMobileBridge {
     throw new Error('Method not supported.');
   }
 
+  // function to be called by the keyring controller when the account is removed
   async destroy(): Promise<void> {
-    await this.#getTransportMiddleWare().dispose();
+    try {
+      await this.#getTransportMiddleWare().dispose();
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error(error);
+    }
     this.isDeviceConnected = false;
   }
 
@@ -178,10 +186,12 @@ export class LedgerMobileBridge implements LedgerMobileBridge {
     this.isDeviceConnected = false;
   }
 
+  // function to be called by the keyring controller
   async deserializeData(serializeData: Record<string, unknown>): Promise<void> {
     this.#deviceId = (serializeData.deviceId as string) ?? this.#deviceId;
   }
 
+  // function to be called by the keyring controller
   async serializeData(): Promise<Record<string, unknown>> {
     return {
       deviceId: this.#deviceId,
@@ -198,6 +208,7 @@ export class LedgerMobileBridge implements LedgerMobileBridge {
     this.setDeviceId(opts.deviceId ?? '');
   }
 
+  // function to be called by the keyring controller
   async deviceSignMessage({
     hdPath,
     message,
@@ -206,6 +217,7 @@ export class LedgerMobileBridge implements LedgerMobileBridge {
     return app.signPersonalMessage(hdPath, message);
   }
 
+  // function to be called by the keyring controller
   async deviceSignTypedData({
     hdPath,
     domainSeparatorHex,
@@ -219,6 +231,7 @@ export class LedgerMobileBridge implements LedgerMobileBridge {
     );
   }
 
+  // function to be called by the keyring controller
   async deviceSignTransaction({
     tx,
     hdPath,

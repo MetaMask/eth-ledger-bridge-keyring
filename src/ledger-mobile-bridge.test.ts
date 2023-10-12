@@ -23,6 +23,7 @@ describe('LedgerMobileBridge', function () {
   let transportMiddlewareDisposeSpy: jest.SpyInstance;
   let transportMiddlewareSetTransportSpy: jest.SpyInstance;
   let transportMiddlewareGetEthAppSpy: jest.SpyInstance;
+  let transportMiddlewareInitAppSpy: jest.SpyInstance;
   const mockEthApp = {
     signEIP712HashedMessage: jest.fn(),
     signTransaction: jest.fn(),
@@ -38,6 +39,9 @@ describe('LedgerMobileBridge', function () {
     transportMiddlewareSetTransportSpy = jest
       .spyOn(transportMiddleware, 'setTransport')
       .mockImplementation(async () => Promise.resolve());
+    transportMiddlewareInitAppSpy = jest
+      .spyOn(transportMiddleware, 'initEthApp')
+      .mockImplementation(async () => Promise.resolve());
     transportMiddlewareGetEthAppSpy = jest
       .spyOn(transportMiddleware, 'getEthApp')
       .mockImplementation(async () => Promise.resolve(mockEthApp as any));
@@ -51,9 +55,24 @@ describe('LedgerMobileBridge', function () {
 
   describe('destroy', function () {
     it('trigger middleware dispose', async function () {
+      await bridge.connect(mockTransport as unknown as Transport, DEVICE_ID);
+      expect(bridge.isDeviceConnected).toBe(true);
       await bridge.destroy();
       expect(transportMiddlewareDisposeSpy).toHaveBeenCalledTimes(1);
       expect(bridge.isDeviceConnected).toBe(false);
+    });
+
+    it('does not throw error when it is not connected', async function () {
+      let result = null;
+      try {
+        await bridge.destroy();
+      } catch (error) {
+        result = error;
+      } finally {
+        expect(result).toBeNull();
+        expect(transportMiddlewareDisposeSpy).toHaveBeenCalledTimes(1);
+        expect(bridge.isDeviceConnected).toBe(false);
+      }
     });
   });
 
@@ -189,6 +208,7 @@ describe('LedgerMobileBridge', function () {
       expect(transportMiddlewareSetTransportSpy).toHaveBeenCalledWith(
         mockTransport,
       );
+      expect(transportMiddlewareInitAppSpy).toHaveBeenCalledTimes(1);
       expect(bridge.getDeviceId()).toBe(DEVICE_ID);
       expect(bridge.isDeviceConnected).toBe(true);
       mockTransport.deviceModel.id = '';
