@@ -2,13 +2,21 @@ import { Common, Chain, Hardfork } from '@ethereumjs/common';
 import { RLP } from '@ethereumjs/rlp';
 import { TransactionFactory } from '@ethereumjs/tx';
 import * as ethUtil from '@ethereumjs/util';
-import sigUtil from 'eth-sig-util';
+import * as sigUtil from '@metamask/eth-sig-util';
 import EthereumTx from 'ethereumjs-tx';
 import HDKey from 'hdkey';
 
 import { LedgerBridge } from './ledger-bridge';
 import { LedgerIframeBridge } from './ledger-iframe-bridge';
 import { AccountDetails, LedgerKeyring } from './ledger-keyring';
+
+jest.mock('@metamask/eth-sig-util', () => {
+  return {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    __esModule: true,
+    ...jest.requireActual('@metamask/eth-sig-util'),
+  };
+});
 
 const fakeAccounts = [
   '0xF30952A1c534CDE7bC471380065726fa8686dfB3',
@@ -700,7 +708,7 @@ describe('LedgerKeyring', function () {
           },
         ],
       },
-      primaryType: 'Mail',
+      primaryType: 'Mail' as const,
       types: {
         EIP712Domain: [
           { name: 'name', type: 'string' },

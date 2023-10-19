@@ -40,21 +40,22 @@
     "@ethereumjs/rlp": "^4.0.0",
     "@ethereumjs/tx": "^4.1.1",
     "@ethereumjs/util": "^8.0.0",
+    "@metamask/eth-sig-util": "^6.0.1",
     "@metamask/utils": "^5.0.0",
-    "eth-sig-util": "^2.0.0",
     "hdkey": "0.8.0"
   },
   "devDependencies": {
     "@ethereumjs/common": "^3.1.1",
     "@lavamoat/allow-scripts": "^2.3.0",
     "@ledgerhq/hw-app-eth": "^6.32.0",
+    "@ledgerhq/types-cryptoassets": "^7.6.0",
+    "@ledgerhq/types-devices": "^6.22.4",
     "@metamask/auto-changelog": "^3.1.0",
     "@metamask/eslint-config": "^11.0.1",
     "@metamask/eslint-config-browser": "^11.0.0",
     "@metamask/eslint-config-jest": "^11.0.0",
     "@metamask/eslint-config-nodejs": "^11.0.0",
     "@metamask/eslint-config-typescript": "^11.0.0",
-    "@types/eth-sig-util": "^2.1.1",
     "@types/ethereumjs-tx": "^1.0.1",
     "@types/hdkey": "^2.0.1",
     "@types/jest": "^28.1.6",
@@ -91,8 +92,8 @@
   "lavamoat": {
     "allowScripts": {
       "@lavamoat/preinstall-always-fail": false,
-      "eth-sig-util>ethereumjs-util>ethereum-cryptography>keccak": false,
-      "eth-sig-util>ethereumjs-util>ethereum-cryptography>secp256k1": false,
+      "@ledgerhq/hw-app-eth>@ledgerhq/domain-service>eip55>keccak": false,
+      "ethereumjs-tx>ethereumjs-util>keccak": false,
       "hdkey>secp256k1": false
     }
   }
