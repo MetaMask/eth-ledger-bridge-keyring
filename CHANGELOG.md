@@ -7,14 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ## [1.0.1]
-### Uncategorized
-- deps: hdkey@0.8.0->^2.1.0 ([#196](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/196))
-- deps: Replace eth-sig-util@^2 with @metamask/eth-sig-util@^6 ([#157](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/157))
-- Bump @babel/traverse from 7.21.4 to 7.23.2 ([#200](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/200))
-- Bump ethereumjs/** versions ([#153](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/153))
-- Bump postcss from 8.4.21 to 8.4.31 ([#199](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/199))
-- Bump word-wrap from 1.2.3 to 1.2.4 ([#195](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/195))
-- Bump semver from 6.3.0 to 6.3.1 ([#194](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/194))
+### Fixed
+- Bump dependency `hdkey` from `0.8.0` to `^2.1.0` ([#196](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/196))
+- Replace dependency `eth-sig-util@^2` with `@metamask/eth-sig-util@^6` ([#157](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/157))
+- Replace dependency `ethereumjs-util@^7.0.9` with `@ethereumjs/util@^8.0.0` and `@ethereumjs/rlp` ([#153](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/153))
 
 ## [1.0.0]
 ### Changed
