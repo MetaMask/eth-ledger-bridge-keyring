@@ -59,7 +59,7 @@
     "@types/ethereumjs-tx": "^1.0.1",
     "@types/hdkey": "^2.0.1",
     "@types/jest": "^28.1.6",
-    "@types/node": "^14.0.0",
+    "@types/node": "^16.18.59",
     "@typescript-eslint/eslint-plugin": "^5.43.0",
     "@typescript-eslint/parser": "^5.43.0",
     "depcheck": "^1.4.3",
@@ -83,7 +83,7 @@
   },
   "packageManager": "yarn@3.4.1",
   "engines": {
-    "node": ">=14.0.0"
+    "node": "^16.20 || ^18.16 || >=20"
   },
   "publishConfig": {
     "access": "public",
