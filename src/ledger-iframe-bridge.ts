@@ -80,17 +80,15 @@ export class LedgerIframeBridge implements LedgerBridge {
 
   eventListener?: (eventMessage: {
     origin: string;
-    data: IFrameMessageResponse<IFrameMessageAction>;
+    data: IFrameMessageResponse;
   }) => void;
 
   isDeviceConnected = false;
 
   currentMessageId = 0;
 
-  messageCallbacks: Record<
-    number,
-    (response: IFrameMessageResponse<IFrameMessageAction>) => void
-  > = {};
+  messageCallbacks: Record<number, (response: IFrameMessageResponse) => void> =
+    {};
 
   delayedPromise?: {
     resolve: (value: boolean) => void;
@@ -267,7 +265,7 @@ export class LedgerIframeBridge implements LedgerBridge {
     bridgeUrl: string,
     eventMessage: {
       origin: string;
-      data: IFrameMessageResponse<IFrameMessageAction>;
+      data: IFrameMessageResponse;
     },
   ) {
     if (eventMessage.origin !== this.#getOrigin(bridgeUrl)) {
@@ -289,7 +287,7 @@ export class LedgerIframeBridge implements LedgerBridge {
 
   #sendMessage<TAction extends IFrameMessageAction>(
     message: IFrameMessage<TAction>,
-    callback: (response: IFrameMessageResponse<TAction>) => void,
+    callback: (response: IFrameMessageResponse) => void,
   ) {
     this.currentMessageId += 1;
 
