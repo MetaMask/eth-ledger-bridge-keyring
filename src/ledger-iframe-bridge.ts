@@ -299,9 +299,7 @@ export class LedgerIframeBridge implements LedgerBridge {
       target: LEDGER_IFRAME_ID,
     };
 
-    this.messageCallbacks[this.currentMessageId] = callback as (
-      response: IFrameMessageResponse<IFrameMessageAction>,
-    ) => void;
+    this.messageCallbacks[this.currentMessageId] = callback;
 
     if (!this.iframeLoaded || !this.iframe || !this.iframe.contentWindow) {
       throw new Error('The iframe is not loaded yet');
