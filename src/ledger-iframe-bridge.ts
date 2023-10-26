@@ -117,10 +117,12 @@ export class LedgerIframeBridge implements LedgerBridge {
           action: IFrameMessageAction.LedgerMakeApp,
         },
         (response) => {
-          if (response.success) {
+          if ('success' in response && response.success) {
             resolve(true);
-          } else {
+          } else if ('error' in response) {
             reject(response.error);
+          } else {
+            reject(new Error('Unknown error occurred'));
           }
         },
       );
@@ -145,8 +147,8 @@ export class LedgerIframeBridge implements LedgerBridge {
           action: IFrameMessageAction.LedgerUpdateTransport,
           params: { transportType },
         },
-        ({ success }) => {
-          if (success) {
+        (response) => {
+          if ('success' in response && response.success) {
             return resolve(true);
           }
           return reject(new Error('Ledger transport could not be updated'));
@@ -221,11 +223,16 @@ export class LedgerIframeBridge implements LedgerBridge {
           action,
           params,
         },
-        ({ success, payload }) => {
-          if (success) {
-            return resolve(payload);
+        (response) => {
+          if ('payload' in response && response.payload) {
+            if ('success' in response && response.success) {
+              return resolve(response.payload);
+            }
+            if ('error' in response.payload) {
+              return reject(response.payload.error);
+            }
           }
-          return reject(payload.error);
+          return reject(new Error('Unknown error occurred'));
         },
       );
     });
