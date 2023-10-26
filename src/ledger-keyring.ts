@@ -1,9 +1,15 @@
 import { RLP } from '@ethereumjs/rlp';
 import { TransactionFactory, TxData, TypedTransaction } from '@ethereumjs/tx';
 import * as ethUtil from '@ethereumjs/util';
+import type { MessageTypes, TypedMessage } from '@metamask/eth-sig-util';
+import {
+  recoverPersonalSignature,
+  recoverTypedSignature,
+  SignTypedDataVersion,
+  TypedDataUtils,
+} from '@metamask/eth-sig-util';
 // eslint-disable-next-line import/no-nodejs-modules
 import { Buffer } from 'buffer';
-import * as sigUtil from 'eth-sig-util';
 import type OldEthJsTransaction from 'ethereumjs-tx';
 // eslint-disable-next-line import/no-nodejs-modules
 import { EventEmitter } from 'events';
@@ -414,10 +420,9 @@ export class LedgerKeyring extends EventEmitter {
       recoveryId = `0${recoveryId}`;
     }
     const signature = `0x${payload.r}${payload.s}${recoveryId}`;
-    const addressSignedWith = sigUtil.recoverPersonalSignature({
+    const addressSignedWith = recoverPersonalSignature({
       data: message,
-      // eslint-disable-next-line id-denylist
-      sig: signature,
+      signature,
     });
     if (
       ethUtil.toChecksumAddress(addressSignedWith) !==
@@ -449,9 +454,9 @@ export class LedgerKeyring extends EventEmitter {
     return hdPath;
   }
 
-  async signTypedData(
+  async signTypedData<T extends MessageTypes>(
     withAccount: string,
-    data: sigUtil.EIP712TypedData,
+    data: TypedMessage<T>,
     options: { version?: string } = {},
   ) {
     const isV4 = options.version === 'V4';
@@ -462,22 +467,18 @@ export class LedgerKeyring extends EventEmitter {
     }
 
     const { domain, types, primaryType, message } =
-      sigUtil.TypedDataUtils.sanitizeData(data);
-    const domainSeparatorHex = sigUtil.TypedDataUtils.hashStruct(
+      TypedDataUtils.sanitizeData(data);
+    const domainSeparatorHex = TypedDataUtils.hashStruct(
       'EIP712Domain',
       domain,
       types,
-      // @ts-expect-error @types/eth-sig-util documents this function
-      // as taking three arguments, but it actually takes four.
-      // See: https://github.com/MetaMask/eth-sig-util/blob/v2.5.4/index.js#L174
-      isV4,
+      SignTypedDataVersion.V4,
     ).toString('hex');
-    const hashStructMessageHex = sigUtil.TypedDataUtils.hashStruct(
-      primaryType,
+    const hashStructMessageHex = TypedDataUtils.hashStruct(
+      primaryType.toString(),
       message,
       types,
-      // @ts-expect-error see comment above
-      isV4,
+      SignTypedDataVersion.V4,
     ).toString('hex');
 
     const hdPath = await this.unlockAccountByAddress(withAccount);
@@ -504,13 +505,10 @@ export class LedgerKeyring extends EventEmitter {
       recoveryId = `0${recoveryId}`;
     }
     const signature = `0x${payload.r}${payload.s}${recoveryId}`;
-    // @ts-expect-error recoverTypedSignature_v4 is missing from
-    // @types/eth-sig-util.
-    // See: https://github.com/MetaMask/eth-sig-util/blob/v2.5.4/index.js#L464
-    const addressSignedWith = sigUtil.recoverTypedSignature_v4({
+    const addressSignedWith = recoverTypedSignature({
       data,
-      // eslint-disable-next-line id-denylist
-      sig: signature,
+      signature,
+      version: SignTypedDataVersion.V4,
     });
     if (
       ethUtil.toChecksumAddress(addressSignedWith) !==
