@@ -22,45 +22,45 @@ export enum IFrameMessageAction {
   LedgerSignTypedData = 'ledger-sign-typed-data',
 }
 
-type IFrameMessageResponse<TAction extends IFrameMessageAction> = {
-  action: TAction;
-  messageId: number;
-} & (
+type IFrameMessageResponse =
   | {
-      action: IFrameMessageAction.LedgerConnectionChange;
-      payload: { connected: boolean };
-    }
-  | ({
-      action: IFrameMessageAction.LedgerMakeApp;
-    } & ({ success: true } | { success: false; error?: unknown }))
-  | {
-      action: IFrameMessageAction.LedgerUpdateTransport;
-      success: boolean;
-    }
-  | ({
-      action: IFrameMessageAction.LedgerUnlock;
-    } & (
-      | { success: true; payload: GetPublicKeyResponse }
-      | { success: false; payload: { error: Error } }
-    ))
-  | ({
-      action: IFrameMessageAction.LedgerSignTransaction;
-    } & (
-      | { success: true; payload: LedgerSignTransactionResponse }
-      | { success: false; payload: { error: Error } }
-    ))
-  | ({
-      action:
-        | IFrameMessageAction.LedgerSignPersonalMessage
-        | IFrameMessageAction.LedgerSignTypedData;
+      messageId: number;
     } & (
       | {
-          success: true;
-          payload: LedgerSignMessageResponse | LedgerSignTypedDataResponse;
+          action: IFrameMessageAction.LedgerConnectionChange;
+          payload: { connected: boolean };
         }
-      | { success: false; payload: { error: Error } }
-    ))
-);
+      | ({
+          action: IFrameMessageAction.LedgerMakeApp;
+        } & ({ success: true } | { success: false; error?: unknown }))
+      | {
+          action: IFrameMessageAction.LedgerUpdateTransport;
+          success: boolean;
+        }
+      | ({
+          action: IFrameMessageAction.LedgerUnlock;
+        } & (
+          | { success: true; payload: GetPublicKeyResponse }
+          | { success: false; payload: { error: Error } }
+        ))
+      | ({
+          action: IFrameMessageAction.LedgerSignTransaction;
+        } & (
+          | { success: true; payload: LedgerSignTransactionResponse }
+          | { success: false; payload: { error: Error } }
+        ))
+      | ({
+          action:
+            | IFrameMessageAction.LedgerSignPersonalMessage
+            | IFrameMessageAction.LedgerSignTypedData;
+        } & (
+          | {
+              success: true;
+              payload: LedgerSignMessageResponse | LedgerSignTypedDataResponse;
+            }
+          | { success: false; payload: { error: Error } }
+        ))
+    );
 
 type IFrameMessage<TAction extends IFrameMessageAction> = {
   action: TAction;
