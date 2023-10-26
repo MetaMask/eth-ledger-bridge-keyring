@@ -22,12 +22,15 @@ export enum IFrameMessageAction {
   LedgerSignTypedData = 'ledger-sign-typed-data',
 }
 
-type IFrameMessageResponseBase<T extends Record<string, unknown>, E = Error> = {
+type IFrameMessageResponseBase<
+  SuccessResult extends Record<string, unknown>,
+  FailureResult = Error,
+> = {
   messageId: number;
 } & (
   | { success: boolean }
-  | { success: true; payload: T }
-  | { success: false; payload: { error: E } }
+  | { success: true; payload: SuccessResult }
+  | { success: false; payload: { error: FailureResult } }
 );
 
 type LedgerConnectionChangeActionResponse = {
