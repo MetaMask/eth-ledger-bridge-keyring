@@ -512,7 +512,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ethereumjs/tx@npm:^4.1.1, @ethereumjs/tx@npm:^4.1.2, @ethereumjs/tx@npm:^4.2.0":
+"@ethereumjs/tx@npm:^4.1.1, @ethereumjs/tx@npm:^4.2.0":
   version: 4.2.0
   resolution: "@ethereumjs/tx@npm:4.2.0"
   dependencies:
@@ -1610,7 +1610,7 @@ __metadata:
     "@metamask/eslint-config-nodejs": ^11.0.0
     "@metamask/eslint-config-typescript": ^11.0.0
     "@metamask/eth-sig-util": ^7.0.0
-    "@metamask/utils": ^5.0.2
+    "@metamask/utils": ^8.2.0
     "@types/ethereumjs-tx": ^1.0.1
     "@types/hdkey": ^2.0.1
     "@types/jest": ^28.1.6
@@ -1654,20 +1654,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@metamask/utils@npm:^5.0.2":
-  version: 5.0.2
-  resolution: "@metamask/utils@npm:5.0.2"
-  dependencies:
-    "@ethereumjs/tx": ^4.1.2
-    "@types/debug": ^4.1.7
-    debug: ^4.3.4
-    semver: ^7.3.8
-    superstruct: ^1.0.3
-  checksum: eca82e42911b2840deb4f32f0f215c5ffd14d22d68afbbe92d3180e920e509e310777b15eab29def3448f3535b66596ceb4c23666ec846adacc8e1bb093ff882
-  languageName: node
-  linkType: hard
-
-"@metamask/utils@npm:^8.0.0, @metamask/utils@npm:^8.1.0":
+"@metamask/utils@npm:^8.0.0, @metamask/utils@npm:^8.1.0, @metamask/utils@npm:^8.2.0":
   version: 8.2.0
   resolution: "@metamask/utils@npm:8.2.0"
   dependencies:
