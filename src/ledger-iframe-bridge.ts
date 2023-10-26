@@ -22,45 +22,54 @@ export enum IFrameMessageAction {
   LedgerSignTypedData = 'ledger-sign-typed-data',
 }
 
-type IFrameMessageResponse =
-  | {
-      messageId: number;
-    } & (
-      | {
-          action: IFrameMessageAction.LedgerConnectionChange;
-          payload: { connected: boolean };
-        }
-      | ({
-          action: IFrameMessageAction.LedgerMakeApp;
-        } & ({ success: true } | { success: false; error?: unknown }))
-      | {
-          action: IFrameMessageAction.LedgerUpdateTransport;
-          success: boolean;
-        }
-      | ({
-          action: IFrameMessageAction.LedgerUnlock;
-        } & (
-          | { success: true; payload: GetPublicKeyResponse }
-          | { success: false; payload: { error: Error } }
-        ))
-      | ({
-          action: IFrameMessageAction.LedgerSignTransaction;
-        } & (
-          | { success: true; payload: LedgerSignTransactionResponse }
-          | { success: false; payload: { error: Error } }
-        ))
-      | ({
-          action:
-            | IFrameMessageAction.LedgerSignPersonalMessage
-            | IFrameMessageAction.LedgerSignTypedData;
-        } & (
-          | {
-              success: true;
-              payload: LedgerSignMessageResponse | LedgerSignTypedDataResponse;
-            }
-          | { success: false; payload: { error: Error } }
-        ))
-    );
+type IFrameMessageResponseBase<T extends Record<string, unknown>, E = Error> = {
+  messageId: number;
+} & (
+  | { success: boolean }
+  | { success: true; payload: T }
+  | { success: false; payload: { error: E } }
+);
+
+type LedgerConnectionChangeActionResponse = {
+  messageId: number;
+  action: IFrameMessageAction.LedgerConnectionChange;
+  payload: { connected: boolean };
+};
+
+type LedgerMakeAppActionResponse = {
+  messageId: number;
+  action: IFrameMessageAction.LedgerMakeApp;
+} & ({ success: true } | { success: false; error?: unknown });
+
+type LedgerUpdateTransportActionResponse = {
+  messageId: number;
+  action: IFrameMessageAction.LedgerUpdateTransport;
+};
+
+type LedgerUnlockActionResponse = {
+  action: IFrameMessageAction.LedgerUnlock;
+} & IFrameMessageResponseBase<GetPublicKeyResponse>;
+
+type LedgerSignTransactionActionResponse = {
+  action: IFrameMessageAction.LedgerSignTransaction;
+} & IFrameMessageResponseBase<LedgerSignTransactionResponse>;
+
+type LedgerSignPersonalMessageActionResponse = {
+  action: IFrameMessageAction.LedgerSignPersonalMessage;
+} & IFrameMessageResponseBase<LedgerSignMessageResponse>;
+
+type LedgerSignTypedDataActionResponse = {
+  action: IFrameMessageAction.LedgerSignTypedData;
+} & IFrameMessageResponseBase<LedgerSignTypedDataResponse>;
+
+export type IFrameMessageResponse =
+  | LedgerConnectionChangeActionResponse
+  | LedgerMakeAppActionResponse
+  | LedgerUpdateTransportActionResponse
+  | LedgerUnlockActionResponse
+  | LedgerSignTransactionActionResponse
+  | LedgerSignPersonalMessageActionResponse
+  | LedgerSignTypedDataActionResponse;
 
 type IFrameMessage<TAction extends IFrameMessageAction> = {
   action: TAction;
