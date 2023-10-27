@@ -28,7 +28,6 @@ type IFrameMessageResponseBase<
 > = {
   messageId: number;
 } & (
-  | { success: boolean }
   | { success: true; payload: SuccessResult }
   | { success: false; payload: { error: FailureResult } }
 );
