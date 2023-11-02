@@ -46,6 +46,7 @@ type LedgerMakeAppActionResponse = {
 type LedgerUpdateTransportActionResponse = {
   messageId: number;
   action: IFrameMessageAction.LedgerUpdateTransport;
+  success: boolean;
 };
 
 type LedgerUnlockActionResponse = {
