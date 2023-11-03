@@ -7,9 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ## [2.0.0]
-### Uncategorized
+### Changed
 - **BREAKING**: Remove support for major node versions 14,15,17,19. Minimum Node.js version is now 16. ([#204](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/204))
-- Bump @metamask/eth-sig-util from ^6.0.1 to ^7.0.0 ([#205](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/205))
+- Bump `@metamask/eth-sig-util` from `^6.0.1` to `^7.0.0` ([#205](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/205))
+
+### Fixed
+- Move `@metamask/utils` from deendencies to devDependencies ([#209](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/209))
 
 ## [1.0.1]
 ### Fixed
