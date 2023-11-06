@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0]
+### Changed
+- **BREAKING**: Remove support for major node versions 14,15,17,19. Minimum Node.js version is now 16. ([#204](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/204))
+- Bump `@metamask/eth-sig-util` from `^6.0.1` to `^7.0.0` ([#205](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/205))
+
+### Fixed
+- Move `@metamask/utils` from deendencies to devDependencies ([#209](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/209))
+
 ## [1.0.1]
 ### Fixed
 - Bump dependency `hdkey` from `0.8.0` to `^2.1.0` ([#196](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/196))
@@ -73,7 +81,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Support new versions of ethereumjs/tx ([#68](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/68))
 
-[Unreleased]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v1.0.1...v2.0.0
 [1.0.1]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v0.15.0...v1.0.0
 [0.15.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v0.14.0...v0.15.0
