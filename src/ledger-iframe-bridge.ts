@@ -22,7 +22,7 @@ export enum IFrameMessageAction {
   LedgerSignTypedData = 'ledger-sign-typed-data',
 }
 
-type IFrameMessageResponseBase<
+type IFrameMessageResponseStub<
   SuccessResult extends Record<string, unknown>,
   FailureResult = Error,
 > = {
@@ -51,19 +51,19 @@ type LedgerUpdateTransportActionResponse = {
 
 type LedgerUnlockActionResponse = {
   action: IFrameMessageAction.LedgerUnlock;
-} & IFrameMessageResponseBase<GetPublicKeyResponse>;
+} & IFrameMessageResponseStub<GetPublicKeyResponse>;
 
 type LedgerSignTransactionActionResponse = {
   action: IFrameMessageAction.LedgerSignTransaction;
-} & IFrameMessageResponseBase<LedgerSignTransactionResponse>;
+} & IFrameMessageResponseStub<LedgerSignTransactionResponse>;
 
 type LedgerSignPersonalMessageActionResponse = {
   action: IFrameMessageAction.LedgerSignPersonalMessage;
-} & IFrameMessageResponseBase<LedgerSignMessageResponse>;
+} & IFrameMessageResponseStub<LedgerSignMessageResponse>;
 
 type LedgerSignTypedDataActionResponse = {
   action: IFrameMessageAction.LedgerSignTypedData;
-} & IFrameMessageResponseBase<LedgerSignTypedDataResponse>;
+} & IFrameMessageResponseStub<LedgerSignTypedDataResponse>;
 
 export type IFrameMessageResponse =
   | LedgerConnectionChangeActionResponse
