@@ -7,7 +7,10 @@ import EthereumTx from 'ethereumjs-tx';
 import HDKey from 'hdkey';
 
 import { LedgerBridge } from './ledger-bridge';
-import { LedgerIframeBridge } from './ledger-iframe-bridge';
+import {
+  LedgerIframeBridge,
+  LedgerIframeBridgeOptions,
+} from './ledger-iframe-bridge';
 import { AccountDetails, LedgerKeyring } from './ledger-keyring';
 
 jest.mock('@metamask/eth-sig-util', () => {
@@ -83,10 +86,12 @@ const fakeTypeTwoTx = TransactionFactory.fromTxData(
   { common: commonEIP1559, freeze: false },
 );
 
+const BRIDGE_URL = 'BRIDGE_URL';
+
 describe('LedgerKeyring', function () {
   let keyring: LedgerKeyring;
-  let bridge: LedgerBridge;
-
+  let bridge: LedgerBridge<LedgerIframeBridgeOptions>;
+  const opts = { bridgeUrl: BRIDGE_URL };
   /**
    * Sets up the keyring to unlock one account.
    *
@@ -102,7 +107,7 @@ describe('LedgerKeyring', function () {
   }
 
   beforeEach(async function () {
-    bridge = new LedgerIframeBridge();
+    bridge = new LedgerIframeBridge(opts);
     keyring = new LedgerKeyring({ bridge });
     keyring.hdk = fakeHdKey;
     await keyring.deserialize();
@@ -128,7 +133,7 @@ describe('LedgerKeyring', function () {
   describe('constructor', function () {
     it('constructs', async function () {
       const ledgerKeyring = new LedgerKeyring({
-        bridge: new LedgerIframeBridge(),
+        bridge: new LedgerIframeBridge(opts),
       });
       expect(typeof ledgerKeyring).toBe('object');
 
@@ -140,7 +145,8 @@ describe('LedgerKeyring', function () {
       expect(
         () =>
           new LedgerKeyring({
-            bridge: undefined as unknown as LedgerBridge,
+            bridge:
+              undefined as unknown as LedgerBridge<LedgerIframeBridgeOptions>,
           }),
       ).toThrow('Bridge is a required dependency for the keyring');
     });
@@ -161,9 +167,7 @@ describe('LedgerKeyring', function () {
     it('serializes an instance', async function () {
       const output = await keyring.serialize();
 
-      expect(output.bridgeUrl).toBe(
-        'https://metamask.github.io/eth-ledger-bridge-keyring',
-      );
+      expect(output.bridgeOptions).toHaveProperty('bridgeUrl', BRIDGE_URL);
       expect(output.hdPath).toBe(`m/44'/60'/0'`);
       expect(Array.isArray(output.accounts)).toBe(true);
       expect(output.accounts).toHaveLength(0);
@@ -184,13 +188,35 @@ describe('LedgerKeyring', function () {
         hdPath: someHdPath,
         accounts: [account],
         accountDetails,
+        bridgeOptions: { bridgeUrl: BRIDGE_URL },
       });
       const serialized = await keyring.serialize();
 
       expect(serialized.accounts).toHaveLength(1);
-      expect(serialized.bridgeUrl).toBe(
-        'https://metamask.github.io/eth-ledger-bridge-keyring',
-      );
+      expect(serialized.bridgeOptions).toHaveProperty('bridgeUrl', BRIDGE_URL);
+      expect(serialized.hdPath).toBe(someHdPath);
+      expect(serialized.accountDetails).toStrictEqual(accountDetails);
+    });
+
+    it('should deserializes with bridgeUrl', async function () {
+      const account = fakeAccounts[0];
+      const checksum = ethUtil.toChecksumAddress(account);
+      const someHdPath = `m/44'/60'/0'/1`;
+      const accountDetails: Record<string, AccountDetails> = {};
+      accountDetails[checksum] = {
+        index: 0,
+        hdPath: someHdPath,
+      };
+      await keyring.deserialize({
+        hdPath: someHdPath,
+        accounts: [account],
+        accountDetails,
+        bridgeUrl: 'URL2',
+      });
+      const serialized = await keyring.serialize();
+
+      expect(serialized.accounts).toHaveLength(1);
+      expect(serialized.bridgeOptions).toHaveProperty('bridgeUrl', 'URL2');
       expect(serialized.hdPath).toBe(someHdPath);
       expect(serialized.accountDetails).toStrictEqual(accountDetails);
     });

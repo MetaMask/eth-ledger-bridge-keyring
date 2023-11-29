@@ -8,6 +8,7 @@ import {
   LedgerSignTransactionResponse,
   LedgerSignTypedDataParams,
   LedgerSignTypedDataResponse,
+  LedgerBridgeSerializeData,
 } from './ledger-bridge';
 
 const LEDGER_IFRAME_ID = 'LEDGER-IFRAME';
@@ -73,10 +74,20 @@ type IFramePostMessage<TAction extends IFrameMessageAction> =
     target: typeof LEDGER_IFRAME_ID;
   };
 
-export class LedgerIframeBridge implements LedgerBridge {
+const BRIDGE_URL = 'https://metamask.github.io/eth-ledger-bridge-keyring';
+
+export type LedgerIframeBridgeOptions = {
+  bridgeUrl: string;
+};
+
+export class LedgerIframeBridge
+  implements LedgerBridge<LedgerIframeBridgeOptions>
+{
   iframe?: HTMLIFrameElement;
 
   iframeLoaded = false;
+
+  bridgeUrl = '';
 
   eventListener?: (eventMessage: {
     origin: string;
@@ -98,10 +109,14 @@ export class LedgerIframeBridge implements LedgerBridge {
     transportType: string;
   };
 
-  async init(bridgeUrl: string) {
-    this.#setupIframe(bridgeUrl);
+  constructor(opts?: LedgerIframeBridgeOptions) {
+    this.bridgeUrl = opts?.bridgeUrl ?? BRIDGE_URL;
+  }
 
-    this.eventListener = this.#eventListener.bind(this, bridgeUrl);
+  async init() {
+    this.#setupIframe(this.bridgeUrl);
+
+    this.eventListener = this.#eventListener.bind(this, this.bridgeUrl);
 
     window.addEventListener('message', this.eventListener);
   }
@@ -109,6 +124,30 @@ export class LedgerIframeBridge implements LedgerBridge {
   async destroy() {
     if (this.eventListener) {
       window.removeEventListener('message', this.eventListener);
+    }
+  }
+
+  async deserializeData(
+    serializeData: LedgerBridgeSerializeData,
+  ): Promise<void> {
+    this.bridgeUrl = (serializeData.bridgeUrl as string) ?? this.bridgeUrl;
+  }
+
+  async serializeData(): Promise<LedgerBridgeSerializeData> {
+    return {
+      bridgeUrl: this.bridgeUrl,
+    };
+  }
+
+  async getOptions(): Promise<LedgerIframeBridgeOptions> {
+    return { bridgeUrl: this.bridgeUrl };
+  }
+
+  async setOptions(opts: LedgerIframeBridgeOptions): Promise<void> {
+    if (opts.bridgeUrl && this.bridgeUrl !== opts.bridgeUrl) {
+      this.bridgeUrl = opts.bridgeUrl;
+      await this.destroy();
+      await this.init();
     }
   }
 

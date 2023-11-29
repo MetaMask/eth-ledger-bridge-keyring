@@ -26,13 +26,28 @@ export type LedgerSignTypedDataResponse = Awaited<
   ReturnType<LedgerHwAppEth['signEIP712HashedMessage']>
 >;
 
+export type LedgerBridgeOptions = Record<string, string | number | object>;
+
+export type LedgerBridgeSerializeData = Record<
+  string,
+  string | number | object
+>;
+
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-export interface LedgerBridge {
+export interface LedgerBridge<T extends LedgerBridgeOptions> {
   isDeviceConnected: boolean;
 
-  init(bridgeUrl: string): Promise<void>;
+  init(): Promise<void>;
 
   destroy(): Promise<void>;
+
+  serializeData(): Promise<LedgerBridgeSerializeData>;
+
+  deserializeData(opts: LedgerBridgeSerializeData): Promise<void>;
+
+  getOptions(): Promise<T>;
+
+  setOptions(opts: T): Promise<void>;
 
   attemptMakeApp(): Promise<boolean>;
 
