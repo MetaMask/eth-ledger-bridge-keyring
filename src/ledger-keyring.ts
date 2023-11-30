@@ -98,7 +98,7 @@ export class LedgerKeyring extends EventEmitter {
 
   implementFullBIP44 = false;
 
-  bridge: LedgerBridge<Record<string, string | number | object>>;
+  bridge: LedgerBridge<LedgerBridgeOptions>;
 
   constructor({ bridge }: { bridge: LedgerBridge<LedgerBridgeOptions> }) {
     super();
