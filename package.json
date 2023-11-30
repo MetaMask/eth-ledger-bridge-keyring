@@ -1,6 +1,6 @@
 {
   "name": "@metamask/eth-ledger-bridge-keyring",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "A MetaMask compatible keyring, for ledger hardware wallets",
   "keywords": [
     "ethereum",
@@ -40,13 +40,12 @@
     "@ethereumjs/rlp": "^4.0.0",
     "@ethereumjs/tx": "^4.1.1",
     "@ethereumjs/util": "^8.0.0",
-    "@metamask/eth-sig-util": "^6.0.1",
-    "@metamask/utils": "^5.0.2",
+    "@metamask/eth-sig-util": "^7.0.0",
     "hdkey": "^2.1.0"
   },
   "devDependencies": {
     "@ethereumjs/common": "^3.1.1",
-    "@lavamoat/allow-scripts": "^2.3.0",
+    "@lavamoat/allow-scripts": "^2.5.1",
     "@ledgerhq/hw-app-eth": "^6.32.0",
     "@ledgerhq/types-cryptoassets": "^7.6.0",
     "@ledgerhq/types-devices": "^6.22.4",
@@ -56,10 +55,11 @@
     "@metamask/eslint-config-jest": "^11.0.0",
     "@metamask/eslint-config-nodejs": "^11.0.0",
     "@metamask/eslint-config-typescript": "^11.0.0",
+    "@metamask/utils": "^8.2.0",
     "@types/ethereumjs-tx": "^1.0.1",
     "@types/hdkey": "^2.0.1",
     "@types/jest": "^28.1.6",
-    "@types/node": "^14.0.0",
+    "@types/node": "^16.18.59",
     "@typescript-eslint/eslint-plugin": "^5.43.0",
     "@typescript-eslint/parser": "^5.43.0",
     "depcheck": "^1.4.3",
@@ -83,7 +83,7 @@
   },
   "packageManager": "yarn@3.4.1",
   "engines": {
-    "node": ">=14.0.0"
+    "node": "^16.20 || ^18.16 || >=20"
   },
   "publishConfig": {
     "access": "public",
