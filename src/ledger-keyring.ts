@@ -138,11 +138,10 @@ export class LedgerKeyring extends EventEmitter {
 
     this.implementFullBIP44 = opts.implementFullBIP44 ?? false;
 
+    const keys = new Set<string>(Object.keys(this.accountDetails));
     // Remove accounts that don't have corresponding account details
     this.accounts = this.accounts.filter((account) =>
-      Object.keys(this.accountDetails).includes(
-        ethUtil.toChecksumAddress(account),
-      ),
+      keys.has(ethUtil.toChecksumAddress(account)),
     );
 
     return Promise.resolve();
@@ -157,26 +156,25 @@ export class LedgerKeyring extends EventEmitter {
         };
       }
     }
-
+    const keys = new Set<string>(Object.keys(this.accountDetails));
     // try to migrate non-LedgerLive accounts too
     if (!this.#isLedgerLiveHdPath()) {
-      this.accounts
-        .filter(
-          (account) =>
-            !Object.keys(this.accountDetails).includes(
-              ethUtil.toChecksumAddress(account),
-            ),
-        )
-        .forEach((account) => {
-          try {
-            this.accountDetails[ethUtil.toChecksumAddress(account)] = {
+      this.accounts.forEach((account) => {
+        try {
+          const key = ethUtil.toChecksumAddress(account);
+
+          if (!keys.has(key)) {
+            this.accountDetails[key] = {
               bip44: false,
               hdPath: this.#pathFromAddress(account),
             };
-          } catch (error) {
-            console.log(`failed to migrate account ${account}`);
           }
-        });
+          // fix a edge case when accounts itself has duplicate address
+          keys.add(key);
+        } catch (error) {
+          console.log(`failed to migrate account ${account}`);
+        }
+      });
     }
   }
 
@@ -275,15 +273,16 @@ export class LedgerKeyring extends EventEmitter {
   }
 
   removeAccount(address: string) {
-    if (
-      !this.accounts.map((a) => a.toLowerCase()).includes(address.toLowerCase())
-    ) {
+    const filteredAccounts = this.accounts.filter(
+      (a) => a.toLowerCase() !== address.toLowerCase(),
+    );
+
+    // if filteredAccounts length is the same, means the address is not exist in the accounts
+    if (filteredAccounts.length === this.accounts.length) {
       throw new Error(`Address ${address} not found in this keyring`);
     }
 
-    this.accounts = this.accounts.filter(
-      (a) => a.toLowerCase() !== address.toLowerCase(),
-    );
+    this.accounts = filteredAccounts;
     delete this.accountDetails[ethUtil.toChecksumAddress(address)];
   }
 
