@@ -40,13 +40,14 @@
     "@ethereumjs/rlp": "^4.0.0",
     "@ethereumjs/tx": "^4.1.1",
     "@ethereumjs/util": "^8.0.0",
+    "@ledgerhq/hw-app-eth": "^6.32.0",
+    "@ledgerhq/hw-transport": "^6.28.8",
     "@metamask/eth-sig-util": "^7.0.0",
     "hdkey": "^2.1.0"
   },
   "devDependencies": {
     "@ethereumjs/common": "^3.1.1",
     "@lavamoat/allow-scripts": "^2.5.1",
-    "@ledgerhq/hw-app-eth": "^6.32.0",
     "@ledgerhq/types-cryptoassets": "^7.6.0",
     "@ledgerhq/types-devices": "^6.22.4",
     "@metamask/auto-changelog": "^3.1.0",
