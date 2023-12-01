@@ -169,8 +169,6 @@ export class LedgerKeyring extends EventEmitter {
               hdPath: this.#pathFromAddress(account),
             };
           }
-          // fix a edge case when accounts itself has duplicate address
-          keys.add(key);
         } catch (error) {
           console.log(`failed to migrate account ${account}`);
         }
@@ -277,7 +275,6 @@ export class LedgerKeyring extends EventEmitter {
       (a) => a.toLowerCase() !== address.toLowerCase(),
     );
 
-    // if filteredAccounts length is the same, means the address is not exist in the accounts
     if (filteredAccounts.length === this.accounts.length) {
       throw new Error(`Address ${address} not found in this keyring`);
     }
