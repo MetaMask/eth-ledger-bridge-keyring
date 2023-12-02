@@ -340,7 +340,7 @@ export class LedgerKeyring extends EventEmitter {
 
     rawTxHex = Buffer.isBuffer(messageToSign)
       ? messageToSign.toString('hex')
-      : RLP.encode(messageToSign).toString();
+      : Buffer.from(RLP.encode(messageToSign)).toString('hex');
 
     return this.#signTransaction(address, rawTxHex, (payload) => {
       // Because tx will be immutable, first get a plain javascript object that
