@@ -1,7 +1,6 @@
 import { hasProperty } from '@metamask/utils';
 
 import {
-  type IFrameMessageResponse,
   IFrameMessageAction,
   LedgerIframeBridge,
 } from './ledger-iframe-bridge';
@@ -63,7 +62,7 @@ describe('LedgerIframeBridge', function () {
    */
   function stubKeyringIFramePostMessage(
     bridgeInstance: LedgerIframeBridge,
-    fn: (message: IFrameMessageResponse) => void,
+    fn: (message: any) => void,
   ) {
     if (!isIFrameValid(bridgeInstance.iframe)) {
       throw new Error('the iframe is not valid');
