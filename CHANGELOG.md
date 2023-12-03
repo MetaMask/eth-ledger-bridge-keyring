@@ -7,9 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ## [2.0.1]
-### Uncategorized
-- fix: invalid rlp data for legacy transactions ([#212](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/212))
-- Fix contradictory typing of `IFrameMessageResponse` and refactor into modular types ([#207](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/207))
+### Fixed
+- Fix `invalid rlp data` error for legacy transactions in `2.0.0` ([#212](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/212))
 
 ## [2.0.0]
 ### Changed
