@@ -22,45 +22,57 @@ export enum IFrameMessageAction {
   LedgerSignTypedData = 'ledger-sign-typed-data',
 }
 
-type IFrameMessageResponse<TAction extends IFrameMessageAction> = {
-  action: TAction;
+type IFrameMessageResponseStub<
+  SuccessResult extends Record<string, unknown>,
+  FailureResult = Error,
+> = {
   messageId: number;
 } & (
-  | {
-      action: IFrameMessageAction.LedgerConnectionChange;
-      payload: { connected: boolean };
-    }
-  | ({
-      action: IFrameMessageAction.LedgerMakeApp;
-    } & ({ success: true } | { success: false; error?: unknown }))
-  | {
-      action: IFrameMessageAction.LedgerUpdateTransport;
-      success: boolean;
-    }
-  | ({
-      action: IFrameMessageAction.LedgerUnlock;
-    } & (
-      | { success: true; payload: GetPublicKeyResponse }
-      | { success: false; payload: { error: Error } }
-    ))
-  | ({
-      action: IFrameMessageAction.LedgerSignTransaction;
-    } & (
-      | { success: true; payload: LedgerSignTransactionResponse }
-      | { success: false; payload: { error: Error } }
-    ))
-  | ({
-      action:
-        | IFrameMessageAction.LedgerSignPersonalMessage
-        | IFrameMessageAction.LedgerSignTypedData;
-    } & (
-      | {
-          success: true;
-          payload: LedgerSignMessageResponse | LedgerSignTypedDataResponse;
-        }
-      | { success: false; payload: { error: Error } }
-    ))
+  | { success: true; payload: SuccessResult }
+  | { success: false; payload: { error: FailureResult } }
 );
+
+type LedgerConnectionChangeActionResponse = {
+  messageId: number;
+  action: IFrameMessageAction.LedgerConnectionChange;
+  payload: { connected: boolean };
+};
+
+type LedgerMakeAppActionResponse = {
+  messageId: number;
+  action: IFrameMessageAction.LedgerMakeApp;
+} & ({ success: true } | { success: false; error?: unknown });
+
+type LedgerUpdateTransportActionResponse = {
+  messageId: number;
+  action: IFrameMessageAction.LedgerUpdateTransport;
+  success: boolean;
+};
+
+type LedgerUnlockActionResponse = {
+  action: IFrameMessageAction.LedgerUnlock;
+} & IFrameMessageResponseStub<GetPublicKeyResponse>;
+
+type LedgerSignTransactionActionResponse = {
+  action: IFrameMessageAction.LedgerSignTransaction;
+} & IFrameMessageResponseStub<LedgerSignTransactionResponse>;
+
+type LedgerSignPersonalMessageActionResponse = {
+  action: IFrameMessageAction.LedgerSignPersonalMessage;
+} & IFrameMessageResponseStub<LedgerSignMessageResponse>;
+
+type LedgerSignTypedDataActionResponse = {
+  action: IFrameMessageAction.LedgerSignTypedData;
+} & IFrameMessageResponseStub<LedgerSignTypedDataResponse>;
+
+export type IFrameMessageResponse =
+  | LedgerConnectionChangeActionResponse
+  | LedgerMakeAppActionResponse
+  | LedgerUpdateTransportActionResponse
+  | LedgerUnlockActionResponse
+  | LedgerSignTransactionActionResponse
+  | LedgerSignPersonalMessageActionResponse
+  | LedgerSignTypedDataActionResponse;
 
 type IFrameMessage<TAction extends IFrameMessageAction> = {
   action: TAction;
@@ -80,17 +92,15 @@ export class LedgerIframeBridge implements LedgerBridge {
 
   eventListener?: (eventMessage: {
     origin: string;
-    data: IFrameMessageResponse<IFrameMessageAction>;
+    data: IFrameMessageResponse;
   }) => void;
 
   isDeviceConnected = false;
 
   currentMessageId = 0;
 
-  messageCallbacks: Record<
-    number,
-    (response: IFrameMessageResponse<IFrameMessageAction>) => void
-  > = {};
+  messageCallbacks: Record<number, (response: IFrameMessageResponse) => void> =
+    {};
 
   delayedPromise?: {
     resolve: (value: boolean) => void;
@@ -119,10 +129,12 @@ export class LedgerIframeBridge implements LedgerBridge {
           action: IFrameMessageAction.LedgerMakeApp,
         },
         (response) => {
-          if (response.success) {
+          if ('success' in response && response.success) {
             resolve(true);
-          } else {
+          } else if ('error' in response) {
             reject(response.error);
+          } else {
+            reject(new Error('Unknown error occurred'));
           }
         },
       );
@@ -147,8 +159,8 @@ export class LedgerIframeBridge implements LedgerBridge {
           action: IFrameMessageAction.LedgerUpdateTransport,
           params: { transportType },
         },
-        ({ success }) => {
-          if (success) {
+        (response) => {
+          if ('success' in response && response.success) {
             return resolve(true);
           }
           return reject(new Error('Ledger transport could not be updated'));
@@ -223,11 +235,16 @@ export class LedgerIframeBridge implements LedgerBridge {
           action,
           params,
         },
-        ({ success, payload }) => {
-          if (success) {
-            return resolve(payload);
+        (response) => {
+          if ('payload' in response && response.payload) {
+            if ('success' in response && response.success) {
+              return resolve(response.payload);
+            }
+            if ('error' in response.payload) {
+              return reject(response.payload.error);
+            }
           }
-          return reject(payload.error);
+          return reject(new Error('Unknown error occurred'));
         },
       );
     });
@@ -267,7 +284,7 @@ export class LedgerIframeBridge implements LedgerBridge {
     bridgeUrl: string,
     eventMessage: {
       origin: string;
-      data: IFrameMessageResponse<IFrameMessageAction>;
+      data: IFrameMessageResponse;
     },
   ) {
     if (eventMessage.origin !== this.#getOrigin(bridgeUrl)) {
@@ -289,7 +306,7 @@ export class LedgerIframeBridge implements LedgerBridge {
 
   #sendMessage<TAction extends IFrameMessageAction>(
     message: IFrameMessage<TAction>,
-    callback: (response: IFrameMessageResponse<TAction>) => void,
+    callback: (response: IFrameMessageResponse) => void,
   ) {
     this.currentMessageId += 1;
 
@@ -299,9 +316,7 @@ export class LedgerIframeBridge implements LedgerBridge {
       target: LEDGER_IFRAME_ID,
     };
 
-    this.messageCallbacks[this.currentMessageId] = callback as (
-      response: IFrameMessageResponse<IFrameMessageAction>,
-    ) => void;
+    this.messageCallbacks[this.currentMessageId] = callback;
 
     if (!this.iframeLoaded || !this.iframe || !this.iframe.contentWindow) {
       throw new Error('The iframe is not loaded yet');
