@@ -43,7 +43,7 @@ export class LedgerTransportMiddleware implements TransportMiddleware {
   }
 
   /**
-   * Method to get the transport object.
+   * Method to retrieve the transport object.
    *
    * @returns An generic interface for communicating with a Ledger hardware wallet.
    */
@@ -55,8 +55,8 @@ export class LedgerTransportMiddleware implements TransportMiddleware {
   }
 
   /**
-   * Method to get the  eth app object.
-   * it create a new instance if not exist.
+   * Method to retrieve the eth app object.
+   * it create a new eth app instance if not exist.
    *
    * @returns An generic interface for communicating with a Ledger hardware wallet to perform operation.
    */

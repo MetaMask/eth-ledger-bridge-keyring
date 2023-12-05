@@ -22,7 +22,7 @@ export class MetaMaskLedgerHwAppEth
   readonly transportEncoding = 'ascii';
 
   /**
-   * Method to open Ethereum application on ledger device.
+   * Method to open ethereum application on ledger device.
    *
    */
   async openEthApp(): Promise<void> {
@@ -44,7 +44,7 @@ export class MetaMaskLedgerHwAppEth
   }
 
   /**
-   * Method to get running application name and version on ledger device.
+   * Method to retrieve the name and version of the running application in ledger device.
    *
    * @returns An object contains appName and version.
    */
