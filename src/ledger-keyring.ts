@@ -15,11 +15,7 @@ import type OldEthJsTransaction from 'ethereumjs-tx';
 import { EventEmitter } from 'events';
 import HDKey from 'hdkey';
 
-import {
-  LedgerBridge,
-  LedgerBridgeOptions,
-  LedgerBridgeSerializeData,
-} from './ledger-bridge';
+import { LedgerBridge, LedgerBridgeOptions } from './ledger-bridge';
 
 const pathBase = 'm';
 const hdPathString = `${pathBase}/44'/60'/0'`;
@@ -50,8 +46,6 @@ export type LedgerBridgeKeyringOptions = {
   accountDetails: Readonly<Record<string, AccountDetails>>;
   accountIndexes: Readonly<Record<string, number>>;
   implementFullBIP44: boolean;
-  bridgeUrl?: string;
-  bridgeOptions?: LedgerBridgeSerializeData;
 };
 
 /**
@@ -124,7 +118,6 @@ export class LedgerKeyring extends EventEmitter {
       accounts: this.accounts,
       accountDetails: this.accountDetails,
       implementFullBIP44: false,
-      bridgeOptions: await this.bridge.serializeData(),
     };
   }
 
@@ -132,15 +125,6 @@ export class LedgerKeyring extends EventEmitter {
     this.hdPath = opts.hdPath ?? hdPathString;
     this.accounts = opts.accounts ?? [];
     this.accountDetails = opts.accountDetails ?? {};
-
-    if (opts.bridgeOptions) {
-      await this.bridge.deserializeData(opts.bridgeOptions);
-    } else if (opts.bridgeUrl) {
-      // allow legacy options bridgeUrl to be passed in
-      await this.bridge.deserializeData({
-        bridgeUrl: opts.bridgeUrl,
-      });
-    }
 
     if (!opts.accountDetails) {
       this.#migrateAccountDetails(opts);

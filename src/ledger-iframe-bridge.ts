@@ -8,7 +8,6 @@ import {
   LedgerSignTransactionResponse,
   LedgerSignTypedDataParams,
   LedgerSignTypedDataResponse,
-  LedgerBridgeSerializeData,
 } from './ledger-bridge';
 
 const LEDGER_IFRAME_ID = 'LEDGER-IFRAME';
@@ -99,7 +98,7 @@ export class LedgerIframeBridge
 
   iframeLoaded = false;
 
-  bridgeUrl = '';
+  #opts: LedgerIframeBridgeOptions = { bridgeUrl: BRIDGE_URL };
 
   eventListener?: (eventMessage: {
     origin: string;
@@ -120,13 +119,15 @@ export class LedgerIframeBridge
   };
 
   constructor(opts?: LedgerIframeBridgeOptions) {
-    this.bridgeUrl = opts?.bridgeUrl ?? BRIDGE_URL;
+    if (opts?.bridgeUrl) {
+      this.#opts.bridgeUrl = opts.bridgeUrl;
+    }
   }
 
   async init() {
-    this.#setupIframe(this.bridgeUrl);
+    this.#setupIframe(this.#opts.bridgeUrl);
 
-    this.eventListener = this.#eventListener.bind(this, this.bridgeUrl);
+    this.eventListener = this.#eventListener.bind(this, this.#opts.bridgeUrl);
 
     window.addEventListener('message', this.eventListener);
   }
@@ -137,25 +138,13 @@ export class LedgerIframeBridge
     }
   }
 
-  async deserializeData(
-    serializeData: LedgerBridgeSerializeData,
-  ): Promise<void> {
-    this.bridgeUrl = (serializeData.bridgeUrl as string) ?? this.bridgeUrl;
-  }
-
-  async serializeData(): Promise<LedgerBridgeSerializeData> {
-    return {
-      bridgeUrl: this.bridgeUrl,
-    };
-  }
-
   async getOptions(): Promise<LedgerIframeBridgeOptions> {
-    return { bridgeUrl: this.bridgeUrl };
+    return this.#opts;
   }
 
   async setOptions(opts: LedgerIframeBridgeOptions): Promise<void> {
-    if (opts.bridgeUrl && this.bridgeUrl !== opts.bridgeUrl) {
-      this.bridgeUrl = opts.bridgeUrl;
+    if (opts.bridgeUrl && this.#opts.bridgeUrl !== opts.bridgeUrl) {
+      this.#opts.bridgeUrl = opts.bridgeUrl;
       await this.destroy();
       await this.init();
     }

@@ -484,58 +484,86 @@ describe('LedgerIframeBridge', function () {
     });
   });
 
-  describe('deserializeData', function () {
-    it('data has assigned to instance', async function () {
-      bridge.bridgeUrl = '';
-      await bridge.deserializeData({ bridgeUrl: BRIDGE_URL });
-      expect(bridge.bridgeUrl).toBe(BRIDGE_URL);
-    });
-  });
-
-  describe('serializeData', function () {
-    it('return struct data', async function () {
-      await bridge.deserializeData({ bridgeUrl: BRIDGE_URL });
-      const result = await bridge.serializeData();
-      expect(result).toStrictEqual({
-        bridgeUrl: BRIDGE_URL,
-      });
-    });
-  });
-
   describe('setOption', function () {
     let removeEventListenerSpy: jest.SpyInstance;
     let addEventListenerSpy: jest.SpyInstance;
+    const defaultIframeLoadedCounter = 1;
 
-    beforeEach(() => {
+    beforeEach(async () => {
       removeEventListenerSpy = jest.spyOn(global.window, 'removeEventListener');
       addEventListenerSpy = jest.spyOn(global.window, 'addEventListener');
       bridge = new LedgerIframeBridge({
         bridgeUrl: BRIDGE_URL,
       });
+      await bridge.init();
+      await simulateIFrameLoad(bridge.iframe);
     });
 
-    it('option set correctly', async function () {
-      await bridge.init();
-      await bridge.setOptions({ bridgeUrl: 'another url' });
-      await simulateIFrameLoad(bridge.iframe);
-      expect(bridge.bridgeUrl).toBe('another url');
-      expect(addEventListenerSpy).toHaveBeenCalledTimes(2);
-      expect(removeEventListenerSpy).toHaveBeenCalledTimes(1);
-    });
+    describe('when configurate bridge url', function () {
+      describe('when given bridge url is different with current', function () {
+        beforeEach(async () => {
+          await bridge.setOptions({ bridgeUrl: 'another url' });
+        });
 
-    it('option will not set when given bridgeUrl is same', async function () {
-      await bridge.init();
-      await bridge.setOptions({ bridgeUrl: BRIDGE_URL });
-      await simulateIFrameLoad(bridge.iframe);
-      expect(bridge.bridgeUrl).toBe(BRIDGE_URL);
-      expect(addEventListenerSpy).toHaveBeenCalledTimes(1);
-      expect(removeEventListenerSpy).toHaveBeenCalledTimes(0);
+        it('should set bridgeUrl correctly', async function () {
+          expect(await bridge.getOptions()).toHaveProperty(
+            'bridgeUrl',
+            'another url',
+          );
+        });
+
+        it('should reload the iframe', async function () {
+          expect(addEventListenerSpy).toHaveBeenCalledTimes(
+            defaultIframeLoadedCounter + 1,
+          );
+          expect(removeEventListenerSpy).toHaveBeenCalledTimes(1);
+        });
+      });
+
+      describe('when given bridge url is same as current', function () {
+        beforeEach(async () => {
+          await bridge.setOptions({ bridgeUrl: BRIDGE_URL });
+        });
+
+        it('should not set bridgeUrl', async function () {
+          expect(await bridge.getOptions()).toHaveProperty(
+            'bridgeUrl',
+            BRIDGE_URL,
+          );
+        });
+
+        it('should not reload the iframe', async function () {
+          expect(addEventListenerSpy).toHaveBeenCalledTimes(
+            defaultIframeLoadedCounter,
+          );
+          expect(removeEventListenerSpy).toHaveBeenCalledTimes(0);
+        });
+      });
+
+      describe('when given bridge url is empty', function () {
+        beforeEach(async () => {
+          await bridge.setOptions({ bridgeUrl: '' });
+        });
+
+        it('should not set bridgeUrl', async function () {
+          expect(await bridge.getOptions()).toHaveProperty(
+            'bridgeUrl',
+            BRIDGE_URL,
+          );
+        });
+
+        it('should not reload the iframe', async function () {
+          expect(addEventListenerSpy).toHaveBeenCalledTimes(
+            defaultIframeLoadedCounter,
+          );
+          expect(removeEventListenerSpy).toHaveBeenCalledTimes(0);
+        });
+      });
     });
   });
 
   describe('getOption', function () {
     it('return instance options', async function () {
-      bridge.bridgeUrl = BRIDGE_URL;
       const result = await bridge.getOptions();
       expect(result).toStrictEqual({
         bridgeUrl: BRIDGE_URL,
