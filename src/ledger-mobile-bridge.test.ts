@@ -184,7 +184,9 @@ describe('LedgerMobileBridge', function () {
       mockTransport.deviceModel.id = '';
       await expect(
         bridge.updateTransportMethod(mockTransport as unknown as Transport),
-      ).rejects.toThrow('device id is not defined.');
+      ).rejects.toThrow(
+        'Property `deviceModel.id` is not defined in `transport`.',
+      );
     });
   });
 
