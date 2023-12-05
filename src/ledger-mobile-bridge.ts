@@ -12,7 +12,6 @@ import {
   LedgerSignTransactionResponse,
   LedgerSignTypedDataParams,
   LedgerSignTypedDataResponse,
-  LedgerBridgeSerializeData,
 } from './ledger-bridge';
 import {
   GetAppNameAndVersionResponse,
@@ -35,7 +34,7 @@ export class LedgerMobileBridge
 {
   #transportMiddleware?: TransportMiddleware;
 
-  #deviceId = '';
+  #opts: LedgerMobileBridgeOptions = {};
 
   isDeviceConnected = false;
 
@@ -43,7 +42,9 @@ export class LedgerMobileBridge
     transportMiddleware: TransportMiddleware,
     opts?: LedgerMobileBridgeOptions,
   ) {
-    this.#deviceId = opts?.deviceId ?? '';
+    if (opts) {
+      this.#opts = opts;
+    }
     this.#transportMiddleware = transportMiddleware;
   }
 
@@ -126,26 +127,6 @@ export class LedgerMobileBridge
   }
 
   /**
-   * Method to deserialize metadata from ledger mobile bridge.
-   *
-   * @param serializeData - An object contains serialized data.
-   */
-  async deserializeData(
-    serializeData: LedgerBridgeSerializeData,
-  ): Promise<void> {
-    this.#deviceId = (serializeData.deviceId as string) ?? this.#deviceId;
-  }
-
-  /**
-   * Method to return the serialized metadata from ledger mobile bridge.
-   */
-  async serializeData(): Promise<LedgerBridgeSerializeData> {
-    return {
-      deviceId: this.#deviceId,
-    };
-  }
-
-  /**
    * Method to get Ethereum address for a given BIP 32 path.
    *
    * @param params - An object contains hdPath.
@@ -162,40 +143,29 @@ export class LedgerMobileBridge
    * Method to get the current configuration of the ledger bridge keyring.
    */
   async getOptions(): Promise<LedgerMobileBridgeOptions> {
-    return {
-      deviceId: this.#deviceId,
-    };
+    return this.#opts;
   }
 
   /**
    * Method to set the current configuration of the ledger bridge keyring.
    *
-   * @param opts - An object contains deviceId.
-   * @param opts.deviceId - The mobile device Id.
+   * @param opts - An configuration object.
    */
   async setOptions(opts: LedgerMobileBridgeOptions): Promise<void> {
-    if (opts.deviceId) {
-      if (this.#deviceId && this.#deviceId !== opts.deviceId) {
-        throw new Error('setOptions: deviceId mismatch.');
-      }
-      this.#deviceId = opts.deviceId;
-    }
+    this.#opts = opts;
   }
 
   /**
    * Method set the transport object to communicate with the device.
    * The transport object will be passed to underlying middleware.
    *
-   * @param transport - The generic interface for communicating with a Ledger hardware wallet. There are different kind of transports based on the technology (channels like U2F, HID, Bluetooth, Webusb).
+   * @param transport - The communication interface with the Ledger hardware wallet. There are different kind of transports based on the technology (channels like U2F, HID, Bluetooth, Webusb).
    */
   async updateTransportMethod(transport: Transport): Promise<boolean> {
     if (!transport.deviceModel?.id) {
       throw new Error('updateTransportMethod: device id is not defined.');
     }
     this.#getTransportMiddleWare().setTransport(transport);
-    await this.setOptions({
-      deviceId: transport.deviceModel.id,
-    });
     this.isDeviceConnected = true;
     return true;
   }

@@ -3,6 +3,4 @@ export type GetAppNameAndVersionResponse = {
   version: string;
 };
 
-export type LedgerMobileBridgeOptions = {
-  deviceId?: string;
-};
+export type LedgerMobileBridgeOptions = Record<string, never>;
