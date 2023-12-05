@@ -85,8 +85,6 @@ type IFramePostMessage<TAction extends IFrameMessageAction> =
     target: typeof LEDGER_IFRAME_ID;
   };
 
-const BRIDGE_URL = 'https://metamask.github.io/eth-ledger-bridge-keyring';
-
 export type LedgerIframeBridgeOptions = {
   bridgeUrl: string;
 };
@@ -98,7 +96,7 @@ export class LedgerIframeBridge
 
   iframeLoaded = false;
 
-  #opts: LedgerIframeBridgeOptions = { bridgeUrl: BRIDGE_URL };
+  #opts: LedgerIframeBridgeOptions;
 
   eventListener?: (eventMessage: {
     origin: string;
@@ -118,10 +116,15 @@ export class LedgerIframeBridge
     transportType: string;
   };
 
-  constructor(opts?: LedgerIframeBridgeOptions) {
-    if (opts?.bridgeUrl) {
-      this.#opts.bridgeUrl = opts.bridgeUrl;
-    }
+  constructor(
+    opts: LedgerIframeBridgeOptions = {
+      bridgeUrl: 'https://metamask.github.io/eth-ledger-bridge-keyring',
+    },
+  ) {
+    this.#validateConfiguration(opts);
+    this.#opts = {
+      bridgeUrl: opts?.bridgeUrl,
+    };
   }
 
   async init() {
@@ -143,7 +146,8 @@ export class LedgerIframeBridge
   }
 
   async setOptions(opts: LedgerIframeBridgeOptions): Promise<void> {
-    if (opts.bridgeUrl && this.#opts.bridgeUrl !== opts.bridgeUrl) {
+    this.#validateConfiguration(opts);
+    if (this.#opts?.bridgeUrl !== opts.bridgeUrl) {
       this.#opts.bridgeUrl = opts.bridgeUrl;
       await this.destroy();
       await this.init();
@@ -351,5 +355,11 @@ export class LedgerIframeBridge
     }
 
     this.iframe.contentWindow.postMessage(postMsg, '*');
+  }
+
+  #validateConfiguration(opts: LedgerIframeBridgeOptions): void {
+    if (typeof opts.bridgeUrl !== 'string' || opts.bridgeUrl.length === 0) {
+      throw new Error('bridgeURL is not a valid URL');
+    }
   }
 }

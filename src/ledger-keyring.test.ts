@@ -86,12 +86,9 @@ const fakeTypeTwoTx = TransactionFactory.fromTxData(
   { common: commonEIP1559, freeze: false },
 );
 
-const BRIDGE_URL = 'BRIDGE_URL';
-
 describe('LedgerKeyring', function () {
   let keyring: LedgerKeyring;
   let bridge: LedgerBridge<LedgerIframeBridgeOptions>;
-  const opts = { bridgeUrl: BRIDGE_URL };
   /**
    * Sets up the keyring to unlock one account.
    *
@@ -107,7 +104,7 @@ describe('LedgerKeyring', function () {
   }
 
   beforeEach(async function () {
-    bridge = new LedgerIframeBridge(opts);
+    bridge = new LedgerIframeBridge();
     keyring = new LedgerKeyring({ bridge });
     keyring.hdk = fakeHdKey;
     await keyring.deserialize();
@@ -133,7 +130,7 @@ describe('LedgerKeyring', function () {
   describe('constructor', function () {
     it('constructs', async function () {
       const ledgerKeyring = new LedgerKeyring({
-        bridge: new LedgerIframeBridge(opts),
+        bridge: new LedgerIframeBridge(),
       });
       expect(typeof ledgerKeyring).toBe('object');
 
