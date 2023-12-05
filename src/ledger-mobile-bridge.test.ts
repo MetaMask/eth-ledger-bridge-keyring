@@ -9,21 +9,13 @@ import {
 
 const DEVICE_ID = 'DEVICE_ID';
 
-const mockTransport = {
-  deviceModel: {
-    id: DEVICE_ID,
-  },
-  send: jest.fn(),
-  close: jest.fn(),
-  decorateAppAPIMethods: jest.fn(),
-};
-
 describe('LedgerMobileBridge', function () {
   let bridge: LedgerMobileBridge;
   let transportMiddleware: LedgerTransportMiddleware;
   let transportMiddlewareDisposeSpy: jest.SpyInstance;
   let transportMiddlewareSetTransportSpy: jest.SpyInstance;
   let transportMiddlewareGetEthAppSpy: jest.SpyInstance;
+
   const mockEthApp = {
     signEIP712HashedMessage: jest.fn(),
     signTransaction: jest.fn(),
@@ -32,6 +24,15 @@ describe('LedgerMobileBridge', function () {
     openEthApp: jest.fn(),
     closeApps: jest.fn(),
     getAppNameAndVersion: jest.fn(),
+  };
+
+  const mockTransport = {
+    deviceModel: {
+      id: DEVICE_ID,
+    },
+    send: jest.fn(),
+    close: jest.fn(),
+    decorateAppAPIMethods: jest.fn(),
   };
 
   beforeEach(async function () {
@@ -169,32 +170,13 @@ describe('LedgerMobileBridge', function () {
     });
   });
 
-  describe('deserializeData', function () {
-    it('serializes what it deserializes', async function () {
-      await bridge.deserializeData({ deviceId: 'ABC' });
-      const data = await bridge.serializeData();
-      expect(data).toHaveProperty('deviceId', 'ABC');
-    });
-  });
-
-  describe('serializeData', function () {
-    it('serializes an instance', async function () {
-      await bridge.deserializeData({ deviceId: DEVICE_ID });
-      const result = await bridge.serializeData();
-      expect(result).toStrictEqual({
-        deviceId: DEVICE_ID,
-      });
-    });
-  });
-
   describe('updateTransportMethod', function () {
-    it('updateTransportMethod with correct parameters', async function () {
+    it('set transport in transportMiddleware and set isDeviceConnected to true', async function () {
       await bridge.updateTransportMethod(mockTransport as unknown as Transport);
       expect(transportMiddlewareSetTransportSpy).toHaveBeenCalledTimes(1);
       expect(transportMiddlewareSetTransportSpy).toHaveBeenCalledWith(
         mockTransport,
       );
-      expect(await bridge.getOptions()).toHaveProperty('deviceId', DEVICE_ID);
       expect(bridge.isDeviceConnected).toBe(true);
     });
 
@@ -227,27 +209,10 @@ describe('LedgerMobileBridge', function () {
     });
   });
 
-  describe('setOption', function () {
-    it('option set correctly', async function () {
-      await bridge.setOptions({ deviceId: 'DEF' });
-      expect(await bridge.getOptions()).toHaveProperty('deviceId', 'DEF');
-    });
-
-    it('throw error when device id has set but different device id given', async function () {
-      await bridge.setOptions({ deviceId: DEVICE_ID });
-      await expect(
-        bridge.setOptions({ deviceId: 'another id' }),
-      ).rejects.toThrow('deviceId mismatch.');
-    });
-  });
-
   describe('getOption', function () {
     it('return instance options', async function () {
-      await bridge.setOptions({ deviceId: DEVICE_ID });
       const result = await bridge.getOptions();
-      expect(result).toStrictEqual({
-        deviceId: DEVICE_ID,
-      });
+      expect(result).toStrictEqual({});
     });
   });
 });
