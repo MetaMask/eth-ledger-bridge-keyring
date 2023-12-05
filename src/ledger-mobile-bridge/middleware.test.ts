@@ -50,7 +50,7 @@ describe('LedgerTransportMiddleware', function () {
     it('throw error when transport not set', async function () {
       transportMiddleware = new LedgerTransportMiddleware();
       expect(() => transportMiddleware.getTransport()).toThrow(
-        'Ledger transport is not initialized. You must call setTransport first.',
+        'Instance `transport` is not initialized.',
       );
     });
   });

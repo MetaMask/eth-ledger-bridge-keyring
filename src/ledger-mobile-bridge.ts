@@ -17,6 +17,7 @@ import {
   GetAppNameAndVersionResponse,
   LedgerMobileBridgeOptions,
   TransportMiddleware,
+  type MetaMaskLedgerHwAppEth,
 } from './ledger-mobile-bridge/';
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
@@ -34,17 +35,15 @@ export class LedgerMobileBridge
 {
   #transportMiddleware?: TransportMiddleware;
 
-  #opts: LedgerMobileBridgeOptions = {};
+  #opts: LedgerMobileBridgeOptions;
 
   isDeviceConnected = false;
 
   constructor(
     transportMiddleware: TransportMiddleware,
-    opts?: LedgerMobileBridgeOptions,
+    opts: LedgerMobileBridgeOptions = {},
   ) {
-    if (opts) {
-      this.#opts = opts;
-    }
+    this.#opts = opts;
     this.#transportMiddleware = transportMiddleware;
   }
 
@@ -83,8 +82,7 @@ export class LedgerMobileBridge
     hdPath,
     message,
   }: LedgerSignMessageParams): Promise<LedgerSignMessageResponse> {
-    const app = this.#getTransportMiddleWare().getEthApp();
-    return app.signPersonalMessage(hdPath, message);
+    return this.#getEthApp().signPersonalMessage(hdPath, message);
   }
 
   /**
@@ -101,8 +99,7 @@ export class LedgerMobileBridge
     domainSeparatorHex,
     hashStructMessageHex,
   }: LedgerSignTypedDataParams): Promise<LedgerSignTypedDataResponse> {
-    const app = this.#getTransportMiddleWare().getEthApp();
-    return app.signEIP712HashedMessage(
+    return this.#getEthApp().signEIP712HashedMessage(
       hdPath,
       domainSeparatorHex,
       hashStructMessageHex,
@@ -122,8 +119,7 @@ export class LedgerMobileBridge
     hdPath,
   }: LedgerSignTransactionParams): Promise<LedgerSignTransactionResponse> {
     const resolution = await ledgerService.resolveTransaction(tx, {}, {});
-    const app = this.#getTransportMiddleWare().getEthApp();
-    return app.signTransaction(hdPath, tx, resolution);
+    return this.#getEthApp().signTransaction(hdPath, tx, resolution);
   }
 
   /**
@@ -135,8 +131,7 @@ export class LedgerMobileBridge
   async getPublicKey({
     hdPath,
   }: GetPublicKeyParams): Promise<GetPublicKeyResponse> {
-    const app = this.#getTransportMiddleWare().getEthApp();
-    return await app.getAddress(hdPath, false, true);
+    return await this.#getEthApp().getAddress(hdPath, false, true);
   }
 
   /**
@@ -163,11 +158,13 @@ export class LedgerMobileBridge
    */
   async updateTransportMethod(transport: Transport): Promise<boolean> {
     if (!transport.deviceModel?.id) {
-      throw new Error('updateTransportMethod: device id is not defined.');
+      throw new Error(
+        'Property `deviceModel.id` is not defined in `transport`.',
+      );
     }
     this.#getTransportMiddleWare().setTransport(transport);
     this.isDeviceConnected = true;
-    return true;
+    return Promise.resolve(true);
   }
 
   /**
@@ -175,7 +172,7 @@ export class LedgerMobileBridge
    * This method is not supported on mobile.
    */
   async attemptMakeApp(): Promise<boolean> {
-    throw new Error('attemptMakeApp: Method not supported.');
+    throw new Error('Method not supported.');
   }
 
   /**
@@ -183,8 +180,7 @@ export class LedgerMobileBridge
    *
    */
   async openEthApp(): Promise<void> {
-    const app = this.#getTransportMiddleWare().getEthApp();
-    await app.openEthApp();
+    await this.#getEthApp().openEthApp();
   }
 
   /**
@@ -192,16 +188,14 @@ export class LedgerMobileBridge
    *
    */
   async closeApps(): Promise<void> {
-    const app = this.#getTransportMiddleWare().getEthApp();
-    await app.closeApps();
+    await this.#getEthApp().closeApps();
   }
 
   /**
    * Method to get running application name and version on ledger device.
    */
   async getAppNameAndVersion(): Promise<GetAppNameAndVersionResponse> {
-    const app = this.#getTransportMiddleWare().getEthApp();
-    return app.getAppNameAndVersion();
+    return this.#getEthApp().getAppNameAndVersion();
   }
 
   /**
@@ -213,8 +207,15 @@ export class LedgerMobileBridge
     if (this.#transportMiddleware) {
       return this.#transportMiddleware;
     }
-    throw new Error(
-      'getTransportMiddleWare: transportMiddleware is not initialized.',
-    );
+    throw new Error('Instance `transportMiddleware` is not initialized.');
+  }
+
+  /**
+   * Method to get ledger Eth App.
+   *
+   * @returns The ledger Eth App object.
+   */
+  #getEthApp(): MetaMaskLedgerHwAppEth {
+    return this.#getTransportMiddleWare().getEthApp();
   }
 }

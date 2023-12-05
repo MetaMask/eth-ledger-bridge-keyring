@@ -19,7 +19,7 @@ describe('MetaMaskLedgerHwAppEth', function () {
   });
 
   describe('openEthApp', function () {
-    it('transport command should send correctly', async function () {
+    it('should send open eth app command correctly', async function () {
       const ethApp = new MetaMaskLedgerHwAppEth(
         mockTransport as unknown as Transport,
       );
@@ -41,7 +41,7 @@ describe('MetaMaskLedgerHwAppEth', function () {
   });
 
   describe('closeApps', function () {
-    it('transport command should send correctly', async function () {
+    it('should send close app command correctly', async function () {
       const ethApp = new MetaMaskLedgerHwAppEth(
         mockTransport as unknown as Transport,
       );
@@ -57,7 +57,7 @@ describe('MetaMaskLedgerHwAppEth', function () {
   });
 
   describe('getAppNameAndVersion', function () {
-    it('transport command should send correctly', async function () {
+    it('should get appName and appVersion correctly', async function () {
       const appNameBuf = Buffer.alloc(7, 'appName', 'ascii');
       const verionBuf = Buffer.alloc(6, 'verion', 'ascii');
       const buffer = Buffer.alloc(20);
@@ -90,7 +90,26 @@ describe('MetaMaskLedgerHwAppEth', function () {
       });
     });
 
-    it('throw error when buffer incorrect', async function () {
+    it('should not throw error when result length less than expected', async function () {
+      const buffer = Buffer.alloc(1);
+      buffer[0] = 1;
+      const ethApp = new MetaMaskLedgerHwAppEth(
+        mockTransport as unknown as Transport,
+      );
+      const transportSpy = jest
+        .spyOn(mockTransport, 'send')
+        .mockImplementation(async () => Promise.resolve(buffer));
+
+      const result = await ethApp.getAppNameAndVersion();
+      expect(transportSpy).toHaveBeenCalledTimes(1);
+      expect(transportSpy).toHaveBeenCalledWith(0xb0, 0x01, 0x00, 0x00);
+      expect(result).toStrictEqual({
+        appName: '',
+        version: '',
+      });
+    });
+
+    it('should throw error when first byte is not 1', async function () {
       const ethApp = new MetaMaskLedgerHwAppEth(
         mockTransport as unknown as Transport,
       );
@@ -100,7 +119,7 @@ describe('MetaMaskLedgerHwAppEth', function () {
         .mockImplementation(async () => Promise.resolve(Buffer.alloc(1)));
 
       await expect(ethApp.getAppNameAndVersion()).rejects.toThrow(
-        'getAppNameAndVersion: incorrect format',
+        'Incorrect format return from getAppNameAndVersion.',
       );
       expect(transportSpy).toHaveBeenCalledTimes(1);
       expect(transportSpy).toHaveBeenCalledWith(0xb0, 0x01, 0x00, 0x00);

@@ -49,9 +49,7 @@ export class LedgerTransportMiddleware implements TransportMiddleware {
    */
   getTransport(): Transport {
     if (!this.#transport) {
-      throw new Error(
-        'Ledger transport is not initialized. You must call setTransport first.',
-      );
+      throw new Error('Instance `transport` is not initialized.');
     }
     return this.#transport;
   }

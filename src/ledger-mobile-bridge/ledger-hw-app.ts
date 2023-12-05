@@ -50,14 +50,11 @@ export class MetaMaskLedgerHwAppEth
    */
   async getAppNameAndVersion(): Promise<GetAppNameAndVersionResponse> {
     const response = await this.transport.send(0xb0, 0x01, 0x00, 0x00);
-
-    let i = 0;
-    const format = response[i];
-    i += 1;
-    if (format !== 1) {
-      throw new Error('getAppNameAndVersion: incorrect format');
+    if (response[0] !== 1) {
+      throw new Error('Incorrect format return from getAppNameAndVersion.');
     }
 
+    let i = 1;
     const nameLength = response[i] ?? 0;
     i += 1;
 
