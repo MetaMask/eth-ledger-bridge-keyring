@@ -57,7 +57,7 @@ export class LedgerMobileBridge
 
   /**
    * Method to destroy the keyring.
-   * Set isDeviceConnected to false. and dispose the transport.
+   * It will dispose the transportmiddleware and set isDeviceConnected to false.
    */
   async destroy(): Promise<void> {
     try {
@@ -76,7 +76,7 @@ export class LedgerMobileBridge
    * @param params - The descriptor to open the transport with.
    * @param params.hdPath - The descriptor to open the transport with.
    * @param params.message - An optional timeout for the transport connection.
-   * @returns A promise that resolves with a Transport instance.
+   * @returns Retrieve v, r, s from the signed message.
    */
   async deviceSignMessage({
     hdPath,
@@ -93,6 +93,7 @@ export class LedgerMobileBridge
    * @param params.hdPath - The BIP 32 path of the account.
    * @param params.domainSeparatorHex - The domain separator.
    * @param params.hashStructMessageHex - The hashed struct message.
+   * @returns Retrieve v, r, s from the signed message.
    */
   async deviceSignTypedData({
     hdPath,
@@ -113,6 +114,7 @@ export class LedgerMobileBridge
    * @param params - An object contains tx, hdPath.
    * @param params.tx - The raw ethereum transaction in hexadecimal to sign.
    * @param params.hdPath - The BIP 32 path of the account.
+   * @returns Retrieve v, r, s from the signed transaction.
    */
   async deviceSignTransaction({
     tx,
@@ -123,10 +125,11 @@ export class LedgerMobileBridge
   }
 
   /**
-   * Method to get Ethereum address for a given BIP 32 path.
+   * Method to retrieve the ethereum address for a given BIP 32 path.
    *
    * @param params - An object contains hdPath.
    * @param params.hdPath - The BIP 32 path of the account.
+   * @returns An object contains publicKey, address and chainCode.
    */
   async getPublicKey({
     hdPath,
@@ -135,14 +138,16 @@ export class LedgerMobileBridge
   }
 
   /**
-   * Method to get the current configuration of the ledger bridge keyring.
+   * Method to retrieve the current configuration.
+   *
+   * @returns Retrieve current configuration.
    */
   async getOptions(): Promise<LedgerMobileBridgeOptions> {
     return this.#opts;
   }
 
   /**
-   * Method to set the current configuration of the ledger bridge keyring.
+   * Method to set the current configuration.
    *
    * @param opts - An configuration object.
    */
@@ -151,10 +156,10 @@ export class LedgerMobileBridge
   }
 
   /**
-   * Method set the transport object to communicate with the device.
-   * The transport object will be passed to underlying middleware.
+   * Method to set the transport object to communicate with the device.
    *
    * @param transport - The communication interface with the Ledger hardware wallet. There are different kind of transports based on the technology (channels like U2F, HID, Bluetooth, Webusb).
+   * @returns Retrieve boolean.
    */
   async updateTransportMethod(transport: Transport): Promise<boolean> {
     if (!transport.deviceModel?.id) {
@@ -176,7 +181,7 @@ export class LedgerMobileBridge
   }
 
   /**
-   * Method to open Ethereum application on ledger device.
+   * Method to open ethereum application on ledger device.
    *
    */
   async openEthApp(): Promise<void> {
@@ -192,14 +197,16 @@ export class LedgerMobileBridge
   }
 
   /**
-   * Method to get running application name and version on ledger device.
+   * Method to retrieve the name and version of the running application in ledger device.
+   *
+   * @returns An object contains appName and version.
    */
   async getAppNameAndVersion(): Promise<GetAppNameAndVersionResponse> {
     return this.#getEthApp().getAppNameAndVersion();
   }
 
   /**
-   * Method to get Transport MiddleWare object.
+   * Method to retrieve the transport middleWare object.
    *
    * @returns The TransportMiddleware object.
    */
@@ -211,7 +218,7 @@ export class LedgerMobileBridge
   }
 
   /**
-   * Method to get ledger Eth App.
+   * Method to retrieve the ledger Eth App object.
    *
    * @returns The ledger Eth App object.
    */
