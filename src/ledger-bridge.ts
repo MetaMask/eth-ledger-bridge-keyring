@@ -28,8 +28,7 @@ export type LedgerSignTypedDataResponse = Awaited<
 
 export type LedgerBridgeOptions = Record<string, unknown>;
 
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-export interface LedgerBridge<T extends LedgerBridgeOptions> {
+export type LedgerBridge<T extends LedgerBridgeOptions> = {
   isDeviceConnected: boolean;
 
   init(): Promise<void>;
@@ -65,4 +64,4 @@ export interface LedgerBridge<T extends LedgerBridgeOptions> {
   deviceSignTypedData(
     params: LedgerSignTypedDataParams,
   ): Promise<LedgerSignTypedDataResponse>;
-}
+};
