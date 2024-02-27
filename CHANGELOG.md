@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.0]
+### Uncategorized
+- feat!: refactor to enable additional bridge ([#210](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/210))
+- feat: enhance code performance ([#211](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/211))
+- Bump ip from 2.0.0 to 2.0.1 ([#219](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/219))
+- Bump follow-redirects from 1.15.3 to 1.15.4 ([#218](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/218))
+- Fix contradictory typing of `IFrameMessageResponse` and refactor into modular types (#207) ([#207](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/207))
+
 ## [2.0.1]
 ### Fixed
 - Fix `invalid rlp data` error for legacy transactions in `2.0.0` ([#212](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/212))
@@ -85,7 +93,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Support new versions of ethereumjs/tx ([#68](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/68))
 
-[Unreleased]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v2.0.1...HEAD
+[Unreleased]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v3.0.0...HEAD
+[3.0.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v2.0.1...v3.0.0
 [2.0.1]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v1.0.1...v2.0.0
 [1.0.1]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v1.0.0...v1.0.1
