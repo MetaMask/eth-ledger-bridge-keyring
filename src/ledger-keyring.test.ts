@@ -542,7 +542,9 @@ describe('LedgerKeyring', function () {
           .mockImplementation(async (params) => {
             expect(params).toStrictEqual({
               hdPath: "m/44'/60'/0'/0",
-              tx: RLP.encode(newFakeTx.getMessageToSign(false)).toString(),
+              tx: Buffer.from(
+                RLP.encode(newFakeTx.getMessageToSign(false)),
+              ).toString('hex'),
             });
             return expectedRSV;
           });
