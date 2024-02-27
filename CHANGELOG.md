@@ -7,12 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ## [3.0.0]
-### Uncategorized
-- feat!: refactor to enable additional bridge ([#210](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/210))
-- feat: enhance code performance ([#211](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/211))
-- Bump ip from 2.0.0 to 2.0.1 ([#219](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/219))
-- Bump follow-redirects from 1.15.3 to 1.15.4 ([#218](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/218))
-- Fix contradictory typing of `IFrameMessageResponse` and refactor into modular types (#207) ([#207](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/207))
+### Added
+-  Add `getOptions` and `setOptions` methods to `LedgerBridge` interface ([#210](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/210))
+
+### Changed
+- **BREAKING**: `LedgerIframeBridge` class constructor now takes an options object with `bridgeUrl` ([#210](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/210))
+- **BREAKING**: `LedgerBridge` `init` function now takes no parameters ([#210](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/210))
+- **BREAKING**: `LedgerBridgeKeyringOptions` no longer contain `bridgeUrl` ([#210](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/210))
+- **BREAKING**: `LedgerBridge` interface is now parameterized over its option type ([#210](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/210))
+- Minor performance enhancement ([#211](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/211))
+
+### Fixed
+- **BREAKING**: `IFrameMessageResponse` now has more restrictive typings (#207) ([#207](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/207))
 
 ## [2.0.1]
 ### Fixed
