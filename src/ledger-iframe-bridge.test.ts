@@ -51,7 +51,8 @@ async function simulateIFrameLoad(iframe?: HTMLIFrameElementShim) {
 }
 
 const LEDGER_IFRAME_ID = 'LEDGER-IFRAME';
-
+const BRIDGE_URL = 'https://metamask.github.io/eth-ledger-bridge-keyring';
+const INVALID_URL_ERROR = 'bridgeURL is not a valid URL';
 describe('LedgerIframeBridge', function () {
   let bridge: LedgerIframeBridge;
 
@@ -75,13 +76,48 @@ describe('LedgerIframeBridge', function () {
   }
 
   beforeEach(async function () {
-    bridge = new LedgerIframeBridge();
-    await bridge.init('bridgeUrl');
+    bridge = new LedgerIframeBridge({
+      bridgeUrl: BRIDGE_URL,
+    });
+    await bridge.init();
     await simulateIFrameLoad(bridge.iframe);
   });
 
   afterEach(function () {
     jest.clearAllMocks();
+  });
+
+  describe('constructor', function () {
+    describe('when configurate not given', function () {
+      it('should use the default bridgeUrl', async function () {
+        bridge = new LedgerIframeBridge();
+        expect(await bridge.getOptions()).toHaveProperty(
+          'bridgeUrl',
+          BRIDGE_URL,
+        );
+      });
+    });
+
+    describe('when configurate given', function () {
+      it('should set the given bridgeUrl', async function () {
+        bridge = new LedgerIframeBridge({
+          bridgeUrl: 'https://metamask.io',
+        });
+        expect(await bridge.getOptions()).toHaveProperty(
+          'bridgeUrl',
+          'https://metamask.io',
+        );
+      });
+
+      it('should throw error if given url is empty', async function () {
+        expect(
+          () =>
+            new LedgerIframeBridge({
+              bridgeUrl: '',
+            }),
+        ).toThrow(INVALID_URL_ERROR);
+      });
+    });
   });
 
   describe('init', function () {
@@ -90,7 +126,7 @@ describe('LedgerIframeBridge', function () {
 
       const addEventListenerSpy = jest.spyOn(global.window, 'addEventListener');
 
-      await bridge.init('bridgeUrl');
+      await bridge.init();
 
       expect(addEventListenerSpy).toHaveBeenCalledTimes(1);
       expect(bridge.iframeLoaded).toBe(false);
@@ -478,6 +514,79 @@ describe('LedgerIframeBridge', function () {
 
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(bridge.iframe?.contentWindow?.postMessage).toHaveBeenCalled();
+    });
+  });
+
+  describe('setOption', function () {
+    let removeEventListenerSpy: jest.SpyInstance;
+    let addEventListenerSpy: jest.SpyInstance;
+    const defaultIframeLoadedCounter = 1;
+
+    beforeEach(async () => {
+      removeEventListenerSpy = jest.spyOn(global.window, 'removeEventListener');
+      addEventListenerSpy = jest.spyOn(global.window, 'addEventListener');
+      bridge = new LedgerIframeBridge();
+      await bridge.init();
+      await simulateIFrameLoad(bridge.iframe);
+    });
+
+    describe('when configurate bridge url', function () {
+      describe('when given bridge url is different with current', function () {
+        beforeEach(async () => {
+          await bridge.setOptions({ bridgeUrl: 'https://metamask.io' });
+        });
+
+        it('should set bridgeUrl correctly', async function () {
+          expect(await bridge.getOptions()).toHaveProperty(
+            'bridgeUrl',
+            'https://metamask.io',
+          );
+        });
+
+        it('should reload the iframe', async function () {
+          expect(addEventListenerSpy).toHaveBeenCalledTimes(
+            defaultIframeLoadedCounter + 1,
+          );
+          expect(removeEventListenerSpy).toHaveBeenCalledTimes(1);
+        });
+      });
+
+      describe('when given bridge url is same as current', function () {
+        beforeEach(async () => {
+          await bridge.setOptions({ bridgeUrl: BRIDGE_URL });
+        });
+
+        it('should not set bridgeUrl', async function () {
+          expect(await bridge.getOptions()).toHaveProperty(
+            'bridgeUrl',
+            BRIDGE_URL,
+          );
+        });
+
+        it('should not reload the iframe', async function () {
+          expect(addEventListenerSpy).toHaveBeenCalledTimes(
+            defaultIframeLoadedCounter,
+          );
+          expect(removeEventListenerSpy).toHaveBeenCalledTimes(0);
+        });
+      });
+
+      describe('when given bridge url is empty', function () {
+        it('should throw error', async function () {
+          await expect(bridge.setOptions({ bridgeUrl: '' })).rejects.toThrow(
+            INVALID_URL_ERROR,
+          );
+        });
+      });
+    });
+  });
+
+  describe('getOption', function () {
+    it('return instance options', async function () {
+      const result = await bridge.getOptions();
+      expect(result).toStrictEqual({
+        bridgeUrl: BRIDGE_URL,
+      });
     });
   });
 });

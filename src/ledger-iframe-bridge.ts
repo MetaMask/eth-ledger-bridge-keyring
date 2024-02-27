@@ -85,10 +85,18 @@ type IFramePostMessage<TAction extends IFrameMessageAction> =
     target: typeof LEDGER_IFRAME_ID;
   };
 
-export class LedgerIframeBridge implements LedgerBridge {
+export type LedgerIframeBridgeOptions = {
+  bridgeUrl: string;
+};
+
+export class LedgerIframeBridge
+  implements LedgerBridge<LedgerIframeBridgeOptions>
+{
   iframe?: HTMLIFrameElement;
 
   iframeLoaded = false;
+
+  #opts: LedgerIframeBridgeOptions;
 
   eventListener?: (eventMessage: {
     origin: string;
@@ -108,10 +116,21 @@ export class LedgerIframeBridge implements LedgerBridge {
     transportType: string;
   };
 
-  async init(bridgeUrl: string) {
-    this.#setupIframe(bridgeUrl);
+  constructor(
+    opts: LedgerIframeBridgeOptions = {
+      bridgeUrl: 'https://metamask.github.io/eth-ledger-bridge-keyring',
+    },
+  ) {
+    this.#validateConfiguration(opts);
+    this.#opts = {
+      bridgeUrl: opts?.bridgeUrl,
+    };
+  }
 
-    this.eventListener = this.#eventListener.bind(this, bridgeUrl);
+  async init() {
+    this.#setupIframe(this.#opts.bridgeUrl);
+
+    this.eventListener = this.#eventListener.bind(this, this.#opts.bridgeUrl);
 
     window.addEventListener('message', this.eventListener);
   }
@@ -119,6 +138,19 @@ export class LedgerIframeBridge implements LedgerBridge {
   async destroy() {
     if (this.eventListener) {
       window.removeEventListener('message', this.eventListener);
+    }
+  }
+
+  async getOptions(): Promise<LedgerIframeBridgeOptions> {
+    return this.#opts;
+  }
+
+  async setOptions(opts: LedgerIframeBridgeOptions): Promise<void> {
+    this.#validateConfiguration(opts);
+    if (this.#opts?.bridgeUrl !== opts.bridgeUrl) {
+      this.#opts.bridgeUrl = opts.bridgeUrl;
+      await this.destroy();
+      await this.init();
     }
   }
 
@@ -323,5 +355,11 @@ export class LedgerIframeBridge implements LedgerBridge {
     }
 
     this.iframe.contentWindow.postMessage(postMsg, '*');
+  }
+
+  #validateConfiguration(opts: LedgerIframeBridgeOptions): void {
+    if (typeof opts.bridgeUrl !== 'string' || opts.bridgeUrl.length === 0) {
+      throw new Error('bridgeURL is not a valid URL');
+    }
   }
 }

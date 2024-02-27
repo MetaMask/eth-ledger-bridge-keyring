@@ -15,13 +15,11 @@ import type OldEthJsTransaction from 'ethereumjs-tx';
 import { EventEmitter } from 'events';
 import HDKey from 'hdkey';
 
-import { LedgerBridge } from './ledger-bridge';
+import { LedgerBridge, LedgerBridgeOptions } from './ledger-bridge';
 
 const pathBase = 'm';
 const hdPathString = `${pathBase}/44'/60'/0'`;
 const keyringType = 'Ledger Hardware';
-
-const BRIDGE_URL = 'https://metamask.github.io/eth-ledger-bridge-keyring';
 
 const MAX_INDEX = 1000;
 
@@ -33,7 +31,7 @@ enum NetworkApiUrls {
 }
 
 type SignTransactionPayload = Awaited<
-  ReturnType<LedgerBridge['deviceSignTransaction']>
+  ReturnType<LedgerBridge<LedgerBridgeOptions>['deviceSignTransaction']>
 >;
 
 export type AccountDetails = {
@@ -47,7 +45,6 @@ export type LedgerBridgeKeyringOptions = {
   accounts: readonly string[];
   accountDetails: Readonly<Record<string, AccountDetails>>;
   accountIndexes: Readonly<Record<string, number>>;
-  bridgeUrl: string;
   implementFullBIP44: boolean;
 };
 
@@ -95,11 +92,9 @@ export class LedgerKeyring extends EventEmitter {
 
   implementFullBIP44 = false;
 
-  bridgeUrl: string = BRIDGE_URL;
+  bridge: LedgerBridge<LedgerBridgeOptions>;
 
-  bridge: LedgerBridge;
-
-  constructor({ bridge }: { bridge: LedgerBridge }) {
+  constructor({ bridge }: { bridge: LedgerBridge<LedgerBridgeOptions> }) {
     super();
 
     if (!bridge) {
@@ -110,7 +105,7 @@ export class LedgerKeyring extends EventEmitter {
   }
 
   async init() {
-    return this.bridge.init(this.bridgeUrl);
+    return this.bridge.init();
   }
 
   async destroy() {
@@ -122,16 +117,15 @@ export class LedgerKeyring extends EventEmitter {
       hdPath: this.hdPath,
       accounts: this.accounts,
       accountDetails: this.accountDetails,
-      bridgeUrl: this.bridgeUrl,
       implementFullBIP44: false,
     };
   }
 
   async deserialize(opts: Partial<LedgerBridgeKeyringOptions> = {}) {
     this.hdPath = opts.hdPath ?? hdPathString;
-    this.bridgeUrl = opts.bridgeUrl ?? BRIDGE_URL;
     this.accounts = opts.accounts ?? [];
     this.accountDetails = opts.accountDetails ?? {};
+
     if (!opts.accountDetails) {
       this.#migrateAccountDetails(opts);
     }
