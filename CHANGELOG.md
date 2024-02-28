@@ -6,6 +6,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.0]
+### Added
+-  Add `getOptions` and `setOptions` methods to `LedgerBridge` interface ([#210](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/210))
+
+### Changed
+- **BREAKING**: `LedgerIframeBridge` class constructor now takes an options object with `bridgeUrl` ([#210](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/210))
+- **BREAKING**: `LedgerBridge` `init` function now takes no parameters ([#210](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/210))
+- **BREAKING**: `LedgerBridgeKeyringOptions` no longer contain `bridgeUrl` ([#210](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/210))
+- **BREAKING**: `LedgerBridge` interface is now parameterized over its option type ([#210](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/210))
+- Minor performance enhancement ([#211](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/211))
+
+### Fixed
+- **BREAKING**: `IFrameMessageResponse` now has more restrictive typings (#207) ([#207](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/207))
+
 ## [2.0.1]
 ### Fixed
 - Fix `invalid rlp data` error for legacy transactions in `2.0.0` ([#212](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/212))
@@ -85,7 +99,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Support new versions of ethereumjs/tx ([#68](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/68))
 
-[Unreleased]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v2.0.1...HEAD
+[Unreleased]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v3.0.0...HEAD
+[3.0.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v2.0.1...v3.0.0
 [2.0.1]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v1.0.1...v2.0.0
 [1.0.1]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v1.0.0...v1.0.1
