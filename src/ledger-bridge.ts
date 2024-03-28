@@ -1,11 +1,10 @@
 import type LedgerHwAppEth from '@ledgerhq/hw-app-eth';
+import { Transport } from '@ledgerhq/types-devices';
 
 export type GetPublicKeyParams = { hdPath: string };
 export type GetPublicKeyResponse = Awaited<
   ReturnType<LedgerHwAppEth['getAddress']>
-> & {
-  chainCode: string;
-};
+>;
 
 export type LedgerSignTransactionParams = { hdPath: string; tx: string };
 export type LedgerSignTransactionResponse = Awaited<
@@ -49,7 +48,7 @@ export type LedgerBridge<T extends LedgerBridgeOptions> = {
 
   attemptMakeApp(): Promise<boolean>;
 
-  updateTransportMethod(transportType: string): Promise<boolean>;
+  updateTransportMethod(transportType: string | Transport): Promise<boolean>;
 
   getPublicKey(params: GetPublicKeyParams): Promise<GetPublicKeyResponse>;
 
