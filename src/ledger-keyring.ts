@@ -413,7 +413,13 @@ export class LedgerKeyring extends EventEmitter {
     if (recoveryId.length < 2) {
       recoveryId = `0${recoveryId}`;
     }
-    const signature = `0x${payload.r}${payload.s}${recoveryId}`;
+
+    let modifiedV = parseInt(String(payload.v), 10).toString(16);
+    if (modifiedV.length < 2) {
+      modifiedV = `0${modifiedV}`;
+    }
+
+    const signature = `0x${payload.r}${payload.s}${modifiedV}`;
     const addressSignedWith = recoverPersonalSignature({
       data: message,
       signature,
