@@ -1,6 +1,6 @@
 import Transport from '@ledgerhq/hw-transport';
 
-import { LedgerTransportMiddleware } from './middleware';
+import { LedgerTransportMiddleware } from './ledger-transport-middleware';
 
 const DEVICE_ID = 'DEVICE_ID';
 

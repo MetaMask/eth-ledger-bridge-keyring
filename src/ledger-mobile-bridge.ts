@@ -13,12 +13,12 @@ import {
   LedgerSignTypedDataParams,
   LedgerSignTypedDataResponse,
 } from './ledger-bridge';
+import { MetaMaskLedgerHwAppEth } from './ledger-hw-app';
+import { TransportMiddleware } from './ledger-transport-middleware';
 import {
   GetAppNameAndVersionResponse,
   LedgerMobileBridgeOptions,
-  TransportMiddleware,
-  type MetaMaskLedgerHwAppEth,
-} from './ledger-mobile-bridge/';
+} from './type';
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export interface LedgerMobileBridge {
@@ -31,7 +31,7 @@ export interface LedgerMobileBridge {
  * LedgerMobileBridge is a bridge between the LedgerKeyring and the LedgerTransportMiddleware.
  */
 export class LedgerMobileBridge
-  implements LedgerBridge<LedgerMobileBridgeOptions>, LedgerMobileBridge
+  implements LedgerBridge<LedgerMobileBridgeOptions>
 {
   #transportMiddleware?: TransportMiddleware;
 
@@ -162,7 +162,10 @@ export class LedgerMobileBridge
    * @returns Retrieve boolean.
    */
   async updateTransportMethod(transport: Transport): Promise<boolean> {
-    if (!transport.deviceModel?.id) {
+    if (!transport.deviceModel) {
+      throw new Error('Property `deviceModel` is not defined in `transport`.');
+    }
+    if (!transport.deviceModel.id) {
       throw new Error(
         'Property `deviceModel.id` is not defined in `transport`.',
       );

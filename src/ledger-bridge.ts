@@ -1,5 +1,5 @@
 import type LedgerHwAppEth from '@ledgerhq/hw-app-eth';
-import { Transport } from '@ledgerhq/types-devices';
+import type Transport from '@ledgerhq/hw-transport';
 
 export type GetPublicKeyParams = { hdPath: string };
 export type GetPublicKeyResponse = Awaited<

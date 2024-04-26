@@ -1,11 +1,9 @@
 import ledgerService from '@ledgerhq/hw-app-eth/lib/services/ledger';
 import Transport from '@ledgerhq/hw-transport';
 
+import { MetaMaskLedgerHwAppEth } from './ledger-hw-app';
 import { LedgerMobileBridge } from './ledger-mobile-bridge';
-import {
-  LedgerTransportMiddleware,
-  MetaMaskLedgerHwAppEth,
-} from './ledger-mobile-bridge/';
+import { LedgerTransportMiddleware } from './ledger-transport-middleware';
 
 const DEVICE_ID = 'DEVICE_ID';
 
@@ -27,15 +25,16 @@ describe('LedgerMobileBridge', function () {
   };
 
   const mockTransport = {
-    deviceModel: {
-      id: DEVICE_ID,
-    },
+    deviceModel: {} || null,
     send: jest.fn(),
     close: jest.fn(),
     decorateAppAPIMethods: jest.fn(),
   };
 
   beforeEach(async function () {
+    mockTransport.deviceModel = {
+      id: DEVICE_ID,
+    };
     transportMiddleware = new LedgerTransportMiddleware();
     transportMiddlewareDisposeSpy = jest
       .spyOn(transportMiddleware, 'dispose')
@@ -54,7 +53,19 @@ describe('LedgerMobileBridge', function () {
 
   afterEach(function () {
     jest.clearAllMocks();
-    mockTransport.deviceModel.id = DEVICE_ID;
+  });
+
+  describe('init', function () {
+    it('does not throw error during init', async function () {
+      let result = null;
+      try {
+        await bridge.init();
+      } catch (error) {
+        result = error;
+      } finally {
+        expect(result).toBeNull();
+      }
+    });
   });
 
   describe('destroy', function () {
@@ -77,6 +88,16 @@ describe('LedgerMobileBridge', function () {
         expect(transportMiddlewareDisposeSpy).toHaveBeenCalledTimes(1);
         expect(bridge.isDeviceConnected).toBe(false);
       }
+    });
+
+    it('logs error when dispose throws error', async function () {
+      const error = new Error('dispose error');
+      transportMiddlewareDisposeSpy.mockRejectedValueOnce(error);
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      await bridge.updateTransportMethod(mockTransport as unknown as Transport);
+      await bridge.destroy();
+      expect(consoleSpy).toHaveBeenCalledTimes(1);
+      expect(consoleSpy).toHaveBeenCalledWith(error);
     });
   });
 
@@ -114,6 +135,14 @@ describe('LedgerMobileBridge', function () {
       expect(transportMiddlewareGetEthAppSpy).toHaveBeenCalledTimes(1);
       expect(mockEthApp.getAddress).toHaveBeenCalledTimes(1);
       expect(mockEthApp.getAddress).toHaveBeenCalledWith(hdPath, false, true);
+    });
+  });
+
+  describe('setOptions', function () {
+    it('set options', async function () {
+      const opts = {};
+      await bridge.setOptions(opts);
+      expect(await bridge.getOptions()).toStrictEqual(opts);
     });
   });
 
@@ -181,12 +210,32 @@ describe('LedgerMobileBridge', function () {
     });
 
     it('throw error when device id not set from transport', async function () {
-      mockTransport.deviceModel.id = '';
+      mockTransport.deviceModel = {
+        id: '',
+      };
       await expect(
         bridge.updateTransportMethod(mockTransport as unknown as Transport),
       ).rejects.toThrow(
         'Property `deviceModel.id` is not defined in `transport`.',
       );
+    });
+
+    it('throw error when transport.deviceMode is not set', async function () {
+      mockTransport.deviceModel = null;
+      await expect(
+        bridge.updateTransportMethod(mockTransport as unknown as Transport),
+      ).rejects.toThrow(
+        'Property `deviceModel` is not defined in `transport`.',
+      );
+    });
+
+    it('throw error when middleware is not initialized', async function () {
+      bridge = new LedgerMobileBridge(
+        null as unknown as LedgerTransportMiddleware,
+      );
+      await expect(
+        bridge.updateTransportMethod(mockTransport as unknown as Transport),
+      ).rejects.toThrow('Instance `transportMiddleware` is not initialized.');
     });
   });
 
