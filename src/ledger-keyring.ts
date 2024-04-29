@@ -168,7 +168,6 @@ export class LedgerKeyring extends EventEmitter {
     // try to migrate non-LedgerLive accounts too
     if (!this.#isLedgerLiveHdPath()) {
       this.accounts.forEach((account) => {
-        try {
           const key = ethUtil.toChecksumAddress(account);
 
           if (!keys.has(key)) {
@@ -177,15 +176,12 @@ export class LedgerKeyring extends EventEmitter {
               hdPath: this.#pathFromAddress(account),
             };
           }
-        } catch (error) {
-          console.log(`failed to migrate account ${account}`);
-        }
       });
     }
   }
 
   isUnlocked() {
-    return Boolean(this.hdk?.publicKey);
+    return Boolean(this.hdk.publicKey);
   }
 
   isConnected() {
@@ -528,6 +524,8 @@ export class LedgerKeyring extends EventEmitter {
       signature,
       version: SignTypedDataVersion.V4,
     });
+
+    console.log('addressSignedWith', addressSignedWith);
     if (
       ethUtil.toChecksumAddress(addressSignedWith) !==
       ethUtil.toChecksumAddress(withAccount)

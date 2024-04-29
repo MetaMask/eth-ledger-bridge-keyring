@@ -310,6 +310,18 @@ describe('LedgerKeyring', function () {
     });
   });
 
+  describe('setAccountToUnlock', function () {
+    it('should set unlockedAccount', function () {
+      keyring.setAccountToUnlock(3);
+      expect(keyring.unlockedAccount).toBe(3);
+    });
+
+    it('should set unlockedAccount to 0 if argument is not number type', function () {
+      keyring.setAccountToUnlock('3' as unknown as number);
+      expect(keyring.unlockedAccount).toBe(3);
+    });
+  });
+
   describe('setHdPath', function () {
     it('should set the hdPath', function () {
       const someHDPath = `m/44'/99'/0`;
@@ -324,10 +336,32 @@ describe('LedgerKeyring', function () {
     });
   });
 
-  describe('setAccountToUnlock', function () {
-    it('should set unlockedAccount', function () {
-      keyring.setAccountToUnlock(3);
-      expect(keyring.unlockedAccount).toBe(3);
+  describe('unlock', function () {
+    it('should unlock when hdPath is not provided', async function () {
+      keyring.setHdPath(`m/44'/60'/0'/0`);
+      jest.spyOn(bridge, 'getPublicKey').mockResolvedValue(
+        Promise.resolve({
+          publicKey: '0x1234',
+          chainCode: '0x1234',
+          address: fakeAccounts[0],
+        }),
+      );
+      const account = await keyring.unlock(undefined, false);
+      expect(account).toBe(fakeAccounts[0]);
+    });
+
+    it('should throw error when bridge.getPublicKey throw errors', async function () {
+      keyring.setHdPath(`m/44'/60'/0'/0`);
+      jest
+        .spyOn(bridge, 'getPublicKey')
+        .mockRejectedValue(new Error('Some error'));
+      await expect(keyring.unlock()).rejects.toThrow('Some error');
+    });
+
+    it('should throw error when bridge.getPublicKey throw errors but error is not error type', async function () {
+      keyring.setHdPath(`m/44'/60'/0'/0`);
+      jest.spyOn(bridge, 'getPublicKey').mockRejectedValue('Some error');
+      await expect(keyring.unlock()).rejects.toThrow('Unknown error');
     });
   });
 
@@ -420,6 +454,18 @@ describe('LedgerKeyring', function () {
     });
 
     it('should return the list of accounts for current page', async function () {
+      const accounts = await keyring.getFirstPage();
+
+      expect(accounts).toHaveLength(keyring.perPage);
+      expect(accounts[0]?.address).toBe(fakeAccounts[0]);
+      expect(accounts[1]?.address).toBe(fakeAccounts[1]);
+      expect(accounts[2]?.address).toBe(fakeAccounts[2]);
+      expect(accounts[3]?.address).toBe(fakeAccounts[3]);
+      expect(accounts[4]?.address).toBe(fakeAccounts[4]);
+    });
+
+    it('should return the list of accounts when isLedgerLiveHdPath is true', async function () {
+      keyring.hdPath === `m/44'/60'/0'/0/0`;
       const accounts = await keyring.getFirstPage();
 
       expect(accounts).toHaveLength(keyring.perPage);
@@ -766,6 +812,19 @@ describe('LedgerKeyring', function () {
         keyring.signPersonalMessage(fakeAccounts[0], 'fakeTx'),
       ).rejects.toThrow('Ledger: Unknown error while signing message');
     });
+
+    it('should throw error when signature doesnt match the address', async function () {
+      await basicSetupToUnlockOneAccount();
+      jest
+        .spyOn(keyring.bridge, 'deviceSignMessage')
+        .mockResolvedValue({ v: 1, r: '0x0', s: '0x0' });
+
+      jest.spyOn(sigUtil, 'recoverPersonalSignature').mockReturnValue('0x0');
+
+      await expect(
+        keyring.signPersonalMessage(fakeAccounts[0], 'some message'),
+      ).rejects.toThrow('Ledger: The signature doesnt match the right address');
+    });
   });
 
   describe('signMessage', function () {
@@ -811,6 +870,16 @@ describe('LedgerKeyring', function () {
         keyring.unlockAccountByAddress(requestedAccount),
       ).rejects.toThrow(
         `Ledger: Account ${fakeAccounts[0]} does not belong to the connected device`,
+      );
+    });
+
+    it('should throw error if account detail is not found', async function () {
+      await basicSetupToUnlockOneAccount();
+      keyring.accountDetails = {};
+      await expect(
+        keyring.unlockAccountByAddress(fakeAccounts[0]),
+      ).rejects.toThrow(
+        `Ledger: Account for address '${fakeAccounts[0]}' not found`,
       );
     });
   });
@@ -908,6 +977,59 @@ describe('LedgerKeyring', function () {
       await expect(
         keyring.signTypedData(fakeAccounts[15], fixtureData, options),
       ).rejects.toThrow('Ledger: The signature doesnt match the right address');
+    });
+
+    it('should throw error when version is not v4', async function () {
+      await expect(
+        keyring.signTypedData(fakeAccounts[0], fixtureData, { version: 'V3' }),
+      ).rejects.toThrow(
+        'Ledger: Only version 4 of typed data signing is supported',
+      );
+    });
+
+    it('should throw error when hdPath is not found', async function () {
+      jest
+        .spyOn(keyring, 'unlockAccountByAddress')
+        .mockResolvedValue(undefined);
+      await expect(
+        keyring.signTypedData(fakeAccounts[0], fixtureData, options),
+      ).rejects.toThrow('Ledger: Unknown error while signing message');
+    });
+
+    it('should throw error when deviceSignTypedData return errors', async function () {
+      jest
+        .spyOn(keyring.bridge, 'deviceSignTypedData')
+        .mockRejectedValue(new Error('some error'));
+
+      await expect(
+        keyring.signTypedData(fakeAccounts[15], fixtureData, options),
+      ).rejects.toThrow('some error');
+    });
+
+    it('should throw error when deviceSignTypedData return error is not Errors type', async function () {
+      jest
+        .spyOn(keyring.bridge, 'deviceSignTypedData')
+        .mockRejectedValue('some error');
+
+      await expect(
+        keyring.signTypedData(fakeAccounts[15], fixtureData, options),
+      ).rejects.toThrow('Ledger: Unknown error while signing message');
+    });
+
+    it('should return signature when recoveryId length < 2', async function () {
+      jest.spyOn(keyring.bridge, 'deviceSignTypedData').mockResolvedValue({
+        v: 0,
+        r: '72d4e38a0e582e09a620fd38e236fe687a1ec782206b56d576f579c026a7e5b9',
+        s: '46759735981cd0c3efb02d36df28bb2feedfec3d90e408efc93f45b894946e32',
+      });
+      const result = await keyring.signTypedData(
+        fakeAccounts[15],
+        fixtureData,
+        options,
+      );
+      expect(result).toBe(
+        '0x72d4e38a0e582e09a620fd38e236fe687a1ec782206b56d576f579c026a7e5b946759735981cd0c3efb02d36df28bb2feedfec3d90e408efc93f45b894946e3200',
+      );
     });
   });
 
