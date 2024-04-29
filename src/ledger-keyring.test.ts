@@ -7,8 +7,8 @@ import EthereumTx from 'ethereumjs-tx';
 import HDKey from 'hdkey';
 
 import { LedgerBridge, LedgerBridgeOptions } from './ledger-bridge';
-import { LedgerIframeBridge } from './ledger-iframe-bridge';
 import { AccountDetails, LedgerKeyring } from './ledger-keyring';
+import { LedgerIframeBridge } from './ledger-iframe-bridge';
 
 jest.mock('@metamask/eth-sig-util', () => {
   return {
@@ -459,6 +459,17 @@ describe('LedgerKeyring', function () {
       expect(accounts[2]?.address).toBe(fakeAccounts[2]);
       expect(accounts[3]?.address).toBe(fakeAccounts[3]);
       expect(accounts[4]?.address).toBe(fakeAccounts[4]);
+    });
+
+    it('should return the list of accounts when isLedgerLiveHdPath is true', async function () {
+      keyring.setHdPath(`m/44'/60'/0'/0/0`);
+      jest.spyOn(keyring, 'unlock').mockResolvedValue(fakeAccounts[0]);
+      const accounts = await keyring.getFirstPage();
+
+      expect(accounts).toHaveLength(keyring.perPage);
+      expect(accounts[0]?.address).toBe(
+        '0xF30952A1c534CDE7bC471380065726fa8686dfB3',
+      );
     });
   });
 
