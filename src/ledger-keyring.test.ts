@@ -270,6 +270,32 @@ describe('LedgerKeyring', function () {
     });
   });
 
+  describe('setAccountToUnlock', function () {
+    it('should set unlockedAccount', function () {
+      keyring.setAccountToUnlock(3);
+      expect(keyring.unlockedAccount).toBe(3);
+    });
+
+    it('should set unlockedAccount to 0 if argument is not number type', function () {
+      keyring.setAccountToUnlock('3' as unknown as number);
+      expect(keyring.unlockedAccount).toBe(3);
+    });
+  });
+
+  describe('setHdPath', function () {
+    it('should set the hdPath', function () {
+      const someHDPath = `m/44'/99'/0`;
+      keyring.setHdPath(someHDPath);
+      expect(keyring.hdPath).toBe(someHDPath);
+    });
+
+    it('should reset the HDKey if the path changes', function () {
+      const someHDPath = `m/44'/99'/0`;
+      keyring.setHdPath(someHDPath);
+      expect(keyring.hdk.publicKey).toBeNull();
+    });
+  });
+
   describe('unlock', function () {
     it('should resolve if we have a public key', async function () {
       expect(async () => {
@@ -308,35 +334,7 @@ describe('LedgerKeyring', function () {
       await keyring.unlock(`m/44'/60'/0'/1`, false);
       expect(keyring.hdk.publicKey).toBe('ABC');
     });
-  });
 
-  describe('setAccountToUnlock', function () {
-    it('should set unlockedAccount', function () {
-      keyring.setAccountToUnlock(3);
-      expect(keyring.unlockedAccount).toBe(3);
-    });
-
-    it('should set unlockedAccount to 0 if argument is not number type', function () {
-      keyring.setAccountToUnlock('3' as unknown as number);
-      expect(keyring.unlockedAccount).toBe(3);
-    });
-  });
-
-  describe('setHdPath', function () {
-    it('should set the hdPath', function () {
-      const someHDPath = `m/44'/99'/0`;
-      keyring.setHdPath(someHDPath);
-      expect(keyring.hdPath).toBe(someHDPath);
-    });
-
-    it('should reset the HDKey if the path changes', function () {
-      const someHDPath = `m/44'/99'/0`;
-      keyring.setHdPath(someHDPath);
-      expect(keyring.hdk.publicKey).toBeNull();
-    });
-  });
-
-  describe('unlock', function () {
     it('should unlock when hdPath is not provided', async function () {
       keyring.setHdPath(`m/44'/60'/0'/0`);
       jest.spyOn(bridge, 'getPublicKey').mockResolvedValue(
@@ -465,7 +463,8 @@ describe('LedgerKeyring', function () {
     });
 
     it('should return the list of accounts when isLedgerLiveHdPath is true', async function () {
-      keyring.hdPath === `m/44'/60'/0'/0/0`;
+      const someHDPath = `m/44'/60'/0'/0/0`;
+      keyring.setHdPath(someHDPath);
       const accounts = await keyring.getFirstPage();
 
       expect(accounts).toHaveLength(keyring.perPage);

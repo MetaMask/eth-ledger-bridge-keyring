@@ -168,14 +168,14 @@ export class LedgerKeyring extends EventEmitter {
     // try to migrate non-LedgerLive accounts too
     if (!this.#isLedgerLiveHdPath()) {
       this.accounts.forEach((account) => {
-          const key = ethUtil.toChecksumAddress(account);
+        const key = ethUtil.toChecksumAddress(account);
 
-          if (!keys.has(key)) {
-            this.accountDetails[key] = {
-              bip44: false,
-              hdPath: this.#pathFromAddress(account),
-            };
-          }
+        if (!keys.has(key)) {
+          this.accountDetails[key] = {
+            bip44: false,
+            hdPath: this.#pathFromAddress(account),
+          };
+        }
       });
     }
   }
