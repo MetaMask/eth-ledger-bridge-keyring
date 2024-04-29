@@ -7,8 +7,8 @@ import EthereumTx from 'ethereumjs-tx';
 import HDKey from 'hdkey';
 
 import { LedgerBridge, LedgerBridgeOptions } from './ledger-bridge';
-import { AccountDetails, LedgerKeyring } from './ledger-keyring';
 import { LedgerIframeBridge } from './ledger-iframe-bridge';
+import { AccountDetails, LedgerKeyring } from './ledger-keyring';
 
 jest.mock('@metamask/eth-sig-util', () => {
   return {
