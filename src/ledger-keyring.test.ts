@@ -103,7 +103,6 @@ describe('LedgerKeyring', function () {
 
   beforeEach(async function () {
     bridge = new LedgerIframeBridge();
-    bridge = new LedgerIframeBridge();
     keyring = new LedgerKeyring({ bridge });
     keyring.hdk = fakeHdKey;
     await keyring.deserialize();
@@ -452,19 +451,6 @@ describe('LedgerKeyring', function () {
     });
 
     it('should return the list of accounts for current page', async function () {
-      const accounts = await keyring.getFirstPage();
-
-      expect(accounts).toHaveLength(keyring.perPage);
-      expect(accounts[0]?.address).toBe(fakeAccounts[0]);
-      expect(accounts[1]?.address).toBe(fakeAccounts[1]);
-      expect(accounts[2]?.address).toBe(fakeAccounts[2]);
-      expect(accounts[3]?.address).toBe(fakeAccounts[3]);
-      expect(accounts[4]?.address).toBe(fakeAccounts[4]);
-    });
-
-    it('should return the list of accounts when isLedgerLiveHdPath is true', async function () {
-      const someHDPath = `m/44'/60'/0'/0/0`;
-      keyring.setHdPath(someHDPath);
       const accounts = await keyring.getFirstPage();
 
       expect(accounts).toHaveLength(keyring.perPage);

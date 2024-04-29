@@ -525,7 +525,6 @@ export class LedgerKeyring extends EventEmitter {
       version: SignTypedDataVersion.V4,
     });
 
-    console.log('addressSignedWith', addressSignedWith);
     if (
       ethUtil.toChecksumAddress(addressSignedWith) !==
       ethUtil.toChecksumAddress(withAccount)
