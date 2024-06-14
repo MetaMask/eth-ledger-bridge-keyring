@@ -229,7 +229,7 @@ describe('LedgerMobileBridge', function () {
       );
     });
 
-    it('throw error when middleware is not initialized', async function () {
+    it('throws error when middleware is not initialized', async function () {
       bridge = new LedgerMobileBridge(
         null as unknown as LedgerTransportMiddleware,
       );
