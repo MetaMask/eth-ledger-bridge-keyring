@@ -26,7 +26,6 @@ export class LedgerTransportMiddleware implements TransportMiddleware {
 
   /**
    * Method to close the transport connection.
-   *
    */
   async dispose(): Promise<void> {
     const transport = this.getTransport();
