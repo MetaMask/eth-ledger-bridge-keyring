@@ -247,7 +247,7 @@ describe('LedgerMobileBridge', function () {
   });
 
   describe('closeApps', function () {
-    it('transport command should send correctly', async function () {
+    it('sends the `closeApps` transport command correctly', async function () {
       await bridge.closeApps();
       expect(mockEthApp.closeApps).toHaveBeenCalledTimes(1);
     });
