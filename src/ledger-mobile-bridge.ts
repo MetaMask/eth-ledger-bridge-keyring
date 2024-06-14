@@ -73,7 +73,7 @@ export class LedgerMobileBridge
    * Method to sign a string Message.
    * Sending the string message to the device and returning the signed message.
    *
-   * @param params - An object contains hdPath and message
+   * @param params - An object contains hdPath and message.
    * @param params.hdPath - The BIP 32 path of the account.
    * @param params.message - The message to sign.
    * @returns Retrieve v, r, s from the signed message.
