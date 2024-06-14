@@ -69,7 +69,7 @@ describe('LedgerMobileBridge', function () {
   });
 
   describe('destroy', function () {
-    it('trigger middleware dispose', async function () {
+    it('triggers middleware dispose', async function () {
       await bridge.updateTransportMethod(mockTransport as unknown as Transport);
       expect(bridge.isDeviceConnected).toBe(true);
       await bridge.destroy();
@@ -200,7 +200,7 @@ describe('LedgerMobileBridge', function () {
   });
 
   describe('updateTransportMethod', function () {
-    it('set transport in transportMiddleware and set isDeviceConnected to true', async function () {
+    it('sets transport in transportMiddleware and set isDeviceConnected to true', async function () {
       await bridge.updateTransportMethod(mockTransport as unknown as Transport);
       expect(transportMiddlewareSetTransportSpy).toHaveBeenCalledTimes(1);
       expect(transportMiddlewareSetTransportSpy).toHaveBeenCalledWith(
@@ -209,7 +209,7 @@ describe('LedgerMobileBridge', function () {
       expect(bridge.isDeviceConnected).toBe(true);
     });
 
-    it('throw error when device id not set from transport', async function () {
+    it('throws error when device id not set from transport', async function () {
       mockTransport.deviceModel = {
         id: '',
       };
@@ -220,7 +220,7 @@ describe('LedgerMobileBridge', function () {
       );
     });
 
-    it('throw error when transport.deviceMode is not set', async function () {
+    it('throws error when transport.deviceMode is not set', async function () {
       mockTransport.deviceModel = null;
       await expect(
         bridge.updateTransportMethod(mockTransport as unknown as Transport),
@@ -254,14 +254,14 @@ describe('LedgerMobileBridge', function () {
   });
 
   describe('getAppNameAndVersion', function () {
-    it('transport command should send correctly', async function () {
+    it('sends the `getAppNameAndVersion` transport command correctly', async function () {
       await bridge.getAppNameAndVersion();
       expect(mockEthApp.getAppNameAndVersion).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('getOption', function () {
-    it('return instance options', async function () {
+    it('returns the bridge instance options', async function () {
       const result = await bridge.getOptions();
       expect(result).toStrictEqual({});
     });
