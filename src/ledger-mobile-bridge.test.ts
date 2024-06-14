@@ -240,7 +240,7 @@ describe('LedgerMobileBridge', function () {
   });
 
   describe('openEthApp', function () {
-    it('transport command should send correctly', async function () {
+    it('sends the `openEthApp` transport command correctly', async function () {
       await bridge.openEthApp();
       expect(mockEthApp.openEthApp).toHaveBeenCalledTimes(1);
     });
