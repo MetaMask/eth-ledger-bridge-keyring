@@ -19,7 +19,7 @@ describe('MetaMaskLedgerHwAppEth', function () {
   });
 
   describe('openEthApp', function () {
-    it('should send open eth app command correctly', async function () {
+    it('sends "open ETH app" command correctly', async function () {
       const ethApp = new MetaMaskLedgerHwAppEth(
         mockTransport as unknown as Transport,
       );
@@ -41,7 +41,7 @@ describe('MetaMaskLedgerHwAppEth', function () {
   });
 
   describe('closeApps', function () {
-    it('should send close app command correctly', async function () {
+    it('sends "closeApp" command correctly', async function () {
       const ethApp = new MetaMaskLedgerHwAppEth(
         mockTransport as unknown as Transport,
       );
@@ -57,9 +57,9 @@ describe('MetaMaskLedgerHwAppEth', function () {
   });
 
   describe('getAppNameAndVersion', function () {
-    it('should get appName and appVersion correctly', async function () {
+    it('gets appName and appVersion correctly', async function () {
       const appNameBuf = Buffer.alloc(7, 'appName', 'ascii');
-      const verionBuf = Buffer.alloc(6, 'verion', 'ascii');
+      const verionBuf = Buffer.alloc(10, 'appVersion', 'ascii');
       const buffer = Buffer.alloc(20);
       buffer[0] = 1;
       buffer[1] = appNameBuf.length;
@@ -86,11 +86,11 @@ describe('MetaMaskLedgerHwAppEth', function () {
       expect(transportSpy).toHaveBeenCalledWith(0xb0, 0x01, 0x00, 0x00);
       expect(result).toStrictEqual({
         appName: 'appName',
-        version: 'verion',
+        version: 'appVersion',
       });
     });
 
-    it('should not throw error when result length less than expected', async function () {
+    it('does not throw an error when the result length is less than expected', async function () {
       const buffer = Buffer.alloc(1);
       buffer[0] = 1;
       const ethApp = new MetaMaskLedgerHwAppEth(
@@ -109,7 +109,7 @@ describe('MetaMaskLedgerHwAppEth', function () {
       });
     });
 
-    it('should throw error when first byte is not 1', async function () {
+    it('throws an error when first byte is not 1', async function () {
       const ethApp = new MetaMaskLedgerHwAppEth(
         mockTransport as unknown as Transport,
       );
