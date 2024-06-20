@@ -188,9 +188,8 @@ export class LedgerKeyring extends EventEmitter {
     return this.bridge.isDeviceConnected;
   }
 
-  setAccountToUnlock(index: number | string) {
-    this.unlockedAccount =
-      typeof index === 'number' ? index : parseInt(index, 10);
+  setAccountToUnlock(index: number) {
+    this.unlockedAccount = index;
   }
 
   setHdPath(hdPath: string) {

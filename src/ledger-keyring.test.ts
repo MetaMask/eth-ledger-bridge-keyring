@@ -274,11 +274,6 @@ describe('LedgerKeyring', function () {
       keyring.setAccountToUnlock(3);
       expect(keyring.unlockedAccount).toBe(3);
     });
-
-    it('should set unlockedAccount to 0 if argument is not number type', function () {
-      keyring.setAccountToUnlock('3' as unknown as number);
-      expect(keyring.unlockedAccount).toBe(3);
-    });
   });
 
   describe('setHdPath', function () {
