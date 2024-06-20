@@ -232,45 +232,45 @@ describe('LedgerKeyring', function () {
   });
 
   describe('setDeviceId', function () {
-    it('should set the deviceId', function () {
+    it('sets the deviceId', function () {
       keyring.setDeviceId('some-device');
       expect(keyring.getDeviceId()).toBe('some-device');
     });
   });
 
   describe('getDeviceId', function () {
-    it('should return the deviceId', function () {
+    it('returns the deviceId', function () {
       keyring.setDeviceId('some-device');
       expect(keyring.getDeviceId()).toBe('some-device');
     });
   });
 
   describe('isConnected', function () {
-    it('should return true if bridge is connected', function () {
+    it('returns true if bridge is connected', function () {
       bridge.isDeviceConnected = true;
       expect(keyring.isConnected()).toBe(true);
     });
 
-    it('should return false if bridge is not connected', function () {
+    it('returns false if bridge is not connected', function () {
       bridge.isDeviceConnected = false;
       expect(keyring.isConnected()).toBe(false);
     });
   });
 
   describe('getName', function () {
-    it('should return the name', function () {
+    it('returns the keyring name', function () {
       expect(keyring.getName()).toBe('Ledger Hardware');
     });
   });
 
   describe('isUnlocked', function () {
-    it('should return true if we have a public key', function () {
+    it('returns true if there is a public key', function () {
       expect(keyring.isUnlocked()).toBe(true);
     });
   });
 
   describe('setAccountToUnlock', function () {
-    it('should set unlockedAccount', function () {
+    it('sets unlockedAccount to new value', function () {
       keyring.setAccountToUnlock(3);
       expect(keyring.unlockedAccount).toBe(3);
     });
@@ -282,13 +282,13 @@ describe('LedgerKeyring', function () {
   });
 
   describe('setHdPath', function () {
-    it('should set the hdPath', function () {
+    it('sets the hdPath', function () {
       const someHDPath = `m/44'/99'/0`;
       keyring.setHdPath(someHDPath);
       expect(keyring.hdPath).toBe(someHDPath);
     });
 
-    it('should reset the HDKey if the path changes', function () {
+    it('resets the HDKey if the path changes', function () {
       const someHDPath = `m/44'/99'/0`;
       keyring.setHdPath(someHDPath);
       expect(keyring.hdk.publicKey).toBeNull();
@@ -296,7 +296,7 @@ describe('LedgerKeyring', function () {
   });
 
   describe('unlock', function () {
-    it('should resolve if we have a public key', async function () {
+    it('resolves to a public key if it exists', async function () {
       expect(async () => {
         await keyring.unlock();
       }).not.toThrow();
@@ -334,7 +334,7 @@ describe('LedgerKeyring', function () {
       expect(keyring.hdk.publicKey).toBe('ABC');
     });
 
-    it('should unlock when hdPath is not provided', async function () {
+    it('unlocks with the set hdPath if a new one is not provided', async function () {
       keyring.setHdPath(`m/44'/60'/0'/0`);
       jest.spyOn(bridge, 'getPublicKey').mockResolvedValue(
         Promise.resolve({
@@ -347,7 +347,7 @@ describe('LedgerKeyring', function () {
       expect(account).toBe(fakeAccounts[0]);
     });
 
-    it('should throw error when bridge.getPublicKey throw errors', async function () {
+    it('throws an error if the bridge getPublicKey method throws an error', async function () {
       keyring.setHdPath(`m/44'/60'/0'/0`);
       jest
         .spyOn(bridge, 'getPublicKey')
@@ -355,7 +355,7 @@ describe('LedgerKeyring', function () {
       await expect(keyring.unlock()).rejects.toThrow('Some error');
     });
 
-    it('should throw error when bridge.getPublicKey throw errors but error is not error type', async function () {
+    it('throws an error when the bridge getPublicKey method throws an error and it is not an error type', async function () {
       keyring.setHdPath(`m/44'/60'/0'/0`);
       jest.spyOn(bridge, 'getPublicKey').mockRejectedValue('Some error');
       await expect(keyring.unlock()).rejects.toThrow('Unknown error');
@@ -461,7 +461,7 @@ describe('LedgerKeyring', function () {
       expect(accounts[4]?.address).toBe(fakeAccounts[4]);
     });
 
-    it('should return the list of accounts when isLedgerLiveHdPath is true', async function () {
+    it('returns the list of accounts when isLedgerLiveHdPath is true', async function () {
       keyring.setHdPath(`m/44'/60'/0'/0/0`);
       jest.spyOn(keyring, 'unlock').mockResolvedValue(fakeAccounts[0]);
       const accounts = await keyring.getFirstPage();
@@ -558,7 +558,7 @@ describe('LedgerKeyring', function () {
   });
 
   describe('attemptMakeApp', function () {
-    it('should call bridge attemptMakeApp', async function () {
+    it('calls the bridge attemptMakeApp method', async function () {
       jest.spyOn(bridge, 'attemptMakeApp').mockResolvedValue(true);
 
       await keyring.attemptMakeApp();
@@ -570,7 +570,7 @@ describe('LedgerKeyring', function () {
 
   describe('updateTransportMethod', function () {
     describe('when bridge is connected', function () {
-      it('should call bridge updateTransportMethod', async function () {
+      it('calls the bridge updateTransportMethod method', async function () {
         jest.spyOn(bridge, 'updateTransportMethod').mockResolvedValue(true);
 
         await keyring.updateTransportMethod('some-transport');
@@ -706,7 +706,7 @@ describe('LedgerKeyring', function () {
       });
     });
 
-    it('should throw default error in signTransaction when unlockAccountByAddress return undefined hdPath', async function () {
+    it('throws default error in signTransaction when unlockAccountByAddress returns undefined hdPath', async function () {
       await basicSetupToUnlockOneAccount();
       jest
         .spyOn(keyring, 'unlockAccountByAddress')
@@ -717,7 +717,7 @@ describe('LedgerKeyring', function () {
       ).rejects.toThrow('Ledger: Unknown error while signing transaction');
     });
 
-    it('should throw default when deviceSignTransaction return errors', async function () {
+    it('throws different error to the default one if the bridge error is an instance of the Error object', async function () {
       await basicSetupToUnlockOneAccount();
       jest
         .spyOn(keyring.bridge, 'deviceSignTransaction')
@@ -728,7 +728,7 @@ describe('LedgerKeyring', function () {
       ).rejects.toThrow('some error');
     });
 
-    it('should throw default when deviceSignTransaction return error is not Errors type', async function () {
+    it('throws the default error if the bridge error is not an instance of the Error object', async function () {
       await basicSetupToUnlockOneAccount();
       jest
         .spyOn(keyring.bridge, 'deviceSignTransaction')
@@ -739,7 +739,7 @@ describe('LedgerKeyring', function () {
       ).rejects.toThrow('Ledger: Unknown error while signing transaction');
     });
 
-    it('should return error when signature is invalid', async function () {
+    it('throws an error if the signature is invalid', async function () {
       await basicSetupToUnlockOneAccount();
       jest
         .spyOn(keyring.bridge, 'deviceSignTransaction')
@@ -776,7 +776,7 @@ describe('LedgerKeyring', function () {
       expect(keyring.bridge.deviceSignMessage).toHaveBeenCalled();
     });
 
-    it('should throw default error in personal sign when unlockAccountByAddress return undefined hdPath', async function () {
+    it('throws the default error in personal sign if the unlockAccountByAddress method returns an undefined hdPath', async function () {
       await basicSetupToUnlockOneAccount();
       jest
         .spyOn(keyring, 'unlockAccountByAddress')
@@ -787,7 +787,7 @@ describe('LedgerKeyring', function () {
       ).rejects.toThrow('Ledger: Unknown error while signing message');
     });
 
-    it('should throw error in personal sign when deviceSignTransaction return errors', async function () {
+    it('throws an error in personal sign if the deviceSignTransaction rejects with an error', async function () {
       await basicSetupToUnlockOneAccount();
       jest
         .spyOn(keyring.bridge, 'deviceSignMessage')
@@ -798,7 +798,7 @@ describe('LedgerKeyring', function () {
       ).rejects.toThrow('some error');
     });
 
-    it('should throw default error in personal sign when deviceSignTransaction return error is not Errors type', async function () {
+    it('throws default error in personal sign when deviceSignTransaction rejects with an error that is not an instance of Error object', async function () {
       await basicSetupToUnlockOneAccount();
       jest
         .spyOn(keyring.bridge, 'deviceSignMessage')
@@ -809,7 +809,7 @@ describe('LedgerKeyring', function () {
       ).rejects.toThrow('Ledger: Unknown error while signing message');
     });
 
-    it('should throw error when signature doesnt match the address', async function () {
+    it('throws an error if the signature does not match the address', async function () {
       await basicSetupToUnlockOneAccount();
       jest
         .spyOn(keyring.bridge, 'deviceSignMessage')
@@ -869,7 +869,7 @@ describe('LedgerKeyring', function () {
       );
     });
 
-    it('should throw error if account detail is not found', async function () {
+    it('throws an error if the account detail is not found', async function () {
       await basicSetupToUnlockOneAccount();
       keyring.accountDetails = {};
       await expect(
@@ -975,7 +975,7 @@ describe('LedgerKeyring', function () {
       ).rejects.toThrow('Ledger: The signature doesnt match the right address');
     });
 
-    it('should throw error when version is not v4', async function () {
+    it('throws an error if the signTypedData version is not v4', async function () {
       await expect(
         keyring.signTypedData(fakeAccounts[0], fixtureData, { version: 'V3' }),
       ).rejects.toThrow(
@@ -983,7 +983,7 @@ describe('LedgerKeyring', function () {
       );
     });
 
-    it('should throw error when hdPath is not found', async function () {
+    it('throws an error if the hdPath is not found', async function () {
       jest
         .spyOn(keyring, 'unlockAccountByAddress')
         .mockResolvedValue(undefined);
@@ -992,7 +992,7 @@ describe('LedgerKeyring', function () {
       ).rejects.toThrow('Ledger: Unknown error while signing message');
     });
 
-    it('should throw error when deviceSignTypedData return errors', async function () {
+    it('throws an error when deviceSignTypedData rejects with an error', async function () {
       jest
         .spyOn(keyring.bridge, 'deviceSignTypedData')
         .mockRejectedValue(new Error('some error'));
@@ -1002,7 +1002,7 @@ describe('LedgerKeyring', function () {
       ).rejects.toThrow('some error');
     });
 
-    it('should throw error when deviceSignTypedData return error is not Errors type', async function () {
+    it('throws default error when deviceSignTypedData reject with an error that is not an instance of Error object', async function () {
       jest
         .spyOn(keyring.bridge, 'deviceSignTypedData')
         .mockRejectedValue('some error');
@@ -1012,7 +1012,7 @@ describe('LedgerKeyring', function () {
       ).rejects.toThrow('Ledger: Unknown error while signing message');
     });
 
-    it('should return signature when recoveryId length < 2', async function () {
+    it('returns signature when recoveryId length < 2', async function () {
       jest.spyOn(keyring.bridge, 'deviceSignTypedData').mockResolvedValue({
         v: 0,
         r: '72d4e38a0e582e09a620fd38e236fe687a1ec782206b56d576f579c026a7e5b9',
