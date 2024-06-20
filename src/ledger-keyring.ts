@@ -25,10 +25,10 @@ const keyringType = 'Ledger Hardware';
 const MAX_INDEX = 1000;
 
 enum NetworkApiUrls {
-  Ropsten = 'http://api-ropsten.etherscan.io',
-  Kovan = 'http://api-kovan.etherscan.io',
+  Ropsten = 'https://api-ropsten.etherscan.io',
+  Kovan = 'https://api-kovan.etherscan.io',
   Rinkeby = 'https://api-rinkeby.etherscan.io',
-  Mainnet = 'https://api.etherscan.io',
+  Mainnet = `https://api.etherscan.io`,
 }
 
 type SignTransactionPayload = Awaited<
@@ -314,11 +314,11 @@ export class LedgerKeyring extends EventEmitter {
       // transaction which is only communicated to ethereumjs-tx in this
       // value. In newer versions the chainId is communicated via the 'Common'
       // object.
-      // @ts-expect-error tx.v should be a Buffer but we are assigning a string
+      // @ts-expect-error tx.v should be a Buffer, but we are assigning a string
       tx.v = ethUtil.bufferToHex(tx.getChainId());
-      // @ts-expect-error tx.r should be a Buffer but we are assigning a string
+      // @ts-expect-error tx.r should be a Buffer, but we are assigning a string
       tx.r = '0x00';
-      // @ts-expect-error tx.s should be a Buffer but we are assigning a string
+      // @ts-expect-error tx.s should be a Buffer, but we are assigning a string
       tx.s = '0x00';
 
       rawTxHex = tx.serialize().toString('hex');
@@ -420,11 +420,6 @@ export class LedgerKeyring extends EventEmitter {
       throw error instanceof Error
         ? error
         : new Error('Ledger: Unknown error while signing message');
-    }
-
-    let recoveryId = parseInt(String(payload.v), 10).toString(16);
-    if (recoveryId.length < 2) {
-      recoveryId = `0${recoveryId}`;
     }
 
     let modifiedV = parseInt(String(payload.v), 10).toString(16);
@@ -662,10 +657,7 @@ export class LedgerKeyring extends EventEmitter {
       `${apiUrl}/api?module=account&action=txlist&address=${address}&tag=latest&page=1&offset=1`,
     );
     const parsedResponse = await response.json();
-    if (parsedResponse.status !== '0' && parsedResponse.result.length > 0) {
-      return true;
-    }
-    return false;
+    return parsedResponse.status !== '0' && parsedResponse.result.length > 0;
   }
 
   #getApiUrl() {
