@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.0]
+### Uncategorized
+- feat: add mobile keyring bridge ([#225](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/225))
+- Bump follow-redirects from 1.15.4 to 1.15.6 ([#224](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/224))
+- Bump tar from 6.2.0 to 6.2.1 ([#226](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/226))
+- Enabling MetaMask security code scanner ([#222](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/222))
+
 ## [3.0.0]
 ### Added
 -  Add `getOptions` and `setOptions` methods to `LedgerBridge` interface ([#210](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/210))
@@ -99,7 +106,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Support new versions of ethereumjs/tx ([#68](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/68))
 
-[Unreleased]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v3.0.0...HEAD
+[Unreleased]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v4.0.0...HEAD
+[4.0.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v3.0.0...v4.0.0
 [3.0.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v2.0.1...v3.0.0
 [2.0.1]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v1.0.1...v2.0.0
