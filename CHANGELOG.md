@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add classes `LedgerMobileBridge`, `LedgerTransportMiddleware`, and `MetaMaskLedgerHwAppEth` to support Bluetooth as a HW Ledger Transport option ([#225](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/225))
 
 ### Changed
-- **BREAKING**: The `LedgerKeyring` method `setAccountToUnlock` now only accept an input of type `number` ([#225](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/225))
+- **BREAKING**: The `LedgerKeyring` method `setAccountToUnlock` now only accepts an input of type `number` ([#225](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/225))
 - **BREAKING**: Removed the `chainCode` property from the `GetPublicKeyResponse` type ([#225](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/225))
 
 ## [3.0.0]
