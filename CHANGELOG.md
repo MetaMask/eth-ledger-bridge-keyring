@@ -14,12 +14,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **BREAKING**: The `LedgerKeyring` method `setAccountToUnlock` now only accept an input of type `number` ([#225](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/225))
 - **BREAKING**: Removed the `chainCode` property from the `GetPublicKeyResponse` type ([#225](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/225))
 
-### Uncategorized
-- feat: add mobile keyring bridge ([#225](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/225))
-- Bump follow-redirects from 1.15.4 to 1.15.6 ([#224](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/224))
-- Bump tar from 6.2.0 to 6.2.1 ([#226](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/226))
-- Enabling MetaMask security code scanner ([#222](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/222))
-
 ## [3.0.0]
 ### Added
 -  Add `getOptions` and `setOptions` methods to `LedgerBridge` interface ([#210](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/210))
