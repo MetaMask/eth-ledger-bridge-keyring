@@ -38,15 +38,16 @@
   },
   "dependencies": {
     "@ethereumjs/rlp": "^4.0.0",
-    "@ethereumjs/tx": "^4.1.1",
+    "@ethereumjs/tx": "^4.2.0",
     "@ethereumjs/util": "^8.0.0",
-    "@metamask/eth-sig-util": "^7.0.0",
+    "@ledgerhq/hw-app-eth": "6.26.1",
+    "@metamask/eth-sig-util": "^7.0.1",
     "hdkey": "^2.1.0"
   },
   "devDependencies": {
-    "@ethereumjs/common": "^3.1.1",
+    "@ethereumjs/common": "^3.2.0",
     "@lavamoat/allow-scripts": "^2.5.1",
-    "@ledgerhq/hw-app-eth": "^6.32.0",
+    "@ledgerhq/hw-transport": "^6.24.1",
     "@ledgerhq/types-cryptoassets": "^7.6.0",
     "@ledgerhq/types-devices": "^6.22.4",
     "@metamask/auto-changelog": "^3.1.0",
@@ -95,7 +96,8 @@
       "@ledgerhq/hw-app-eth>@ledgerhq/domain-service>eip55>keccak": false,
       "ethereumjs-tx>ethereumjs-util>keccak": false,
       "ethereumjs-tx>ethereumjs-util>secp256k1": false,
-      "hdkey>secp256k1": false
+      "hdkey>secp256k1": false,
+      "ethereumjs-tx>ethereumjs-util>ethereum-cryptography>keccak": false
     }
   }
 }
