@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.0]
+### Added
+- Add classes `LedgerMobileBridge`, `LedgerTransportMiddleware`, and `MetaMaskLedgerHwAppEth` to support Bluetooth as a HW Ledger Transport option ([#225](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/225))
+
+### Changed
+- **BREAKING**: The `LedgerKeyring` method `setAccountToUnlock` now only accepts an input of type `number` ([#225](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/225))
+- **BREAKING**: Removed the `chainCode` property from the `GetPublicKeyResponse` type ([#225](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/225))
+
 ## [3.0.0]
 ### Added
 -  Add `getOptions` and `setOptions` methods to `LedgerBridge` interface ([#210](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/210))
@@ -99,7 +107,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Support new versions of ethereumjs/tx ([#68](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/68))
 
-[Unreleased]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v3.0.0...HEAD
+[Unreleased]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v4.0.0...HEAD
+[4.0.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v3.0.0...v4.0.0
 [3.0.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v2.0.1...v3.0.0
 [2.0.1]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v1.0.1...v2.0.0
