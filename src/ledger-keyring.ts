@@ -212,7 +212,9 @@ export class LedgerKeyring extends EventEmitter {
         hdPath: path,
       });
     } catch (error) {
-      throw error instanceof Error ? error : new Error('Unlock your Ledger device and open the ETH app');
+      throw error instanceof Error
+        ? error
+        : new Error('Unlock your Ledger device and open the ETH app');
     }
 
     if (updateHdk && payload.chainCode) {
