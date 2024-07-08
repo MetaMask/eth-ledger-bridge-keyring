@@ -39,6 +39,7 @@ export class LedgerTransportMiddleware implements TransportMiddleware {
    */
   setTransport(transport: Transport): void {
     this.#transport = transport;
+    this.#app = new MetaMaskLedgerHwAppEth(this.#transport);
   }
 
   /**
