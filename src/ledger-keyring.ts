@@ -22,6 +22,7 @@ const pathBase = 'm';
 const hdPathString = `${pathBase}/44'/60'/0'`;
 const keyringType = 'Ledger Hardware';
 
+// This number make one of our failure test very slow which for loop need to run 1000 times.
 const MAX_INDEX = 1000;
 
 enum NetworkApiUrls {

@@ -58,10 +58,6 @@ export class LedgerTransportMiddleware implements TransportMiddleware {
    * @returns An generic interface for communicating with a Ledger hardware wallet to perform operation.
    */
   getEthApp(): MetaMaskLedgerHwAppEth {
-    if (!this.getTransport()) {
-      throw new Error('Instance `transport` is not initialized.');
-    }
-
     return new MetaMaskLedgerHwAppEth(this.getTransport());
   }
 }

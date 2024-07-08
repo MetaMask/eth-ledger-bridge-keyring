@@ -191,7 +191,7 @@ describe('LedgerKeyring', function () {
       expect(serialized.deviceId).toBe('some-device');
     });
 
-    it('should migrate accountIndexes to accountDetails', async function () {
+    it('migrates accountIndexes to accountDetails', async function () {
       const someHdPath = `m/44'/60'/0'/0/0`;
       const account = fakeAccounts[1];
       const checksum = ethUtil.toChecksumAddress(account);
@@ -211,7 +211,7 @@ describe('LedgerKeyring', function () {
       });
     });
 
-    it('should migrate non-bip44 accounts to accountDetails', async function () {
+    it('migrates non-bip44 accounts to accountDetails', async function () {
       const someHdPath = `m/44'/60'/0'`;
       const account = fakeAccounts[1];
       const checksum = ethUtil.toChecksumAddress(account);
@@ -228,6 +228,28 @@ describe('LedgerKeyring', function () {
         bip44: false,
         hdPath: `m/44'/60'/0'/1`,
       });
+    });
+
+    it('throws errors when address is not found', async function () {
+      const hdPath = `m/44'/60'/0'`;
+      const account = '0x90A5b70d94418d6c25C19071e5b8170607f6302D';
+
+      let thrownError;
+      const accountIndexes: Record<string, number> = {};
+      accountIndexes['0x90a'] = 1;
+
+      try {
+        await keyring.deserialize({
+          hdPath,
+          accounts: [account],
+          deviceId: 'some-device',
+          implementFullBIP44: true,
+          accountIndexes,
+        });
+      } catch (error) {
+        thrownError = error;
+      }
+      expect(thrownError).toStrictEqual(new Error('Unknown address'));
     });
   });
 
@@ -440,12 +462,12 @@ describe('LedgerKeyring', function () {
   });
 
   describe('getFirstPage', function () {
-    it('should set the currentPage to 1', async function () {
+    it('sets the currentPage to 1', async function () {
       await keyring.getFirstPage();
       expect(keyring.page).toBe(1);
     });
 
-    it('should return the list of accounts for current page', async function () {
+    it('returns the list of accounts for current page', async function () {
       const accounts = await keyring.getFirstPage();
 
       expect(accounts).toHaveLength(keyring.perPage);
@@ -973,6 +995,14 @@ describe('LedgerKeyring', function () {
     it('throws an error if the signTypedData version is not v4', async function () {
       await expect(
         keyring.signTypedData(fakeAccounts[0], fixtureData, { version: 'V3' }),
+      ).rejects.toThrow(
+        'Ledger: Only version 4 of typed data signing is supported',
+      );
+    });
+
+    it('throws an error if the version is not provided', async function () {
+      await expect(
+        keyring.signTypedData(fakeAccounts[0], fixtureData),
       ).rejects.toThrow(
         'Ledger: Only version 4 of typed data signing is supported',
       );
