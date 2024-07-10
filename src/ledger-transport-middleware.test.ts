@@ -62,5 +62,12 @@ describe('LedgerTransportMiddleware', function () {
       const app = transportMiddleware.getEthApp();
       expect(app).toBeDefined();
     });
+
+    it('throws an error when the transport object is not set', async function () {
+      transportMiddleware = new LedgerTransportMiddleware();
+      expect(() => transportMiddleware.getEthApp()).toThrow(
+        'Instance `transport` is not initialized.',
+      );
+    });
   });
 });
