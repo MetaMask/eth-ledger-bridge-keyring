@@ -63,7 +63,7 @@ describe('LedgerTransportMiddleware', function () {
       expect(app).toBeDefined();
     });
 
-    it('throw error when transport not set', async function () {
+    it('throws an error when the transport object is not set', async function () {
       transportMiddleware = new LedgerTransportMiddleware();
       expect(() => transportMiddleware.getEthApp()).toThrow(
         'Instance `transport` is not initialized.',

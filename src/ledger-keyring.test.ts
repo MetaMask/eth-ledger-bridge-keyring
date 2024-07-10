@@ -230,27 +230,22 @@ describe('LedgerKeyring', function () {
       });
     });
 
-    it('throws errors when address is not found', async function () {
+    it('throws an error when the address is not found', async function () {
       const hdPath = `m/44'/60'/0'`;
       const account = '0x90A5b70d94418d6c25C19071e5b8170607f6302D';
 
-      let thrownError;
       const accountIndexes: Record<string, number> = {};
       accountIndexes['0x90a'] = 1;
 
-      try {
-        await keyring.deserialize({
+      await expect(
+        keyring.deserialize({
           hdPath,
           accounts: [account],
           deviceId: 'some-device',
           implementFullBIP44: true,
           accountIndexes,
-        });
-      } catch (error) {
-        thrownError = error;
-      }
-      expect(thrownError).toStrictEqual(new Error('Unknown address'));
-    });
+        }),
+      ).rejects.toThrow('Unknown address');
   });
 
   describe('setDeviceId', function () {
