@@ -1,12 +1,10 @@
 import ledgerService from '@ledgerhq/hw-app-eth/lib/services/ledger';
 import type Transport from '@ledgerhq/hw-transport';
 
-// eslint-disable-next-line import/no-nodejs-modules
 import {
   GetPublicKeyParams,
   GetPublicKeyResponse,
   LedgerBridge,
-  LedgerBridgeOptions,
   LedgerSignMessageParams,
   LedgerSignMessageResponse,
   LedgerSignTransactionParams,
@@ -21,7 +19,8 @@ import {
   LedgerMobileBridgeOptions,
 } from './type';
 
-export type MobileBridge<T extends LedgerBridgeOptions> = LedgerBridge<T> & {
+// MobileBridge Type will always use LedgerBridge with LedgerMobileBridgeOptions
+export type MobileBridge = LedgerBridge<LedgerMobileBridgeOptions> & {
   getAppNameAndVersion(): Promise<GetAppNameAndVersionResponse>;
   openEthApp(): Promise<void>;
   closeApps(): Promise<void>;
@@ -30,9 +29,7 @@ export type MobileBridge<T extends LedgerBridgeOptions> = LedgerBridge<T> & {
 /**
  * LedgerMobileBridge is a bridge between the LedgerKeyring and the LedgerTransportMiddleware.
  */
-export class LedgerMobileBridge
-  implements MobileBridge<LedgerMobileBridgeOptions>
-{
+export class LedgerMobileBridge implements MobileBridge {
   #transportMiddleware?: TransportMiddleware;
 
   #opts: LedgerMobileBridgeOptions;
