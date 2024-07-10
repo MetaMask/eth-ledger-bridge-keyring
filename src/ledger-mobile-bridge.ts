@@ -6,6 +6,7 @@ import {
   GetPublicKeyParams,
   GetPublicKeyResponse,
   LedgerBridge,
+  LedgerBridgeOptions,
   LedgerSignMessageParams,
   LedgerSignMessageResponse,
   LedgerSignTransactionParams,
@@ -20,18 +21,17 @@ import {
   LedgerMobileBridgeOptions,
 } from './type';
 
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-export interface LedgerMobileBridge {
+export type MobileBridge<T extends LedgerBridgeOptions> = LedgerBridge<T> & {
   getAppNameAndVersion(): Promise<GetAppNameAndVersionResponse>;
   openEthApp(): Promise<void>;
   closeApps(): Promise<void>;
-}
+};
 
 /**
  * LedgerMobileBridge is a bridge between the LedgerKeyring and the LedgerTransportMiddleware.
  */
 export class LedgerMobileBridge
-  implements LedgerBridge<LedgerMobileBridgeOptions>
+  implements MobileBridge<LedgerMobileBridgeOptions>
 {
   #transportMiddleware?: TransportMiddleware;
 
