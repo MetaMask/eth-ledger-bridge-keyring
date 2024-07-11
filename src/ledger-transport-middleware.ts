@@ -20,8 +20,6 @@ export class LedgerTransportMiddleware implements TransportMiddleware {
 
   readonly transportEncoding = 'ascii';
 
-  #app?: MetaMaskLedgerHwAppEth;
-
   #transport?: Transport;
 
   /**
@@ -60,9 +58,6 @@ export class LedgerTransportMiddleware implements TransportMiddleware {
    * @returns An generic interface for communicating with a Ledger hardware wallet to perform operation.
    */
   getEthApp(): MetaMaskLedgerHwAppEth {
-    if (!this.#app) {
-      this.#app = new MetaMaskLedgerHwAppEth(this.getTransport());
-    }
-    return this.#app;
+    return new MetaMaskLedgerHwAppEth(this.getTransport());
   }
 }
