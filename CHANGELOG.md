@@ -7,10 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ## [4.1.0]
-### Uncategorized
-- refactor: improve error messages ([#232](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/232))
-- refactor: extend `LedgerMobileBridge` interface from `LedgerBridge` ([#233](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/233))
-- fix: disconnect error during transport reset (iOS devices only) ([#231](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/231))
+### Changed
+- Refactor error message in `LedgerKeyring` ([#232](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/232))
+- Extend `LedgerMobileBridge` type from `LedgerBridge` ([#233](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/233))
+- Create new `MetaMaskLedgerHwAppEth` instance instead of re-using previous instance ([#231](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/231))
 
 ## [4.0.0]
 ### Added
