@@ -334,7 +334,7 @@ describe('LedgerKeyring', function () {
         keyring.setHdPath(`m/44'/60'/0'/0`);
         jest.spyOn(bridge, 'getPublicKey').mockRejectedValue('Some error');
         await expect(keyring.unlock()).rejects.toThrow(
-          'ULedger Ethereum app closed. Open it to unlock.',
+          'Ledger Ethereum app closed. Open it to unlock.',
         );
       });
 
