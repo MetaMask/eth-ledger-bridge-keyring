@@ -215,7 +215,7 @@ export class LedgerKeyring extends EventEmitter {
     } catch (error) {
       throw error instanceof Error
         ? error
-        : new Error('Unlock your Ledger device and open the ETH app');
+        : new Error('Ledger Ethereum app closed. Open it to unlock.');
     }
 
     if (updateHdk && payload.chainCode) {
