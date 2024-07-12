@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.1.0]
+### Changed
+- Refactor error message in `LedgerKeyring` ([#232](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/232))
+- Extend `LedgerMobileBridge` type from `LedgerBridge` ([#233](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/233))
+- Create new `MetaMaskLedgerHwAppEth` instance instead of re-using previous instance ([#231](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/231))
+
 ## [4.0.0]
 ### Added
 - Add classes `LedgerMobileBridge`, `LedgerTransportMiddleware`, and `MetaMaskLedgerHwAppEth` to support Bluetooth as a HW Ledger Transport option ([#225](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/225))
@@ -107,7 +113,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Support new versions of ethereumjs/tx ([#68](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/68))
 
-[Unreleased]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v4.0.0...HEAD
+[Unreleased]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v4.1.0...HEAD
+[4.1.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v4.0.0...v4.1.0
 [4.0.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v3.0.0...v4.0.0
 [3.0.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v2.0.1...v3.0.0
 [2.0.1]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v2.0.0...v2.0.1
