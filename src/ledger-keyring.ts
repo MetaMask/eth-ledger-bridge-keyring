@@ -213,7 +213,9 @@ export class LedgerKeyring extends EventEmitter {
         hdPath: path,
       });
     } catch (error) {
-      throw error instanceof Error ? error : new Error('Unknown error');
+      throw error instanceof Error
+        ? error
+        : new Error('Ledger Ethereum app closed. Open it to unlock.');
     }
 
     if (updateHdk && payload.chainCode) {

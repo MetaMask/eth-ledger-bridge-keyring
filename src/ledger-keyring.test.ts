@@ -330,6 +330,14 @@ describe('LedgerKeyring', function () {
         expect(keyring.hdk.publicKey).not.toBe('ABC');
       });
 
+      it('throws an error when the bridge getPublicKey method throws an error and it is not an error type', async function () {
+        keyring.setHdPath(`m/44'/60'/0'/0`);
+        jest.spyOn(bridge, 'getPublicKey').mockRejectedValue('Some error');
+        await expect(keyring.unlock()).rejects.toThrow(
+          'Ledger Ethereum app closed. Open it to unlock.',
+        );
+      });
+
       it('does not update hdk.publicKey if updateHdk is false', async function () {
         // @ts-expect-error we want to bypass the publicKey property set method
         keyring.hdk = { publicKey: 'ABC' };
@@ -365,12 +373,6 @@ describe('LedgerKeyring', function () {
           .spyOn(bridge, 'getPublicKey')
           .mockRejectedValue(new Error('Some error'));
         await expect(keyring.unlock()).rejects.toThrow('Some error');
-      });
-
-      it('throws an error when the bridge getPublicKey method throws an error and it is not an error type', async function () {
-        keyring.setHdPath(`m/44'/60'/0'/0`);
-        jest.spyOn(bridge, 'getPublicKey').mockRejectedValue('Some error');
-        await expect(keyring.unlock()).rejects.toThrow('Unknown error');
       });
     });
 
