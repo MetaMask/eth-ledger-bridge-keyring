@@ -36,33 +36,6 @@ function isIFrameValid(
   );
 }
 
-/**
- * Simulates the loading of an iframe by calling the onload function.
- *
- * @param iframe - The iframe to simulate the loading of.
- * @returns Returns a promise that resolves when the onload function is called.
- */
-async function simulateIFrameLoad(iframe?: HTMLIFrameElementShim) {
-  if (!isIFrameValid(iframe)) {
-    throw new Error('the iframe is not valid');
-  }
-  // we call manually the onload event to simulate the iframe loading
-  return await iframe.onload();
-}
-
-/**
- * Initializes the bridge with a simulated iframe.
- *
- * @param bridge - The bridge to initialize.
- */
-async function initializeBridge(bridge: LedgerIframeBridge) {
-  // The promise returned by the init method is resolved when the iframe
-  // is loaded, but as we are using a shim, we need to resolve it manually.
-  const initHandle = bridge.init();
-  await simulateIFrameLoad(bridge.iframe);
-  return initHandle;
-}
-
 const LEDGER_IFRAME_ID = 'LEDGER-IFRAME';
 const BRIDGE_URL = 'https://metamask.github.io/eth-ledger-bridge-keyring';
 const INVALID_URL_ERROR = 'bridgeURL is not a valid URL';
@@ -92,7 +65,7 @@ describe('LedgerIframeBridge', function () {
     bridge = new LedgerIframeBridge({
       bridgeUrl: BRIDGE_URL,
     });
-    await initializeBridge(bridge);
+    await bridge.init();
   });
 
   afterEach(function () {
@@ -137,9 +110,7 @@ describe('LedgerIframeBridge', function () {
       const addEventListenerSpy = jest.spyOn(global.window, 'addEventListener');
       bridge = new LedgerIframeBridge();
 
-      // `initializeBridge` is used to call `init` while simulating the iframe loading
-      // in a way that does not cause the test to hang.
-      await initializeBridge(bridge);
+      await bridge.init();
 
       expect(addEventListenerSpy).toHaveBeenCalledTimes(1);
       expect(bridge.iframeLoaded).toBe(true);
@@ -210,8 +181,6 @@ describe('LedgerIframeBridge', function () {
 
   describe('updateTransportMethod', function () {
     it('sends and processes a successful ledger-update-transport message', async function () {
-      bridge.iframeLoaded = true;
-
       const transportType = 'u2f';
 
       stubKeyringIFramePostMessage(bridge, (message) => {
@@ -544,19 +513,15 @@ describe('LedgerIframeBridge', function () {
       removeEventListenerSpy = jest.spyOn(global.window, 'removeEventListener');
       addEventListenerSpy = jest.spyOn(global.window, 'addEventListener');
       bridge = new LedgerIframeBridge();
-      await initializeBridge(bridge);
+      await bridge.init();
     });
 
     describe('when configurate bridge url', function () {
       describe('when given bridge url is different with current', function () {
         beforeEach(async () => {
-          // since the bridge will be re-initialized, we need to
-          // simulate the iframe loading again
-          const setOptionHandle = bridge.setOptions({
+          await bridge.setOptions({
             bridgeUrl: 'https://metamask.io',
           });
-          await simulateIFrameLoad(bridge.iframe);
-          await setOptionHandle;
         });
 
         it('should set bridgeUrl correctly', async function () {
