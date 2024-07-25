@@ -107,8 +107,8 @@ describe('LedgerIframeBridge', function () {
 
   describe('init', function () {
     it('sets up the listener and iframe', async function () {
-      const addEventListenerSpy = jest.spyOn(global.window, 'addEventListener');
       bridge = new LedgerIframeBridge();
+      const addEventListenerSpy = jest.spyOn(global.window, 'addEventListener');
 
       await bridge.init();
 
@@ -519,9 +519,7 @@ describe('LedgerIframeBridge', function () {
     describe('when configurate bridge url', function () {
       describe('when given bridge url is different with current', function () {
         beforeEach(async () => {
-          await bridge.setOptions({
-            bridgeUrl: 'https://metamask.io',
-          });
+          await bridge.setOptions({ bridgeUrl: 'https://metamask.io' });
         });
 
         it('should set bridgeUrl correctly', async function () {
