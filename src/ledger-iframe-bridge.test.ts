@@ -36,20 +36,6 @@ function isIFrameValid(
   );
 }
 
-/**
- * Simulates the loading of an iframe by calling the onload function.
- *
- * @param iframe - The iframe to simulate the loading of.
- * @returns Returns a promise that resolves when the onload function is called.
- */
-async function simulateIFrameLoad(iframe?: HTMLIFrameElementShim) {
-  if (!isIFrameValid(iframe)) {
-    throw new Error('the iframe is not valid');
-  }
-  // we call manually the onload event to simulate the iframe loading
-  return await iframe.onload();
-}
-
 const LEDGER_IFRAME_ID = 'LEDGER-IFRAME';
 const BRIDGE_URL = 'https://metamask.github.io/eth-ledger-bridge-keyring';
 const INVALID_URL_ERROR = 'bridgeURL is not a valid URL';
@@ -80,7 +66,6 @@ describe('LedgerIframeBridge', function () {
       bridgeUrl: BRIDGE_URL,
     });
     await bridge.init();
-    await simulateIFrameLoad(bridge.iframe);
   });
 
   afterEach(function () {
@@ -123,15 +108,11 @@ describe('LedgerIframeBridge', function () {
   describe('init', function () {
     it('sets up the listener and iframe', async function () {
       bridge = new LedgerIframeBridge();
-
       const addEventListenerSpy = jest.spyOn(global.window, 'addEventListener');
 
       await bridge.init();
 
       expect(addEventListenerSpy).toHaveBeenCalledTimes(1);
-      expect(bridge.iframeLoaded).toBe(false);
-
-      await simulateIFrameLoad(bridge.iframe);
       expect(bridge.iframeLoaded).toBe(true);
     });
   });
@@ -200,8 +181,6 @@ describe('LedgerIframeBridge', function () {
 
   describe('updateTransportMethod', function () {
     it('sends and processes a successful ledger-update-transport message', async function () {
-      bridge.iframeLoaded = true;
-
       const transportType = 'u2f';
 
       stubKeyringIFramePostMessage(bridge, (message) => {
@@ -225,6 +204,14 @@ describe('LedgerIframeBridge', function () {
 
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(bridge.iframe?.contentWindow?.postMessage).toHaveBeenCalled();
+    });
+
+    it('throws an error when the bridge is not initialized', async function () {
+      bridge = new LedgerIframeBridge();
+
+      await expect(bridge.updateTransportMethod('u2f')).rejects.toThrow(
+        'The iframe is not loaded yet',
+      );
     });
 
     it('throws an error when a ledger-update-transport message is not successful', async function () {
@@ -527,7 +514,6 @@ describe('LedgerIframeBridge', function () {
       addEventListenerSpy = jest.spyOn(global.window, 'addEventListener');
       bridge = new LedgerIframeBridge();
       await bridge.init();
-      await simulateIFrameLoad(bridge.iframe);
     });
 
     describe('when configurate bridge url', function () {
