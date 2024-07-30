@@ -119,6 +119,7 @@ export class LedgerMobileBridge implements MobileBridge {
   }: LedgerSignTransactionParams): Promise<LedgerSignTransactionResponse> {
     const resolution = await ledgerService.resolveTransaction(tx, {}, {});
     return this.#getEthApp().signTransaction(hdPath, tx, resolution);
+    // return this.#getEthApp().clearSignTransaction(hdPath, tx, resolution);
   }
 
   /**
