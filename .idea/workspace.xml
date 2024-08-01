@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="f84567a7-0e5c-4163-be73-65930b23f671" name="Changes" comment="feat: upgrade the ledger-hw-app library to support clear Sign transaction feature in ledger.">
+      <change beforePath="$PROJECT_DIR$/.babelrc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bundle.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/gulpfile.babel.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ledger-bridge.js" beforeDir="false" afterPath="$PROJECT_DIR$/ledger-bridge.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="feat/upgrade-lib-to-support-clear-sign" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;dawnseeker8&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/MetaMask/eth-ledger-bridge-keyring.git&quot;,
+    &quot;accountId&quot;: &quot;80962bd8-e0f8-4487-99ee-9c458c6658d8&quot;
+  }
+}</component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 8
+}</component>
+  <component name="ProjectId" id="2izqfp9eff3oKZo9k4fOiNyvOEp" />
+  <component name="ProjectViewState">
+    <option name="autoscrollFromSource" value="true" />
+    <option name="autoscrollToSource" value="true" />
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "feat/gh-page-upgrade-lib-to-support-clear-sign",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "yarn",
+    "settings.editor.selected.configurable": "configurable.group.appearance",
+    "ts.external.directory.path": "/Users/xiaomingwang/Applications/WebStorm.app/Contents/plugins/javascript-plugin/jsLanguageServicesImpl/external",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="RunManager">
+    <configuration name="TestCafe" type="JavaScriptTestRunnerTestCafe" temporary="true">
+      <TestCafeRunConfiguration testcafe-browser="chrome" testcafe-live-mode="false" testcafe-headless-mode="false" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="TestCafe.TestCafe" />
+        <item itemvalue="TestCafe.TestCafe" />
+        <item itemvalue="TestCafe.TestCafe" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-1d06a55b98c1-0b3e54e931b4-JavaScript-WS-241.18034.50" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="f84567a7-0e5c-4163-be73-65930b23f671" name="Changes" comment="" />
+      <created>1720503858972</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1720503858972</updated>
+      <workItem from="1720503860092" duration="5735000" />
+      <workItem from="1720583025228" duration="770000" />
+      <workItem from="1720584640478" duration="1091000" />
+      <workItem from="1720614124190" duration="3487000" />
+      <workItem from="1720705255998" duration="627000" />
+      <workItem from="1720771269142" duration="1296000" />
+      <workItem from="1721290809638" duration="1648000" />
+      <workItem from="1722240503775" duration="1958000" />
+      <workItem from="1722245293137" duration="2403000" />
+      <workItem from="1722310608585" duration="8932000" />
+      <workItem from="1722329855022" duration="3434000" />
+      <workItem from="1722395271338" duration="13176000" />
+      <workItem from="1722478124011" duration="4437000" />
+    </task>
+    <task id="LOCAL-00001" summary="feat: Refactor all unit test comments to remove `should` in the description and follow metamask unit tests guideline">
+      <option name="closed" value="true" />
+      <created>1720583637984</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1720583637984</updated>
+    </task>
+    <task id="LOCAL-00002" summary="feat: According to Gustova's feedback, and modify the LedgerMobileBridge interface to `MobileBridge` extends `LedgerBridge`">
+      <option name="closed" value="true" />
+      <created>1720615961411</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1720615961411</updated>
+    </task>
+    <task id="LOCAL-00003" summary="feat: According to Gustova's feedback, and modify the LedgerMobileBridge interface to `MobileBridge` extends `LedgerBridge`">
+      <option name="closed" value="true" />
+      <created>1720616383922</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1720616383922</updated>
+    </task>
+    <task id="LOCAL-00004" summary="feat: Remove duplicate tests.">
+      <option name="closed" value="true" />
+      <created>1720705749122</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1720705749122</updated>
+    </task>
+    <task id="LOCAL-00005" summary="feat: Change the error message to `Ledger Ethereum app closed. Open it to unlock.`">
+      <option name="closed" value="true" />
+      <created>1720771431550</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1720771431550</updated>
+    </task>
+    <task id="LOCAL-00006" summary="feat: Change the error message to `Ledger Ethereum app closed. Open it to unlock.`">
+      <option name="closed" value="true" />
+      <created>1720772685639</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1720772685639</updated>
+    </task>
+    <task id="LOCAL-00007" summary="feat: upgrade the ledger-hw-app library to support clear Sign transaction feature in ledger.">
+      <option name="closed" value="true" />
+      <created>1722322273946</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1722322273946</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="feat: Refactor all unit test comments to remove `should` in the description and follow metamask unit tests guideline" />
+    <MESSAGE value="feat: According to Gustova's feedback, and modify the LedgerMobileBridge interface to `MobileBridge` extends `LedgerBridge`" />
+    <MESSAGE value="feat: Remove duplicate tests." />
+    <MESSAGE value="feat: Change the error message to `Ledger Ethereum app closed. Open it to unlock.`" />
+    <MESSAGE value="feat: upgrade the ledger-hw-app library to support clear Sign transaction feature in ledger." />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: upgrade the ledger-hw-app library to support clear Sign transaction feature in ledger." />
+  </component>
+</project>
