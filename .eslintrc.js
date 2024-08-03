@@ -1,36 +1,10 @@
-{
-  "parserOptions": {
-    "sourceType": "module",
-    "ecmaVersion": 2017,
-    "ecmaFeatures": {
-      "experimentalObjectRestSpread": true,
-      "impliedStrict": true,
-      "modules": true,
-      "blockBindings": true,
-      "arrowFunctions": true,
-      "objectLiteralShorthandMethods": true,
-      "objectLiteralShorthandProperties": true,
-      "templateStrings": true,
-      "classes": true,
-      "jsx": true
-    },
-  },
-
+module.exports = {
   "env": {
     "es6": true,
     "node": true,
     "browser": true,
-    "mocha" : true
+    "jest": true
   },
-
-  "plugins": [
-    "mocha",
-    "chai",
-    "json"
-  ],
-
-  "globals": {},
-
   "rules": {
     "no-restricted-globals": ["error", "event"],
     "accessor-pairs": 2,
@@ -148,6 +122,6 @@
     "wrap-iife": [2, "any"],
     "yield-star-spacing": [2, "both"],
     "yoda": [2, "never"],
-    "prefer-const": 1,
+    "prefer-const": 1
   }
 }
