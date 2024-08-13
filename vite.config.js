@@ -22,6 +22,7 @@ export default defineConfig({
 
 function manualChunks(id) {
     if (id.includes('node_modules')) {
+        //@ledgerhq library is big, so we want to separate it into its own chunk
         if(id.includes('node_modules/@ledgerhq')) {
             return id.split('node_modules/@ledgerhq/')[1].split('/')[0].toString();
         }
