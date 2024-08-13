@@ -4,7 +4,9 @@ import legacy from '@vitejs/plugin-legacy'
 export default defineConfig({
     plugins: [
         [legacy({
-            targets: ['defaults', 'not IE 11'],
+            // This will generate both modern and legacy builds, with the legacy build targeting not IE 11
+            // and the modern build targeting the last 2 versions of all browsers and not dead browsers
+            targets: ['last 2 versions, not dead, > 0.2%', 'not IE 11'],
         }),]
     ],
     build: {
