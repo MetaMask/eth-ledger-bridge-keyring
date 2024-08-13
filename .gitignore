@@ -11,6 +11,8 @@ node_modules
 dist
 dist-ssr
 *.local
+# all projects setting files from IDEs
+.idea/*
 
 .yarn/cache
 # Editor directories and files
