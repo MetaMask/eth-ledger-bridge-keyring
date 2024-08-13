@@ -60,3 +60,5 @@ typings/
 .parcel-cache
 dist
 parcel-bundle-reports
+
+.idea
