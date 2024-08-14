@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.1.1]
+### Uncategorized
+- fix: `init` waits for the iframe to be loaded  ([#236](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/236))
+- chore: update MetaMaskLedgerHwAppEth docs ([#235](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/235))
+
 ## [4.1.0]
 ### Changed
 - Refactor error message in `LedgerKeyring` ([#232](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/232))
@@ -113,7 +118,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Support new versions of ethereumjs/tx ([#68](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/68))
 
-[Unreleased]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v4.1.0...HEAD
+[Unreleased]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v4.1.1...HEAD
+[4.1.1]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v4.1.0...v4.1.1
 [4.1.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v4.0.0...v4.1.0
 [4.0.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v3.0.0...v4.0.0
 [3.0.0]: https://github.com/MetaMask/eth-ledger-bridge-keyring/compare/v2.0.1...v3.0.0
