@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.1]
 ### Fixed
-- The promise returned by the `init` method now resolves only after iframe has been loaded  ([#236](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/236))
+- The promise returned by the `init` method now resolves only after the iframe has been loaded ([#236](https://github.com/MetaMask/eth-ledger-bridge-keyring/pull/236))
   - `updateTransportMethod` will throw an error when called before `init`
 
 ## [3.0.0]
