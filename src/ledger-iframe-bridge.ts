@@ -110,12 +110,6 @@ export class LedgerIframeBridge
   messageCallbacks: Record<number, (response: IFrameMessageResponse) => void> =
     {};
 
-  delayedPromise?: {
-    resolve: (value: boolean) => void;
-    reject: (error: unknown) => void;
-    transportType: string;
-  };
-
   constructor(
     opts: LedgerIframeBridgeOptions = {
       bridgeUrl: 'https://metamask.github.io/eth-ledger-bridge-keyring',
@@ -128,7 +122,7 @@ export class LedgerIframeBridge
   }
 
   async init() {
-    this.#setupIframe(this.#opts.bridgeUrl);
+    await this.#setupIframe(this.#opts.bridgeUrl);
 
     this.eventListener = this.#eventListener.bind(this, this.#opts.bridgeUrl);
 
@@ -178,12 +172,7 @@ export class LedgerIframeBridge
       // If the iframe isn't loaded yet, let's store the desired transportType value and
       // optimistically return a successful promise
       if (!this.iframeLoaded) {
-        this.delayedPromise = {
-          resolve,
-          reject,
-          transportType,
-        };
-        return;
+        throw new Error('The iframe is not loaded yet');
       }
 
       this.#sendMessage(
@@ -282,28 +271,17 @@ export class LedgerIframeBridge
     });
   }
 
-  #setupIframe(bridgeUrl: string) {
-    this.iframe = document.createElement('iframe');
-    this.iframe.src = bridgeUrl;
-    this.iframe.allow = `hid 'src'`;
-    this.iframe.onload = async () => {
-      // If the ledger live preference was set before the iframe is loaded,
-      // set it after the iframe has loaded
-      this.iframeLoaded = true;
-      if (this.delayedPromise) {
-        try {
-          const result = await this.updateTransportMethod(
-            this.delayedPromise.transportType,
-          );
-          this.delayedPromise.resolve(result);
-        } catch (error) {
-          this.delayedPromise.reject(error);
-        } finally {
-          delete this.delayedPromise;
-        }
-      }
-    };
-    document.head.appendChild(this.iframe);
+  async #setupIframe(bridgeUrl: string): Promise<void> {
+    return new Promise((resolve) => {
+      this.iframe = document.createElement('iframe');
+      this.iframe.src = bridgeUrl;
+      this.iframe.allow = `hid 'src'`;
+      this.iframe.onload = async () => {
+        this.iframeLoaded = true;
+        resolve();
+      };
+      document.head.appendChild(this.iframe);
+    });
   }
 
   #getOrigin(bridgeUrl: string) {
