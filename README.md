@@ -1,5 +1,10 @@
 # eth-ledger-bridge-keyring [![CircleCI](https://circleci.com/gh/MetaMask/eth-ledger-bridge-keyring.svg?style=svg)](https://circleci.com/gh/MetaMask/eth-ledger-bridge-keyring)
 
+> [!WARNING]
+> This package has been moved into a
+> [new monorepo](https://github.com/MetaMask/accounts/tree/main/packages/keyring-eth-ledger-bridge).
+> This repository is no longer in use, and pull requests will no longer be accepted.
+
 An implementation of MetaMask's [Keyring interface](https://github.com/MetaMask/eth-simple-keyring#the-keyring-class-protocol), that uses a Ledger hardware wallet for all cryptographic operations.
 
 In most regards, it works in the same way as
