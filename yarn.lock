@@ -1320,7 +1320,7 @@ __metadata:
     "@types/ethereumjs-tx": ^1.0.1
     "@types/hdkey": ^2.0.1
     "@types/jest": ^28.1.6
-    "@types/node": ^16.18.59
+    "@types/node": ~18.18.14
     "@typescript-eslint/eslint-plugin": ^5.43.0
     "@typescript-eslint/parser": ^5.43.0
     depcheck: ^1.4.3
@@ -1749,19 +1749,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*":
-  version: 20.12.7
-  resolution: "@types/node@npm:20.12.7"
+"@types/node@npm:*, @types/node@npm:~18.18.14":
+  version: 18.18.14
+  resolution: "@types/node@npm:18.18.14"
   dependencies:
     undici-types: ~5.26.4
-  checksum: 7cc979f7e2ca9a339ec71318c3901b9978555257929ef3666987f3e447123bc6dc92afcc89f6347e09e07d602fde7d51bcddea626c23aa2bb74aeaacfd1e1686
-  languageName: node
-  linkType: hard
-
-"@types/node@npm:^16.18.59":
-  version: 16.18.96
-  resolution: "@types/node@npm:16.18.96"
-  checksum: c5b4c20868e1ecb2e3b975b37aeeb5790b3a4f1472b496fae779ac4f14ba4fb4c0e9ed8e9b6eb389e5a074371056130c9d6506705b144b4f6985ffa844556242
+  checksum: 3a77e6819e50fd22196b08d542433e1513c855f4993a200bc0e7be076445c61ce2a9e5f7f202f060c46130b2b2f98643461fb7999f874475e6bb322c4534c580
   languageName: node
   linkType: hard
 
