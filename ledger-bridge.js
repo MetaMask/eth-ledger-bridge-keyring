@@ -29,6 +29,7 @@ export default class LedgerBridge {
               this.unlock(replyAction, params.hdPath, messageId);
               break;
             case "ledger-sign-transaction":
+              console.log("ledger-sign-transaction", params);
               this.signTransaction(
                 replyAction,
                 params.hdPath,
@@ -78,8 +79,7 @@ export default class LedgerBridge {
               this.signTypedData(
                 replyAction,
                 params.hdPath,
-                params.domainSeparatorHex,
-                params.hashStructMessageHex,
+                params.message,
                 messageId
               );
               break;
@@ -267,22 +267,10 @@ export default class LedgerBridge {
     }
   }
 
-  async signTypedData(
-    replyAction,
-    hdPath,
-    domainSeparatorHex,
-    hashStructMessageHex,
-    messageId
-  ) {
+  async signTypedData(replyAction, hdPath, message, messageId) {
     try {
       await this.makeApp();
-      const res = await this.app.signEIP712HashedMessage(
-        hdPath,
-        domainSeparatorHex,
-        hashStructMessageHex
-      );
-      // TODO: Uncomment this when enable the clear signing feature in ledger for EIP712 messages;
-      // const res = await this.app.signEIP712Message(hdPath, domainSeparatorHex);
+      const res = await this.app.signEIP712Message(hdPath, message);
 
       this.sendMessageToExtension({
         action: replyAction,
