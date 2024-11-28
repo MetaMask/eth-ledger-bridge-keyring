@@ -22,26 +22,6 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # Build job
-  build:
-    # Specify runner +  build & upload the static files as an artifact
-    runs-on: ubuntu-latest
-    steps:
-      - name: Setup Node.js environment
-        uses: actions/setup-node@v4.1.0
-
-      - name: Build static files
-        id: build
-        run: |
-          yarn install
-          yarn build
-
-      - name: Upload static files as artifact
-        id: deployment
-        uses: actions/upload-pages-artifact@v3 # or specific "vX.X.X" version tag for this action
-        with:
-          path: dist/
-
   # Deployment job
   deploy:
     environment:
