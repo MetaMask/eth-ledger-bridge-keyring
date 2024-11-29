@@ -3,6 +3,7 @@ import legacy from "@vitejs/plugin-legacy";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
 
 export default defineConfig({
+  base: "./",
   plugins: [
     [
       legacy({
@@ -24,6 +25,7 @@ export default defineConfig({
     outDir: "dist",
     sourcemap: false,
   },
+  base: "./",
 });
 
 function manualChunks(id) {
