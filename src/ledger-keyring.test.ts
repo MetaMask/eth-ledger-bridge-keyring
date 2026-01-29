@@ -840,6 +840,82 @@ describe('LedgerKeyring', function () {
           'Ledger: The signature doesnt match the right address',
         );
       });
+
+      it('normalizes v=0 to v=27 for proper signature recovery', async function () {
+        await basicSetupToUnlockOneAccount();
+        jest
+          .spyOn(keyring.bridge, 'deviceSignMessage')
+          .mockResolvedValue({ v: 0, r: 'aabbccdd', s: '11223344' });
+
+        jest
+          .spyOn(sigUtil, 'recoverPersonalSignature')
+          .mockReturnValue(fakeAccounts[0]);
+
+        const result = await keyring.signPersonalMessage(
+          fakeAccounts[0],
+          'some message',
+        );
+
+        // v=0 should be normalized to v=27 (0x1b)
+        expect(result).toBe('0xaabbccdd112233441b');
+      });
+
+      it('normalizes v=1 to v=28 for proper signature recovery', async function () {
+        await basicSetupToUnlockOneAccount();
+        jest
+          .spyOn(keyring.bridge, 'deviceSignMessage')
+          .mockResolvedValue({ v: 1, r: 'aabbccdd', s: '11223344' });
+
+        jest
+          .spyOn(sigUtil, 'recoverPersonalSignature')
+          .mockReturnValue(fakeAccounts[0]);
+
+        const result = await keyring.signPersonalMessage(
+          fakeAccounts[0],
+          'some message',
+        );
+
+        // v=1 should be normalized to v=28 (0x1c)
+        expect(result).toBe('0xaabbccdd112233441c');
+      });
+
+      it('preserves v=27 unchanged', async function () {
+        await basicSetupToUnlockOneAccount();
+        jest
+          .spyOn(keyring.bridge, 'deviceSignMessage')
+          .mockResolvedValue({ v: 27, r: 'aabbccdd', s: '11223344' });
+
+        jest
+          .spyOn(sigUtil, 'recoverPersonalSignature')
+          .mockReturnValue(fakeAccounts[0]);
+
+        const result = await keyring.signPersonalMessage(
+          fakeAccounts[0],
+          'some message',
+        );
+
+        // v=27 should remain as 0x1b
+        expect(result).toBe('0xaabbccdd112233441b');
+      });
+
+      it('preserves v=28 unchanged', async function () {
+        await basicSetupToUnlockOneAccount();
+        jest
+          .spyOn(keyring.bridge, 'deviceSignMessage')
+          .mockResolvedValue({ v: 28, r: 'aabbccdd', s: '11223344' });
+
+        jest
+          .spyOn(sigUtil, 'recoverPersonalSignature')
+          .mockReturnValue(fakeAccounts[0]);
+
+        const result = await keyring.signPersonalMessage(
+          fakeAccounts[0],
+          'some message',
+        );
+
+        // v=28 should remain as 0x1c
+        expect(result).toBe('0xaabbccdd112233441c');
+      });
     });
 
     describe('signMessage', function () {
@@ -1043,7 +1119,9 @@ describe('LedgerKeyring', function () {
         ).rejects.toThrow('Ledger: Unknown error while signing message');
       });
 
-      it('returns signature when recoveryId length < 2', async function () {
+      it('normalizes v=0 to v=27 for proper signature recovery', async function () {
+        // Ledger may return v as 0 or 1 (modern format), but signature
+        // recovery expects 27 or 28 (legacy format)
         jest.spyOn(keyring.bridge, 'deviceSignTypedData').mockResolvedValue({
           v: 0,
           r: '72d4e38a0e582e09a620fd38e236fe687a1ec782206b56d576f579c026a7e5b9',
@@ -1054,8 +1132,41 @@ describe('LedgerKeyring', function () {
           fixtureData,
           options,
         );
+        // v=0 should be normalized to v=27 (0x1b)
         expect(result).toBe(
-          '0x72d4e38a0e582e09a620fd38e236fe687a1ec782206b56d576f579c026a7e5b946759735981cd0c3efb02d36df28bb2feedfec3d90e408efc93f45b894946e3200',
+          '0x72d4e38a0e582e09a620fd38e236fe687a1ec782206b56d576f579c026a7e5b946759735981cd0c3efb02d36df28bb2feedfec3d90e408efc93f45b894946e321b',
+        );
+      });
+
+      it('normalizes v=1 to v=28 for proper signature recovery', async function () {
+        jest.spyOn(keyring.bridge, 'deviceSignTypedData').mockResolvedValue({
+          v: 1,
+          r: '72d4e38a0e582e09a620fd38e236fe687a1ec782206b56d576f579c026a7e5b9',
+          s: '46759735981cd0c3efb02d36df28bb2feedfec3d90e408efc93f45b894946e32',
+        });
+
+        // v=1 should be normalized to v=28 (0x1c), but this will fail
+        // address recovery since the correct v for this signature is 27
+        await expect(
+          keyring.signTypedData(fakeAccounts[15], fixtureData, options),
+        ).rejects.toThrow(
+          'Ledger: The signature doesnt match the right address',
+        );
+      });
+
+      it('preserves v=27 unchanged', async function () {
+        jest.spyOn(keyring.bridge, 'deviceSignTypedData').mockResolvedValue({
+          v: 27,
+          r: '72d4e38a0e582e09a620fd38e236fe687a1ec782206b56d576f579c026a7e5b9',
+          s: '46759735981cd0c3efb02d36df28bb2feedfec3d90e408efc93f45b894946e32',
+        });
+        const result = await keyring.signTypedData(
+          fakeAccounts[15],
+          fixtureData,
+          options,
+        );
+        expect(result).toBe(
+          '0x72d4e38a0e582e09a620fd38e236fe687a1ec782206b56d576f579c026a7e5b946759735981cd0c3efb02d36df28bb2feedfec3d90e408efc93f45b894946e321b',
         );
       });
     });
